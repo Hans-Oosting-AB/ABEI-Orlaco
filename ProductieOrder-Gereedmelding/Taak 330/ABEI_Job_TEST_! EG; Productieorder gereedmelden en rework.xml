@@ -106,10 +106,10 @@
 				<id>4028</id>
 				<entity>-none-</entity>
 				<action>exec SQL</action>
-				<source>0</source>
-				<target>0</target>
+				<source>135</source>
+				<target>136</target>
 				<datasource>
-					INSERT INTO [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					INSERT INTO %abeitargetdb%.[dbo].[_ST_PRD_Process_Cummulative]
 					( [ProductionOrder] ,[Itemcode] ,[QtyPlanned] ,[QtyReceived] ,[QtyReady] ,[QtyReject] ,[OrderStatus] ,[Quantity], [RunId] )
 
 					SELECT TOP 100 PERCENT ep.ProductionOrder, ep.Itemcode, ep.ExactPlanned,
@@ -121,10 +121,10 @@
 					THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0)
 					ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END as Quantity,
 					'%runid%' as runid
-					from [ExactData].[dbo].[_ST_PRD_Exact_Planned_Open] ep
-					left join [ExactData].[dbo].[_ST_PRD_Exact_Received_Open] er on ep.ProductionOrder = er.ProductionOrder
-					left join [ExactData].[dbo].[_ST_PRD_Prod_Ready] pr on ep.ProductionOrder = pr.ProductionOrder
-					left join [ExactData].[dbo].[_ST_PRD_Prod_Reject] px on ep.ProductionOrder = px.ProductionOrder
+					from %abeisourcedb%.[dbo].[_ST_PRD_Exact_Planned_Open] ep
+					left join %abeisourcedb%.[dbo].[_ST_PRD_Exact_Received_Open] er on ep.ProductionOrder = er.ProductionOrder
+					left join %abeisourcedb%.[dbo].[_ST_PRD_Prod_Ready] pr on ep.ProductionOrder = pr.ProductionOrder
+					left join %abeisourcedb%.[dbo].[_ST_PRD_Prod_Reject] px on ep.ProductionOrder = px.ProductionOrder
 					where ep.itemcode in ('1003030', '1003050')
 					AND CASE WHEN ISNULL(pr.OrderStatus,0) = 1
 					THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0)
@@ -147,9 +147,9 @@
 				<entity>-none-</entity>
 				<action>exec SQL</action>
 				<source>0</source>
-				<target>105</target>
+				<target>136</target>
 				<datasource>
-					exec [ProdGlobe_live].dbo._AB_sp_New_prod_2_table
+					exec %abeisourcedb%.dbo._AB_sp_New_prod_2_table
 				</datasource>
 				<contentbody></contentbody>
 				<mapping></mapping>
@@ -166,13 +166,13 @@
 				<entity>-none-</entity>
 				<action>exec SQL</action>
 				<source>0</source>
-				<target>130</target>
+				<target>136</target>
 				<datasource>
 					BEGIN TRANSACTION;
 
 					WITH CTE AS(
 					SELECT serienummer, Status_ProdGer, Imp_attempts, ROW_NUMBER() OVER(PARTITION BY serienummer ORDER BY serienummer) AS RowNum
-					FROM [ProdGlobe_live].._AB_GerProd_proces
+					FROM %abeitargetdb%.._AB_GerProd_proces
 					WHERE  serienummer IS NOT NULL AND status_Prodger != '3'
 					),
 					Duplicates AS (
@@ -187,7 +187,7 @@
 
 					WITH CTE AS(
 					SELECT serienummer, Status_ProdGer, Imp_attempts, ROW_NUMBER() OVER(PARTITION BY serienummer ORDER BY serienummer) AS RowNum
-					FROM [ProdGlobe_live].._AB_GerProd_proces
+					FROM %abeitargetdb%.._AB_GerProd_proces
 					WHERE  serienummer IS NOT NULL AND status_Prodger != '3'
 					),
 					Duplicates AS (
@@ -230,12 +230,12 @@
 					ISNULL(SUM(ob.aantal), 1) as actualquantity,
 					10152 as res_id,
 					gbk.magcode as warehouse
-					FROM [ProdGlobe_live].dbo._AB_GerProd_proces as ob with (nolock)
+					FROM %abeisourcedb%.dbo._AB_GerProd_proces as ob with (nolock)
 					CROSS APPLY (
 					SELECT TOP 1 g.id, g.blockitem, pr.magcode
-					FROM [400].dbo.PRProject as pr with (nolock)
-					INNER JOIN [400].dbo.gbkmut as g with (nolock)  ON g.project = pr.ProjectNr
-					INNER JOIN [400].dbo.Items as i with (nolock)  ON i.itemcode = g.artcode AND i.GLAccountDistribution = g.reknr
+					FROM %abeitargetdb%.dbo.PRProject as pr with (nolock)
+					INNER JOIN %abeitargetdb%.dbo.gbkmut as g with (nolock)  ON g.project = pr.ProjectNr
+					INNER JOIN %abeitargetdb%.dbo.Items as i with (nolock)  ON i.itemcode = g.artcode AND i.GLAccountDistribution = g.reknr
 					WHERE pr.type = 'P'
 					AND pr.status = 'A'
 					AND g.transsubtype = 'A'
@@ -270,11 +270,11 @@
 					-- , gbk.magcode as warehouse
 					--
 					--
-					--FROM    [ProdGlobe_live].dbo._AB_GerProd_proces as ob with (nolock)
+					--FROM    %abeisourcedb%.dbo._AB_GerProd_proces as ob with (nolock)
 					--        CROSS APPLY (SELECT TOP 1 g.id, g.blockitem, pr.magcode
-					--                     FROM   [400].dbo.PRProject as pr with (nolock)
-					--                            INNER JOIN [400].dbo.gbkmut as g with (NOLOCK) on g.project = pr.ProjectNr
-					--                            INNER JOIN [400].dbo.Items as i WITH (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+					--                     FROM   %abeitargetdb%.dbo.PRProject as pr with (nolock)
+					--                            INNER JOIN %abeitargetdb%.dbo.gbkmut as g with (NOLOCK) on g.project = pr.ProjectNr
+					--                            INNER JOIN %abeitargetdb%.dbo.Items as i WITH (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
 					--
 					--                     WHERE 1=1
 					--                     and pr.type = 'P'
@@ -289,7 +289,7 @@
 					--                     ORDER BY g.blockitem, g.ID ASC
 					--                     ) as gbk
 					--where
-					---- (ob.Serienummer IS NULL OR ob.Serienummer not in (select top 100 percent number FROM [400].[dbo].[ItemNumbers] WITH (NOLOCK) )) LS 2020-2-26 05.048.511
+					---- (ob.Serienummer IS NULL OR ob.Serienummer not in (select top 100 percent number FROM %abeitargetdb%.[dbo].[ItemNumbers] WITH (NOLOCK) )) LS 2020-2-26 05.048.511
 					-- isnull(ob.productieorder,'') &lt;&gt; ''
 					--and (ob.Status_ProdGer = 0 OR (ob.Status_ProdGer = 4 and ob.Imp_attempts &lt; 5))
 					----and ob.proddatum = CONVERT(DATE, GETDATE())
@@ -366,14 +366,14 @@
 				<entity>-none-</entity>
 				<action>exec SQL</action>
 				<source>0</source>
-				<target>105</target>
+				<target>136</target>
 				<datasource>
-					update [ProdGlobe_live].dbo._AB_GerProd_proces with(rowlock,nowait) set Status_ProdGer = '1' where Status_prodger = '0' or (Status_ProdGer = '4' and Imp_attempts &lt;5)
+					update %abeitargetdb%.dbo._AB_GerProd_proces with(rowlock,nowait) set Status_ProdGer = '1' where Status_prodger = '0' or (Status_ProdGer = '4' and Imp_attempts &lt;5)
 
-					update [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					update %abeitargetdb%.[dbo].[_ST_PRD_Process_Cummulative]
 					Set Status = 2 WHERE runid = '%runid%'
 
-					exec [ProdGlobe_live].dbo._AB_sp_Report_Status_Prod
+					exec %abeitargetdb%.dbo._AB_sp_Report_Status_Prod
 				</datasource>
 				<contentbody></contentbody>
 				<mapping></mapping>
@@ -390,8 +390,8 @@
 				<entity>-none-</entity>
 				<action>exec SQL</action>
 				<source>0</source>
-				<target>105</target>
-				<datasource>exec [ProdGlobe_live].dbo._AB_sp_New_interf_2_table</datasource>
+				<target>136</target>
+				<datasource>exec %abeitargetdb%.dbo._AB_sp_New_interf_2_table</datasource>
 				<contentbody></contentbody>
 				<mapping></mapping>
 				<disable>0</disable>
@@ -406,13 +406,13 @@
 				<id>4026</id>
 				<entity>WarehouseStock</entity>
 				<action>create</action>
-				<source>0</source>
+				<source>136</source>
 				<target>105</target>
 				<datasource>
 					select distinct
 					artikel as artcode,
 					'95' as magcode
-					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces aip with (nolock)
+					from %abeisourcedb%.dbo._AB_Interfiliaal_proces aip with (nolock)
 					where 1=1
 					and not exists (select 1 from [%abeitargetdb%].dbo.voorrd vrd with (nolock) where vrd.magcode = '95' and vrd.artcode = aip.artikel)
 					and
@@ -451,7 +451,7 @@
 				<id>4021</id>
 				<entity>FinancialLine</entity>
 				<action>create</action>
-				<source>0</source>
+				<source>136</source>
 				<target>105</target>
 				<datasource>
 					select
@@ -476,7 +476,7 @@
 					,proddatum As 'docdate'
 					--proddatum As 'ReportDate'
 					,rtrim(ltrim(eenheid)) as UnitCode
-					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					from %abeisourcedb%.dbo._AB_Interfiliaal_proces with (nolock)
 					where 1=1
 					and
 					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
@@ -571,7 +571,7 @@
 				<id>4022</id>
 				<entity>FinancialLine</entity>
 				<action>create</action>
-				<source>0</source>
+				<source>136</source>
 				<target>105</target>
 				<datasource>
 					select
@@ -595,7 +595,7 @@
 					,proddatum As 'docdate'
 					--proddatum As 'ReportDate'
 					,rtrim(ltrim(eenheid)) as UnitCode
-					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					from %abeisourcedb%.dbo._AB_Interfiliaal_proces with (nolock)
 					where 1=1
 					and
 					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
@@ -689,10 +689,10 @@
 				<id>4023</id>
 				<entity>FinancialHeader</entity>
 				<action>create</action>
-				<source>0</source>
+				<source>136</source>
 				<target>105</target>
 				<datasource>
-					select ID as HeaderID, 70 as dagbknr from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					select ID as HeaderID, 70 as dagbknr from %abeisourcedb%.dbo._AB_Interfiliaal_proces with (nolock)
 					where 1=1
 					and
 					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
@@ -734,14 +734,14 @@
 				<source>0</source>
 				<target>105</target>
 				<datasource>
-					update [ProdGlobe_live].dbo._AB_Interfiliaal_proces with(rowlock,nowait) set Status_Interfiliaal = '1' where Status_Interfiliaal = '0' or (Status_Interfiliaal = '4' and Imp_attempts &lt;3)
+					update %abeitargetdb%.dbo._AB_Interfiliaal_proces with(rowlock,nowait) set Status_Interfiliaal = '1' where Status_Interfiliaal = '0' or (Status_Interfiliaal = '4' and Imp_attempts &lt;3)
 
 
-					update [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					update %abeitargetdb%.[dbo].[_ST_PRD_Process_Cummulative]
 					Set Status = 3 WHERE runid = '%runid%'
 
 
-					exec [ProdGlobe_live].dbo._AB_sp_Report_Status_Interfiliaal
+					exec %abeitargetdb%.dbo._AB_sp_Report_Status_Interfiliaal
 				</datasource>
 				<contentbody></contentbody>
 				<mapping></mapping>
@@ -836,18 +836,18 @@
 				<id>4029</id>
 				<entity>-none-</entity>
 				<action>exec SQL</action>
-				<source>0</source>
-				<target>0</target>
+				<source>136</source>
+				<target>136</target>
 				<datasource>
-					INSERT INTO [ProdGlobe_live].._AB_Gerprod_Receiptless (Productieorder, Artikel, Serienummer, Proddatum, sysmessage, status)
+					INSERT INTO %abeitargetdb%.._AB_Gerprod_Receiptless (Productieorder, Artikel, Serienummer, Proddatum, sysmessage, status)
 					SELECT Productieorder, Artikel, Serienummer, Proddatum, sysmessage, '0' as Status
-					FROM [ProdGlobe_live].[dbo].[_AB_GerProd_proces] with (NOLOCK)
+					FROM %abeisourcedb%.[dbo].[_AB_GerProd_proces] with (NOLOCK)
 					WHERE Status_ProdGer = '4' and Imp_attempts = '5' and ch_aantal IS NULL
 					and sysmessage = 'No receipt found' and SourceId IS NOT NULL and SysCreated &gt; Getdate() -7
 					ORDER BY Productieorder
 
 					DELETE
-					FROM [ProdGlobe_live].[dbo].[_AB_GerProd_proces]
+					FROM %abeitargetdb%.[dbo].[_AB_GerProd_proces]
 					WHERE
 					Status_ProdGer = '4' and
 					Imp_attempts = '5' and
@@ -855,9 +855,9 @@
 					sysmessage = 'No receipt found' and
 					SourceId IS NOT NULL and
 					SysCreated &gt; Getdate() -7
-					AND Serienummer NOT IN (SELECT Serienummer FROM [ProdGlobe_live].._AB_Gerprod_Receiptless Where status = '1')
+					AND Serienummer NOT IN (SELECT Serienummer FROM %abeitargetdb%.._AB_Gerprod_Receiptless Where status = '1')
 
-					Update [ProdGlobe_live].._AB_Gerprod_Receiptless
+					Update %abeitargetdb%.._AB_Gerprod_Receiptless
 					Set status = 1 Where status = '0'
 				</datasource>
 				<contentbody />
@@ -874,22 +874,22 @@
 				<id>4030</id>
 				<entity>-none-</entity>
 				<action>exec SQL</action>
-				<source>0</source>
-				<target>0</target>
+				<source>135</source>
+				<target>136</target>
 				<datasource>
 					WITH PlannedOpen AS (
 					SELECT
 					po.ProductionOrder,
 					po.ExactPlanned
 					FROM
-					[ExactData].dbo.[_ST_PRD_Exact_Planned_Open] po WITH (NOLOCK)
+					%abeisourcedb%.dbo.[_ST_PRD_Exact_Planned_Open] po WITH (NOLOCK)
 					),
 					ReceivedOpen AS (
 					SELECT
 					ro.ProductionOrder,
 					ro.ExactReceived
 					FROM
-					[ExactData].dbo.[_ST_PRD_Exact_Received_Open] ro WITH (NOLOCK)
+					%abeisourcedb%.dbo.[_ST_PRD_Exact_Received_Open] ro WITH (NOLOCK)
 					),
 					ProductionProcess AS (
 					SELECT
@@ -897,7 +897,7 @@
 					pp.ProcessReady,
 					pp.LastModified
 					FROM
-					[ExactData].dbo.[_ST_PRD_Prod_Process] pp WITH (NOLOCK)
+					%abeisourcedb%.dbo.[_ST_PRD_Prod_Process] pp WITH (NOLOCK)
 					WHERE
 					pp.ProductionOrder != 'PROD00198101.002'
 					AND pp.LastModified &lt; DATEADD(DAY, -1, GETDATE())
@@ -908,7 +908,7 @@
 					pg.Productieorder,
 					COUNT(*) AS ExactPlannedCount
 					FROM
-					[ProdGlobe_Live].._AB_Gerprod_Proces pg WITH (NOLOCK)
+					%abeitargetdb%.._AB_Gerprod_Proces pg WITH (NOLOCK)
 					GROUP BY
 					pg.Productieorder
 					),
@@ -917,7 +917,7 @@
 					pgl.*,
 					ROW_NUMBER() OVER (PARTITION BY pgl.Productieorder ORDER BY (CASE WHEN pgl.aantal = 1 THEN 1 ELSE 2 END), pgl.Productieorder) AS RowNumber
 					FROM
-					[ProdGlobe_live].._AB_GerProd_proces pgl
+					%abeitargetdb%.._AB_GerProd_proces pgl
 					INNER JOIN
 					ProductionProcess pp ON pgl.Productieorder = pp.ProductionOrder
 					INNER JOIN
