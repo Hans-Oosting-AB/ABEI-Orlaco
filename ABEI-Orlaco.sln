@@ -8,10 +8,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 330", "Taak 330", "{8E8E58CD-95DB-4F3E-89C7-18A33D2ADC3D}"
 	ProjectSection(SolutionItems) = preProject
 		ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_! EG; Productieorder gereedmelden en rework.xml = ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_! EG; Productieorder gereedmelden en rework.xml
-		ProductieOrder-Gereedmelding\Taak 330\Job 330 SeqNo 20 Select records for creating ProductionReceipt.sql = ProductieOrder-Gereedmelding\Taak 330\Job 330 SeqNo 20 Select records for creating ProductionReceipt.sql
-		ProductieOrder-Gereedmelding\Taak 330\Job 330 SeqNo 30 SET Status after creating ProductionReceipt.sql = ProductieOrder-Gereedmelding\Taak 330\Job 330 SeqNo 30 SET Status after creating ProductionReceipt.sql
-		ProductieOrder-Gereedmelding\Taak 330\[ProdGlobe_live].dbo._AB_sp_New_prod_2_table.sql = ProductieOrder-Gereedmelding\Taak 330\[ProdGlobe_live].dbo._AB_sp_New_prod_2_table.sql
-		ProductieOrder-Gereedmelding\Taak 330\[ProdGlobe_live].dbo._AB_sp_Report_Status_Prod.sql = ProductieOrder-Gereedmelding\Taak 330\[ProdGlobe_live].dbo._AB_sp_Report_Status_Prod.sql
+		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30-ProdGlobe.dbo._AB_sp_Report_Status_Prod.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30-ProdGlobe.dbo._AB_sp_Report_Status_Prod.sql
+		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo40-ProdGLobe.dbo._AB_sp_New_interf_2_table.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo40-ProdGLobe.dbo._AB_sp_New_interf_2_table.sql
+		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo70.ProdGlobe.dbo._AB_sp_Report_Status_Interfiliaal.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo70.ProdGlobe.dbo._AB_sp_Report_Status_Interfiliaal.sql
+		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30 SET Status after creating ProductionReceipt.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30 SET Status after creating ProductionReceipt.sql
+		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo20 Select records for creating ProductionReceipt.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo20 Select records for creating ProductionReceipt.sql
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 469", "Taak 469", "{D6086639-FCDB-462E-8E31-DB117EC38DA1}"
@@ -23,13 +24,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Investigative", "SQL In
 	ProjectSection(SolutionItems) = preProject
 		ProductieOrder-Gereedmelding\SQL_Investigative\Checkup Mutations for a serial Number.sql = ProductieOrder-Gereedmelding\SQL_Investigative\Checkup Mutations for a serial Number.sql
 		ProductieOrder-Gereedmelding\SQL_Investigative\Detect Duplicate serial Numbers in inventory.sql = ProductieOrder-Gereedmelding\SQL_Investigative\Detect Duplicate serial Numbers in inventory.sql
+		ProductieOrder-Gereedmelding\SQL_Investigative\Jobs that manipulate [ProdGlobe_live].[dbo].[_AB_GerProd_proces].sql = ProductieOrder-Gereedmelding\SQL_Investigative\Jobs that manipulate [ProdGlobe_live].[dbo].[_AB_GerProd_proces].sql
 		ProductieOrder-Gereedmelding\SQL_Investigative\Orlaco-Duplicate SerialNumber Issue.xlsx = ProductieOrder-Gereedmelding\SQL_Investigative\Orlaco-Duplicate SerialNumber Issue.xlsx
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Reporting", "SQL Reporting", "{27171723-C7A4-4F59-BDB0-C668B7887BBC}"
 	ProjectSection(SolutionItems) = preProject
 		ProductieOrder-Gereedmelding\SQL Reporting\ABEI330 - Open Production Orders (Check Query Lennard).sql = ProductieOrder-Gereedmelding\SQL Reporting\ABEI330 - Open Production Orders (Check Query Lennard).sql
+		ProductieOrder-Gereedmelding\SQL Reporting\When did Job ID 330 & 469 run in the same minute.sql = ProductieOrder-Gereedmelding\SQL Reporting\When did Job ID 330 & 469 run in the same minute.sql
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data Landscape", "Data Landscape", "{5A510F56-0968-4076-9D8D-3B3D889B6F49}"
 EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
