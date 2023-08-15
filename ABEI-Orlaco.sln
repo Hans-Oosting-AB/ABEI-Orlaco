@@ -36,6 +36,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Reporting", "SQL Report
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data Landscape", "Data Landscape", "{5A510F56-0968-4076-9D8D-3B3D889B6F49}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Backups", "SQL Backups", "{60DC39CD-B333-4936-A0F6-D38D10416049}"
+	ProjectSection(SolutionItems) = preProject
+		Data Landscape\SQL Backups\ExactData-For_Test-Backup.sql = Data Landscape\SQL Backups\ExactData-For_Test-Backup.sql
+		Data Landscape\SQL Backups\ExactData-Normal-Backup.sql = Data Landscape\SQL Backups\ExactData-Normal-Backup.sql
+		Data Landscape\SQL Backups\ProdGlobe_live-For_Test-Backup.sql = Data Landscape\SQL Backups\ProdGlobe_live-For_Test-Backup.sql
+		Data Landscape\SQL Backups\ProdGlobe_live-Normal-Backup.sql = Data Landscape\SQL Backups\ProdGlobe_live-Normal-Backup.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -45,6 +53,7 @@ Global
 		{D6086639-FCDB-462E-8E31-DB117EC38DA1} = {084110E9-A778-4661-847A-3A4CCB4C41CA}
 		{842363B3-514F-43E0-82FD-F07DE3DF6166} = {084110E9-A778-4661-847A-3A4CCB4C41CA}
 		{27171723-C7A4-4F59-BDB0-C668B7887BBC} = {084110E9-A778-4661-847A-3A4CCB4C41CA}
+		{60DC39CD-B333-4936-A0F6-D38D10416049} = {5A510F56-0968-4076-9D8D-3B3D889B6F49}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {71FBFD1E-522E-4CD8-9216-B8DD666A3EB5}
