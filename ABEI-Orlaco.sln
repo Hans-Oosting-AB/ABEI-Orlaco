@@ -8,6 +8,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 330", "Taak 330", "{8E8E58CD-95DB-4F3E-89C7-18A33D2ADC3D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 469", "Taak 469", "{D6086639-FCDB-462E-8E31-DB117EC38DA1}"
+	ProjectSection(SolutionItems) = preProject
+		ProductieOrder-Gereedmelding\Taak 469\ABEI_Job_00.1 _ EG Production order auto_complete.xml = ProductieOrder-Gereedmelding\Taak 469\ABEI_Job_00.1 _ EG Production order auto_complete.xml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
