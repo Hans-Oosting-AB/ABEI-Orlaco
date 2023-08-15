@@ -1,553 +1,745 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <jobs>
-  <instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid>
-  <job>
-    <id>469</id>
-    <jobname>00.1 - EG: Production order auto-complete</jobname>
-    <disable>True</disable>
-    <emailbody />
-    <emailmode>0</emailmode>
-    <emailsubject />
-    <emailto></emailto>
-    <remarks>Run ever y 1 hour</remarks>
-    <schedulename />
-    <schedulesettings>startat=15:52:08;beginat=07:00:00;endat=21:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=0</schedulesettings>
-    <settings></settings>
-    <settingsxml>
-      <settings>
-        <schedule>
-          <allowmultipleprocessorinstances>false</allowmultipleprocessorinstances>
-        </schedule>
-        <general>
-          <maxjobstepactions>200</maxjobstepactions>
-        </general>
-        <jobparams />
-      </settings>
-    </settingsxml>
-    <steps>
-      <step>
-        <id>2760</id>
-        <entity>-none-</entity>
-        <action>process</action>
-        <source>0</source>
-        <target>80</target>
-        <datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
-FROM (VALUES (0)) l(v)
-    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
-        ON r.jobid = %jobid%
-        AND r.runid &lt;&gt; '%runid%'
-        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
-        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
-        </datasource>
-        <contentbody></contentbody>
-        <mapping></mapping>
-        <disable>0</disable>
-        <remarks></remarks>
-        <replace></replace>
-        <seqno>0</seqno>
-        <settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
-        <settingsxml>
-          <settings>
-            <general>
-              <gen_datasource_method>0</gen_datasource_method>
-              <target_override />
-              <referencekey />
-              <datacolumns>
-                <datacolumn>
-                  <name>doQuit</name>
-                  <type>Int32</type>
-                </datacolumn>
-              </datacolumns>
-            </general>
-            <systemtarget>
-              <systemtarget_param2 />
-              <systemtarget_param3 />
-              <systemtarget_skiptoseqno />
-              <systemtarget_sleep>0</systemtarget_sleep>
-              <systemtarget_user />
-              <systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
-            </systemtarget>
-          </settings>
-        </settingsxml>
-        <stepname>Quit if running</stepname>
-      </step>
-      <step>
-        <id>2761</id>
-        <entity>-none-</entity>
-        <action>process</action>
-        <source>0</source>
-        <target>80</target>
-        <datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
-FROM (VALUES (0)) l(v)
-    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
-        ON r.jobid = 330
-        AND r.runid &lt;&gt; '%runid%'
-        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
-        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
-        </datasource>
-        <contentbody></contentbody>
-        <mapping></mapping>
-        <disable>0</disable>
-        <remarks></remarks>
-        <replace></replace>
-        <seqno>10</seqno>
-        <settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
-        <settingsxml>
-          <settings>
-            <general>
-              <gen_datasource_method>0</gen_datasource_method>
-              <target_override />
-              <referencekey />
-              <datacolumns>
-                <datacolumn>
-                  <name>doQuit</name>
-                  <type>Int32</type>
-                </datacolumn>
-              </datacolumns>
-            </general>
-            <systemtarget>
-              <systemtarget_param2 />
-              <systemtarget_param3 />
-              <systemtarget_skiptoseqno />
-              <systemtarget_sleep>0</systemtarget_sleep>
-              <systemtarget_user />
-              <systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
-            </systemtarget>
-          </settings>
-        </settingsxml>
-        <stepname>Quit if Receipt task is running (330)</stepname>
-      </step>
-      <step>
-        <id>2762</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET
-    runid = '%runid%'
-    , seqno = 100 -- technically you don't want to overwrite this when it is filled but it does not really matter to do the checks again
-    , rowstatus = 1
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder  
-WHERE 1=1
-    AND ob.syscreated &gt; '20200401'
-    AND p.Status != 'C'
-    AND ob.rowstatus = 0</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>100</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Assign runid for prodorders with status != C</stepname>
-      </step>
-      <step>
-        <id>2763</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET 
-    ch_aantal = pr.aantal
-    , rowstatus = CASE  WHEN pr.aantal IS NULL THEN -3
-                        WHEN ISNULL(pr.aantal, 9000) &gt; ob.Aantal THEN -2 ELSE 1 END
-    , sysmessage = CASE WHEN pr.aantal IS NULL THEN 'No receipt found'
-                        WHEN ISNULL(pr.aantal, 9000) &gt; ob.Aantal THEN 'More received than planned' ELSE '' END
-    , seqno = 110
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob  
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-    OUTER APPLY (
-        SELECT g.project, g.artcode, g.facode, SUM(g.aantal) as aantal
-        FROM dbo._AB_sy_gbkmut g WITH (NOLOCK)
-            INNER JOIN dbo._AB_sy_Items i WITH (NOLOCK) ON g.artcode = i.ItemCode and g.reknr = i.GLAccountDistribution 
-        WHERE 1=1
-            AND g.transtype = 'N'
-            AND g.transsubtype = 'A'
+	<instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid>
+	<job>
+		<id>469</id>
+		<jobname>00.1 - EG: Production order auto-complete</jobname>
+		<disable>False</disable>
+		<emailbody />
+		<emailmode>1</emailmode>
+		<emailsubject />
+		<emailto>lennart.meeuse@stoneridge.com</emailto>
+		<remarks>
+			Run every 15 minutes
 
-            AND g.project = p.ProjectNr
-            AND g.artcode = ob.artikel
-            AND (g.facode  = ob.serienummer OR i.IsSerialNumberItem = 0)
-        GROUP BY g.project, g.artcode, g.facode
-    ) pr
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 100
-    AND ob.rowstatus = 1
-    AND p.Status != 'C' -- Keep checking on status so that we don't have problems with users who finish the orders by hand</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>110</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Get quantity received and set status accordingly</stepname>
-      </step>
-      <step>
-        <id>2764</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET  
-    rowstatus = 1
-    , sysmessage = ''
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob  
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.serienummer IS NULL
-    AND ob.seqno = 110
-    AND ob.rowstatus = -2
-    AND EXISTS (SELECT 1
-                FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2  
-                WHERE 1=1
-                    AND ob2.runid = ob.runid
-                    AND ob2.serienummer IS NULL
-                    AND ob2.seqno = ob.seqno
-                    AND ob2.rowstatus = ob.rowstatus
-                GROUP BY ob2.Productieorder, ob2.Artikel, ob2.ch_aantal
-                HAVING SUM(ob2.Aantal) = ob2.ch_aantal)</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>115</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Check total amounts for status -2 lines without serial number and set status back when false alarm</stepname>
-      </step>
-      <step>
-        <id>2765</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET  
-    rowstatus = CASE WHEN ISNULL(r.QtyActual, 0) = 0 THEN -3
-                     WHEN ISNULL(r.QtyActual, 0) &lt; ISNULL(r.QtyBudget, 0) THEN -3
-                     WHEN ISNULL(r.QtyActual, 0) &gt; ISNULL(r.QtyBudget, 0) THEN -1
-                     ELSE 1 END 
-    , sysmessage = CASE WHEN ISNULL(r.QtyActual, 0) = 0 THEN 'No receipt found'
-                        WHEN ISNULL(r.QtyActual, 0) &lt; ISNULL(r.QtyBudget, 0) THEN 'Not completed yet'
-                        WHEN ISNULL(r.QtyActual, 0) &gt; ISNULL(r.QtyBudget, 0) THEN 'More received than planned'
-                        ELSE '' END 
-    , seqno = 120
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-    LEFT JOIN (
-        SELECT
-            p.ProjectNr, g.artcode
-            , SUM(CASE WHEN g.transtype = 'B' AND g.freefield1 = 'P' THEN g.aantal ELSE 0 END) AS QtyBudget
-            , SUM(CASE WHEN g.transtype IN ('N', 'X') THEN g.aantal ELSE 0 END) AS QtyActual
-        FROM dbo._AB_sy_PRProject as p with (nolock)
-            INNER JOIN dbo._AB_sy_gbkmut as g with (nolock) on p.ProjectNr = g.project 
-            INNER JOIN dbo._AB_sy_Items as i with (nolock) on g.artcode = i.ItemCode and g.reknr = i.GLAccountDistribution 
-        WHERE 1=1   
-            and p.Type = 'P'    
-            and p.Status != 'C' --= 'A' 
-            and g.transtype in('N', 'B') -- Ontvangst en geplande regels    
-            and g.transsubtype = 'A' -- Ontvangstregels 
-            AND NOT (g.checked=0 AND g.blockitem=1 AND g.reviewed=1) -- this line makes the difference between original planned and extra
-        GROUP BY p.ProjectNr, g.oms25, g.artcode
-    ) r -- receipt total
-        ON r.Projectnr = ob.Productieorder
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 110
-    AND ob.rowstatus = 1
-    AND p.Status != 'C' </datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>120</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Check planned vs realized qty for PO</stepname>
-      </step>
-      <step>
-        <id>2766</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET  
-    rowstatus = -1
-    , seqno = 130
-    , sysmessage = 'One line in PO has error'
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 120
-    AND ob.rowstatus = 1
-    AND EXISTS (SELECT 1 FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2 WITH (NOLOCK) WHERE ob2.runid = ob.runid AND ob2.productieorder = ob.productieorder AND ob2.rowstatus &lt; 1)</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>130</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Update - status of PO when one line has - </stepname>
-      </step>
-      <step>
-        <id>2813</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET  
-    rowstatus = -3 -- retry
-    , seqno = 131
-    , sysmessage = 'Has child POs that are not finished yet'
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-    INNER JOIN dbo._AB_sy_PRProject pc WITH (NOLOCK)
-        ON pc.ParentProject = p.ProjectNr
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 120
-    AND ob.rowstatus = 1
+			AB Snergy 219 document: 00.621.671
+		</remarks>
+		<schedulename />
+		<schedulesettings></schedulesettings>
+		<settings></settings>
+		<settingsxml>
+			<settings>
+				<schedule>
+					<allowmultipleprocessorinstances>false</allowmultipleprocessorinstances>
+					<schedules>
+						<scheduledetails>
+							<scheduleid>0</scheduleid>
+							<allowmultipleprocessorinstances>False</allowmultipleprocessorinstances>
+							<freq>15</freq>
+							<timescale>minutes</timescale>
+							<frequency>daily</frequency>
+							<frequency_recurrence>1</frequency_recurrence>
+							<frequency_dayofmonth>1</frequency_dayofmonth>
+							<frequency_dayofmonth_day>1</frequency_dayofmonth_day>
+							<frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos>
+							<frequency_dayofmonth_type>nr</frequency_dayofmonth_type>
+							<scheduledenabled>-1</scheduledenabled>
+							<startat>15:52:08</startat>
+							<beginat>05:55:00</beginat>
+							<endat>23:16:00</endat>
+							<day1>-1</day1>
+							<day2>-1</day2>
+							<day3>-1</day3>
+							<day4>-1</day4>
+							<day5>-1</day5>
+							<day6>-1</day6>
+							<day7>-1</day7>
+							<duration_start>2022-03-09</duration_start>
+							<duration_end>2073-08-10</duration_end>
+						</scheduledetails>
+					</schedules>
+				</schedule>
+				<general>
+					<maxjobstepactions>200</maxjobstepactions>
+				</general>
+				<jobparams>
+					<jobparam>
+						<name>param_0</name>
+						<type>String</type>
+						<value />
+					</jobparam>
+				</jobparams>
+			</settings>
+		</settingsxml>
+		<steps>
+			<step>
+				<id>2760</id>
+				<entity>-none-</entity>
+				<action>process</action>
+				<source>0</source>
+				<target>80</target>
+				<datasource>
+					SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+					FROM (VALUES (0)) l(v)
+					LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+					ON r.jobid = %jobid%
+					AND r.runid &lt;&gt; '%runid%'
+					AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+					AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>0</seqno>
+				<settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>doQuit</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<systemtarget>
+							<systemtarget_param2 />
+							<systemtarget_param3 />
+							<systemtarget_skiptoseqno />
+							<systemtarget_sleep>0</systemtarget_sleep>
+							<systemtarget_user />
+							<systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
+						</systemtarget>
+					</settings>
+				</settingsxml>
+				<stepname>Quit if running</stepname>
+			</step>
+			<step>
+				<id>2761</id>
+				<entity>-none-</entity>
+				<action>process</action>
+				<source>0</source>
+				<target>80</target>
+				<datasource>
+					SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+					FROM (VALUES (0)) l(v) -- 2023-08-10 HOO:Ensure at least one row result
+					LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+					ON r.jobid = 330
+					--AND r.runid &lt;&gt; '%runid%' -- 2023-08-10 HOO: Also quit when runid's are the same
+					AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+					AND NOT EXISTS (
+					SELECT 1
+					FROM dbo._AB_Entity_Log r1 WITH (NOLOCK)
+					WHERE r1.runid = r.runid
+					AND r1.jobid = r.jobid    -- 2023-08-10 HOO: Check specifically whetehr given job is finished (not just any job in run id)
+					AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>10</seqno>
+				<settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>doQuit</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<systemtarget>
+							<systemtarget_param2 />
+							<systemtarget_param3 />
+							<systemtarget_skiptoseqno />
+							<systemtarget_sleep>0</systemtarget_sleep>
+							<systemtarget_user />
+							<systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
+						</systemtarget>
+					</settings>
+				</settingsxml>
+				<stepname>Quit if Receipt task is running (330)</stepname>
+			</step>
+			<step>
+				<id>2762</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					runid = '%runid%'
+					, seqno = 100 -- technically you don't want to overwrite this when it is filled but it does not really matter to do the checks again
+					, rowstatus = 1
+					, sysmessage = ''
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					WHERE 1=1
+					AND ob.syscreated &gt; '20200401'
+					AND p.Status != 'C'
+					AND ob.rowstatus = 0
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>100</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Assign runid for prodorders with status != C</stepname>
+			</step>
+			<step>
+				<id>2763</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					ch_aantal = pr.aantal
+					, rowstatus = CASE  WHEN pr.aantal IS NULL THEN -3
+					WHEN ISNULL(pr.aantal, 9000) &gt; ob.Aantal THEN -2 ELSE 1 END
+					, sysmessage = CASE WHEN pr.aantal IS NULL THEN 'No receipt found'
+					WHEN ISNULL(pr.aantal, 9000) &gt; ob.Aantal THEN 'More received than planned' ELSE '' END
+					, seqno = 110
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK) ON p.ProjectNr = ob.Productieorder
+					OUTER APPLY (
+					SELECT g.project, g.artcode, g.facode, SUM(g.aantal) as aantal
+					FROM dbo._AB_sy_gbkmut g WITH (NOLOCK)
+					INNER JOIN dbo._AB_sy_Items i WITH (NOLOCK) ON g.artcode = i.ItemCode and g.reknr = i.GLAccountDistribution
+					WHERE 1=1
+					AND g.transtype = 'N'
+					AND g.transsubtype IN ( 'A', 'J' )
 
-    AND pc.[Status] != 'C'</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>131</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Check if PO has not-finished child POs</stepname>
-      </step>
-      <step>
-        <id>2767</id>
-        <entity>SDK-ProductionOrder-Finish</entity>
-        <action>process</action>
-        <source>129</source>
-        <target>107</target>
-        <datasource>SELECT DISTINCT p.ProjectNr as project -- sets status to B 
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)   
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 120
-    AND ob.rowstatus = 1
-    AND p.Status NOT IN ('C', 'B')</datasource>
-        <contentbody></contentbody>
-        <mapping></mapping>
-        <disable>0</disable>
-        <remarks></remarks>
-        <replace></replace>
-        <seqno>140</seqno>
-        <settings>uniquekey=;retryunique=0;</settings>
-        <settingsxml>
-          <settings>
-            <general>
-              <gen_datasource_method>0</gen_datasource_method>
-              <target_override />
-              <referencekey />
-              <datacolumns />
-            </general>
-          </settings>
-        </settingsxml>
-        <stepname>Take the PO's that still have status 1 and finish them</stepname>
-      </step>
-      <step>
-        <id>2771</id>
-        <entity>Project</entity>
-        <action>update</action>
-        <source>129</source>
-        <target>107</target>
-        <datasource>SELECT DISTINCT p.ProjectNr, 'C' as status
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)   
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-    -- Last step success
-    INNER JOIN [%abeidb%].dbo._AB_Entity_Results r WITH (NOLOCK)
-        ON r.runid = ob.runid
-        AND r.Entity = 'SDK-ProductionOrder-Finish'
-        AND r.KeyValue = p.ProjectNr COLLATE DATABASE_DEFAULT
-        AND r.rowstatus = 2
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 120
-    AND ob.rowstatus = 1
-    AND p.Status = 'B'-- != 'C' 
-</datasource>
-        <contentbody></contentbody>
-        <mapping></mapping>
-        <disable>1</disable>
-        <remarks></remarks>
-        <replace></replace>
-        <seqno>145</seqno>
-        <settings>uniquekey=;retryunique=0;</settings>
-        <settingsxml>
-          <settings>
-            <general>
-              <gen_datasource_method>0</gen_datasource_method>
-              <target_override />
-              <referencekey />
-              <datacolumns>
-                <datacolumn>
-                  <name>project</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>status</name>
-                  <type>String</type>
-                </datacolumn>
-              </datacolumns>
-            </general>
-          </settings>
-        </settingsxml>
-        <stepname>Update Pr status when last step is done</stepname>
-      </step>
-      <step>
-        <id>2768</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET 
-    rowstatus = CASE WHEN p.Status = 'C' THEN 2 ELSE 0 END -- 0 = retry 
-    , seqno = 150
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.seqno = 120
-    AND ob.rowstatus = 1</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>150</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Check the result in Exact</stepname>
-      </step>
-      <step>
-        <id>2769</id>
-        <entity>-none-</entity>
-        <action>create</action>
-        <source>129</source>
-        <target>6</target>
-        <datasource>SELECT DISTINCT TOP (1000) Productieorder, Artikel
-    , CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN Serienummer ELSE '' END as Serienummer
-    , CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN CAST(Aantal as varchar(10)) ELSE '' END as Aantal
-    , CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN CAST(ch_aantal as varchar(10)) ELSE '' END as Aantal_Ontvangen
-    , sysmessage as Opmerking
-    , ob.rowstatus
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.rowstatus &lt; 0
-ORDER BY Productieorder, Artikel, ob.rowstatus</datasource>
-        <contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
-&lt;HTML&gt;
-&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;De volgende productieorders zijn niet automatisch afgehandeld.&lt;/p&gt;&lt;p&gt;Controleer het resultaat in Exact en handel ze eventueel handmatig af.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Productieorder&lt;/td&gt;&lt;td&gt;Artikel&lt;/td&gt;&lt;td&gt;Serienummer&lt;/td&gt;&lt;td&gt;Aantal&lt;/td&gt;&lt;td&gt;Aantal_Ontvangen&lt;/td&gt;&lt;td&gt;Opmerking&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Productieorder%&lt;/td&gt;&lt;td&gt;%Artikel%&lt;/td&gt;&lt;td&gt;%Serienummer%&lt;/td&gt;&lt;td&gt;%Aantal%&lt;/td&gt;&lt;td&gt;%Aantal_Ontvangen%&lt;/td&gt;&lt;td&gt;%Opmerking%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody>
-        <mapping></mapping>
-        <disable>0</disable>
-        <remarks></remarks>
-        <replace></replace>
-        <seqno>160</seqno>
-        <settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=sysint@orlaco.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=barmbx01.stoneridge.com;emailport=25;emailssl=False;emailto=lenard.schouten@stoneridge.com;emailcc=;emailbcc=;emailsub=Production order auto-complete;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Productieorder,Artikel,Serienummer,Aantal,Aantal_Ontvangen,Opmerking;mex_connectionid=0;</settings>
-        <settingsxml>
-          <settings>
-            <general>
-              <gen_datasource_method>0</gen_datasource_method>
-              <target_override />
-              <referencekey />
-              <datacolumns>
-                <datacolumn>
-                  <name>Productieorder</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>Artikel</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>Serienummer</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>Aantal</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>Aantal_Ontvangen</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>Opmerking</name>
-                  <type>String</type>
-                </datacolumn>
-                <datacolumn>
-                  <name>rowstatus</name>
-                  <type>Int32</type>
-                </datacolumn>
-              </datacolumns>
-            </general>
-            <email>
-              <emailattachment_allowduplicate>false</emailattachment_allowduplicate>
-              <emailimpersonation_account />
-              <emailbodytype>html</emailbodytype>
-              <attachments />
-            </email>
-          </settings>
-        </settingsxml>
-        <stepname>Send mail for lines that have error</stepname>
-      </step>
-      <step>
-        <id>2770</id>
-        <entity>-none-</entity>
-        <action>exec SQL</action>
-        <source>129</source>
-        <target>129</target>
-        <datasource>UPDATE ob WITH (ROWLOCK, NOWAIT) SET  
-    rowstatus = 0
-    , sysmessage = ''
-    , sysmodified = CURRENT_TIMESTAMP
-FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob 
-    INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
-        ON p.ProjectNr = ob.Productieorder
-WHERE 1=1
-    AND ob.runid = '%runid%'
-    AND ob.rowstatus &lt;&gt; 2
-    AND p.Status != 'C'
-    AND EXISTS (SELECT 1 FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2 WITH (NOLOCK) WHERE ob2.runid = ob.runid AND ob2.productieorder = ob.productieorder AND ob2.rowstatus = -3)</datasource>
-        <contentbody />
-        <mapping />
-        <disable>0</disable>
-        <remarks />
-        <replace />
-        <seqno>170</seqno>
-        <settings />
-        <settingsxml />
-        <stepname>Retry PO's without receipt or that were not complete yet</stepname>
-      </step>
-    </steps>
-  </job>
+					AND g.project = p.ProjectNr
+					AND g.artcode = ob.artikel
+					AND (g.facode  = ob.serienummer OR i.IsSerialNumberItem = 0)
+					GROUP BY g.project, g.artcode, g.facode
+					) pr
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.seqno = 100
+					AND ob.rowstatus = 1
+					AND p.Status != 'C' -- Keep checking on status so that we don't have problems with users who finish the orders by hand
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>110</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Get quantity received and set status accordingly</stepname>
+			</step>
+			<step>
+				<id>2764</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = 1
+					, sysmessage = ''
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.serienummer IS NULL
+					AND ob.seqno = 110
+					AND ob.rowstatus = -2
+					AND EXISTS (SELECT 1
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2
+					WHERE 1=1
+					AND ob2.runid = ob.runid
+					AND ob2.serienummer IS NULL
+					AND ob2.seqno = ob.seqno
+					AND ob2.rowstatus = ob.rowstatus
+					GROUP BY ob2.Productieorder, ob2.Artikel, ob2.ch_aantal
+					HAVING SUM(ob2.Aantal) = ob2.ch_aantal)
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>115</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Check total amounts for status -2 lines without serial number and set status back when false alarm</stepname>
+			</step>
+			<step>
+				<id>2765</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = CASE WHEN ISNULL(r.QtyActual, 0) = 0 THEN -3
+					WHEN ISNULL(r.QtyActual, 0) &lt; ISNULL(r.QtyBudget, 0) THEN -3
+					WHEN ISNULL(r.QtyActual, 0) &gt; ISNULL(r.QtyBudget, 0) THEN -1
+					ELSE 1 END
+					, sysmessage = CASE WHEN ISNULL(r.QtyActual, 0) = 0 THEN 'No receipt found'
+					WHEN ISNULL(r.QtyActual, 0) &lt; ISNULL(r.QtyBudget, 0) THEN 'Not completed yet'
+					WHEN ISNULL(r.QtyActual, 0) &gt; ISNULL(r.QtyBudget, 0) THEN 'More received than planned'
+					ELSE '' END
+					, seqno = 120
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					LEFT JOIN (
+					SELECT
+					p.ProjectNr, g.artcode
+					, SUM(CASE WHEN g.transtype = 'B' AND g.freefield1 = 'P' THEN g.aantal ELSE 0 END) AS QtyBudget
+					, SUM(CASE WHEN g.transtype IN ('N', 'X') THEN g.aantal ELSE 0 END) AS QtyActual
+					FROM dbo._AB_sy_PRProject as p with (nolock)
+					INNER JOIN dbo._AB_sy_gbkmut as g with (nolock) on p.ProjectNr = g.project
+					INNER JOIN dbo._AB_sy_Items as i with (nolock) on g.artcode = i.ItemCode and g.reknr = i.GLAccountDistribution
+					WHERE 1=1
+					and p.Type = 'P'
+					and p.Status != 'C' --= 'A'
+					and g.transtype in('N', 'B') -- Ontvangst en geplande regels
+					and g.transsubtype IN ( 'A', 'J') -- Ontvangstregels
+					AND NOT (g.checked=0 AND g.blockitem=1 AND g.reviewed=1) -- this line makes the difference between original planned and extra
+					GROUP BY p.ProjectNr, g.oms25, g.artcode
+					) r -- receipt total
+					ON r.Projectnr = ob.Productieorder
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.seqno = 110
+					AND ob.rowstatus = 1
+					AND p.Status != 'C'
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>120</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Check planned vs realized qty for PO</stepname>
+			</step>
+			<step>
+				<id>2766</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = -1
+					, seqno = 130
+					, sysmessage = 'One line in PO has error'
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.seqno = 120
+					AND ob.rowstatus = 1
+					AND EXISTS (SELECT 1 FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2 WITH (NOLOCK) WHERE ob2.runid = ob.runid AND ob2.productieorder = ob.productieorder AND ob2.rowstatus &lt; 1)
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>130</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Update - status of PO when one line has - </stepname>
+			</step>
+			<step>
+				<id>2813</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = -3 -- retry
+					, seqno = 131
+					, sysmessage = 'Has child POs that are not finished yet'
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					INNER JOIN dbo._AB_sy_PRProject pc WITH (NOLOCK)
+					ON pc.ParentProject = p.ProjectNr
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.seqno = 120
+					AND ob.rowstatus = 1
+
+					AND pc.[Status] != 'C'
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>131</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Check if PO has not-finished child POs</stepname>
+			</step>
+			<step>
+				<id>2767</id>
+				<entity>ProductionComplete</entity>
+				<action>create</action>
+				<source>129</source>
+				<target>107</target>
+				<datasource>
+					-- Unchanged original query
+					SELECT DISTINCT p.ProjectNr as project
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					WHERE   ob.runid = '%runid%' AND
+					ob.seqno = 120 AND
+					ob.rowstatus = 1 AND
+					p.Status NOT IN ('C', 'B')
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>140</seqno>
+				<settings>uniquekey=project;retryunique=1;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey>project</referencekey>
+							<datacolumns>
+								<datacolumn>
+									<name>project</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Take the PO's that still have status 1 and complete them</stepname>
+			</step>
+			<step>
+				<id>4004</id>
+				<entity>ProductionComplete</entity>
+				<action>create</action>
+				<source>129</source>
+				<target>107</target>
+				<datasource>
+					-- Select the ProductionOrder as project
+					SELECT a.ProductionOrder AS project
+					FROM [ExactData].dbo.[_ST_PRD_Prod_Process] a WITH (NOLOCK)
+					WHERE a.ProductionOrder != 'PROD00198101.002'
+					-- Filter based on ProcessReady and ExactPlanned
+					AND a.ProcessReady &gt;= (
+					SELECT ExactPlanned
+					FROM [ExactData].dbo.[_ST_PRD_Exact_Planned_Open] WITH (NOLOCK)
+					WHERE Productionorder = a.ProductionOrder
+					)
+					AND a.LastModified &lt; DATEADD(DAY, -1, GETDATE())
+					-- Check for matching ExactReceived with ExactPlanned
+					AND EXISTS (
+					SELECT 1
+					FROM [ExactData].dbo.[_ST_PRD_Exact_Received_Open] c WITH (NOLOCK)
+					WHERE c.Productionorder = a.Productionorder
+					AND c.ExactReceived = (
+					SELECT ExactPlanned
+					FROM [ExactData].dbo.[_ST_PRD_Exact_Planned_Open] WITH (NOLOCK)
+					WHERE Productionorder = c.Productionorder
+					)
+					)
+					-- Check for absence of Quantity of double booked serial numbers
+					AND NOT EXISTS (
+					SELECT 1
+					FROM [400]..Items i WITH (NOLOCK)
+					INNER JOIN [400]..gbkmut g WITH (NOLOCK) ON i.ItemCode = g.artcode AND g.reknr = i.GLAccountDistribution
+					INNER JOIN [400]..prproject pr WITH (NOLOCK) ON pr.projectnr = g.project
+					WHERE g.project = a.ProductionOrder
+					AND pr.status IN ('P', 'A')
+					AND g.aantal &gt; 0
+					AND i.IsSerialNumberItem = 1
+					GROUP BY g.project
+					HAVING COUNT(*) = 2
+					)
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>141</seqno>
+				<settings>uniquekey=project;retryunique=1;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey>project</referencekey>
+							<datacolumns>
+								<datacolumn>
+									<name>project</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Take open PO's with no double serial and planned = reveived and complete them</stepname>
+			</step>
+			<step>
+				<id>2768</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = CASE WHEN p.Status = 'C' THEN 2 ELSE 0 END -- 0 = retry
+					, seqno = 150
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					--AND ob.seqno = 120 -- LVE 210119 removed
+					--AND ob.rowstatus = 1 -- LVE 210119 removed
+					AND p.Status = 'C' -- only assign if status is ok
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>150</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Check the result in Exact</stepname>
+			</step>
+			<step>
+				<id>2900</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = ISNULL(e.POComplete_status, -1)
+					, sysmessage = ISNULL(e.POComplete_mssg, 'No POComplete message found')
+					, seqno = 150
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					OUTER APPLY(SELECT
+					r.[rowstatus] as POComplete_status
+					, CONCAT('PO Complete: ', REPLACE(r.[errormessage], 'Entiteit: Validatiefout, Property:,Message: ', '') COLLATE DATABASE_DEFAULT) as POComplete_mssg
+					FROM    [ABEI].[dbo].[_AB_Entity_results] AS r WITH (nolock)
+					WHERE 1=1
+					AND r.[jobid] = '%jobid%'
+					AND r.[runid] = ob.runid
+					AND r.Entity = 'ProductionComplete'
+					AND r.[ReferenceValue] = ob.Productieorder COLLATE DATABASE_DEFAULT
+					) AS e
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.seqno = 120
+					AND ob.rowstatus = 1 -- if status is still 1 something happened
+					--AND p.Status = 'C' -- LVE 20201222 uit gezet omdat deze de execution van de rest in de weg staat, bovendien moet het != C zijn eigenlijk...
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>155</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Check status for ProductionComplete</stepname>
+			</step>
+			<step>
+				<id>2769</id>
+				<entity>-none-</entity>
+				<action>create</action>
+				<source>129</source>
+				<target>6</target>
+				<datasource>
+					SELECT DISTINCT TOP (1000) Productieorder, Artikel
+					, CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN Serienummer ELSE '' END as Serienummer
+					, CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN CAST(Aantal as varchar(10)) ELSE '' END as Aantal
+					, CASE WHEN rowstatus IN (-2, -3) AND sysmessage NOT LIKE '%child%' AND sysmessage NOT LIKE '%complete%' THEN CAST(ch_aantal as varchar(10)) ELSE '' END as Aantal_Ontvangen
+					, sysmessage as Opmerking
+					, ob.rowstatus
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.rowstatus &lt; 0
+					ORDER BY Productieorder, Artikel, ob.rowstatus
+				</datasource>
+				<contentbody>
+					&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+					&lt;HTML&gt;
+					&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;De volgende productieorders zijn niet automatisch afgehandeld.&lt;/p&gt;&lt;p&gt;Controleer het resultaat in Exact en handel ze eventueel handmatig af.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Productieorder&lt;/td&gt;&lt;td&gt;Artikel&lt;/td&gt;&lt;td&gt;Serienummer&lt;/td&gt;&lt;td&gt;Aantal&lt;/td&gt;&lt;td&gt;Aantal_Ontvangen&lt;/td&gt;&lt;td&gt;Opmerking&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Productieorder%&lt;/td&gt;&lt;td&gt;%Artikel%&lt;/td&gt;&lt;td&gt;%Serienummer%&lt;/td&gt;&lt;td&gt;%Aantal%&lt;/td&gt;&lt;td&gt;%Aantal_Ontvangen%&lt;/td&gt;&lt;td&gt;%Opmerking%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;
+				</contentbody>
+				<mapping></mapping>
+				<disable>1</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>160</seqno>
+				<settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com%semicolon%inpak@orlaco.com%semicolon%monique.kraats@stoneridge.com;emailcc=;emailbcc=;emailsub=Production order auto-complete;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Productieorder,Artikel,Serienummer,Aantal,Aantal_Ontvangen,Opmerking;mex_connectionid=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>Productieorder</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Artikel</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Serienummer</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Aantal</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Aantal_Ontvangen</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Opmerking</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>rowstatus</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<email>
+							<emailattachment_allowduplicate>false</emailattachment_allowduplicate>
+							<emailimpersonation_account />
+							<emailbodytype>html</emailbodytype>
+							<attachments />
+						</email>
+					</settings>
+				</settingsxml>
+				<stepname>Send mail for lines that have error</stepname>
+			</step>
+			<step>
+				<id>2899</id>
+				<entity>-none-</entity>
+				<action>create</action>
+				<source>129</source>
+				<target>6</target>
+				<datasource>
+					SELECT ob.Productieorder
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob WITH (NOLOCK)
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					WHERE 1=1
+					AND ob.runid = '%runid%' -- this run
+					AND p.status = 'C' -- Completed
+					-- Open OHW
+					AND p.ProjectNr IN (
+					SELECT g.project--, SUM(g.aantal), SUM(g.bdr_hfl)
+					FROM dbo._AB_sy_gbkmut g WITH (NOLOCK)
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = g.project
+					WHERE 1=1
+					AND g.reknr = '     3800'
+					AND g.datum &gt; '2019-01-01'
+					AND p.status = 'C'
+					GROUP BY g.project
+					HAVING (SUM(g.aantal) &gt; 0.001)
+					) -- ohw &gt; 0
+				</datasource>
+				<contentbody>
+					&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+					&lt;HTML&gt;
+					&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;Onderstaande productieorders hebben nog openstaande OHW regels, controleer deze a.u.b.:&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Productieorder&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Productieorder%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="1"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;
+				</contentbody>
+				<mapping></mapping>
+				<disable>1</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>165</seqno>
+				<settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Let op, openstaande OHW regels voor afgehandelde productieorder;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Productieorder;mex_connectionid=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>Productieorder</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<email>
+							<emailattachment_allowduplicate>false</emailattachment_allowduplicate>
+							<emailimpersonation_account />
+							<emailbodytype>html</emailbodytype>
+							<attachments />
+						</email>
+					</settings>
+				</settingsxml>
+				<stepname>Check for remaining WIP lines and send mail for them</stepname>
+			</step>
+			<step>
+				<id>2770</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>129</source>
+				<target>129</target>
+				<datasource>
+					UPDATE ob WITH (ROWLOCK, NOWAIT) SET
+					rowstatus = 0
+					--, sysmessage = ''
+					, sysmodified = CURRENT_TIMESTAMP
+					FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob
+					INNER JOIN dbo._AB_sy_PRProject p WITH (NOLOCK)
+					ON p.ProjectNr = ob.Productieorder
+					WHERE 1=1
+					AND ob.runid = '%runid%'
+					AND ob.rowstatus &lt;&gt; 2
+					AND p.Status != 'C'
+					AND EXISTS (SELECT 1 FROM [dbo].[_AB_sy_PROD_GerProd_Process] ob2 WITH (NOLOCK) WHERE ob2.runid = ob.runid AND ob2.productieorder = ob.productieorder AND ob2.rowstatus = -3)
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>170</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Retry PO's without receipt or that were not complete yet</stepname>
+			</step>
+		</steps>
+	</job>
 </jobs>

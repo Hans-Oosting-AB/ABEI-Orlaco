@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 469", "Taak 469", "{D6
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL Investigative", "SQL Investigative", "{842363B3-514F-43E0-82FD-F07DE3DF6166}"
 	ProjectSection(SolutionItems) = preProject
+		ProductieOrder-Gereedmelding\SQL_Investigative\CHANGE Check other Job Query (Job 469 Step 10 - Job 330 Step 2).sql = ProductieOrder-Gereedmelding\SQL_Investigative\CHANGE Check other Job Query (Job 469 Step 10 - Job 330 Step 2).sql
 		ProductieOrder-Gereedmelding\SQL_Investigative\Checkup Mutations for a serial Number.sql = ProductieOrder-Gereedmelding\SQL_Investigative\Checkup Mutations for a serial Number.sql
 		ProductieOrder-Gereedmelding\SQL_Investigative\Detect Duplicate serial Numbers in inventory.sql = ProductieOrder-Gereedmelding\SQL_Investigative\Detect Duplicate serial Numbers in inventory.sql
 		ProductieOrder-Gereedmelding\SQL_Investigative\Jobs that manipulate [ProdGlobe_live].[dbo].[_AB_GerProd_proces].sql = ProductieOrder-Gereedmelding\SQL_Investigative\Jobs that manipulate [ProdGlobe_live].[dbo].[_AB_GerProd_proces].sql

@@ -21,7 +21,7 @@
 						<scheduledetails>
 							<scheduleid>0</scheduleid>
 							<allowmultipleprocessorinstances>False</allowmultipleprocessorinstances>
-							<freq>10</freq>
+							<freq>15</freq>
 							<timescale>minutes</timescale>
 							<frequency>daily</frequency>
 							<frequency_recurrence>1</frequency_recurrence>
@@ -41,7 +41,7 @@
 							<day6>-1</day6>
 							<day7>-1</day7>
 							<duration_start>2022-02-13</duration_start>
-							<duration_end>2073-03-14</duration_end>
+							<duration_end>2073-08-10</duration_end>
 						</scheduledetails>
 					</schedules>
 				</schedule>
@@ -98,6 +98,58 @@
 					</settings>
 				</settingsxml>
 				<stepname>Quit if running</stepname>
+			</step>
+			<step>
+				<id>4032</id>
+				<entity>-none-</entity>
+				<action>process</action>
+				<source>0</source>
+				<target>80</target>
+				<datasource>
+					SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+					FROM (VALUES (0)) l(v) -- 2023-08-10 HOO:Ensure at least one row result
+					LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+					ON r.jobid = 469
+					--AND r.runid &lt;&gt; '%runid%' -- 2023-08-10 HOO: Also quit when runid's are the same
+					AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+					AND NOT EXISTS (
+					SELECT 1
+					FROM dbo._AB_Entity_Log r1 WITH (NOLOCK)
+					WHERE r1.runid = r.runid
+					AND r1.jobid = r.jobid    -- 2023-08-10 HOO: Check specifically whetehr given job is finished (not just any job in run id)
+					AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>2</seqno>
+				<settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>doQuit</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<systemtarget>
+							<systemtarget_param2 />
+							<systemtarget_param3 />
+							<systemtarget_skiptoseqno />
+							<systemtarget_sleep>0</systemtarget_sleep>
+							<systemtarget_user />
+							<systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
+						</systemtarget>
+					</settings>
+				</settingsxml>
+				<stepname>Quit if auto complete task is running (469)</stepname>
 			</step>
 			<step>
 				<id>3848</id>
