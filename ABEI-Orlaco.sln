@@ -3,9 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProductieOrder-Gereedmelding", "ProductieOrder-Gereedmelding", "{084110E9-A778-4661-847A-3A4CCB4C41CA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 330", "Taak 330", "{8E8E58CD-95DB-4F3E-89C7-18A33D2ADC3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 469", "Taak 469", "{D6086639-FCDB-462E-8E31-DB117EC38DA1}"
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8E8E58CD-95DB-4F3E-89C7-18A33D2ADC3D} = {084110E9-A778-4661-847A-3A4CCB4C41CA}
+		{D6086639-FCDB-462E-8E31-DB117EC38DA1} = {084110E9-A778-4661-847A-3A4CCB4C41CA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {71FBFD1E-522E-4CD8-9216-B8DD666A3EB5}
