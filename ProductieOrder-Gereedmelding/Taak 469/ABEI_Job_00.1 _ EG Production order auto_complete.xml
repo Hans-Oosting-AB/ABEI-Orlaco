@@ -4,14 +4,14 @@
   <job>
     <id>469</id>
     <jobname>00.1 - EG: Production order auto-complete</jobname>
-    <disable>False</disable>
+    <disable>True</disable>
     <emailbody />
     <emailmode>0</emailmode>
     <emailsubject />
     <emailto></emailto>
     <remarks>Run ever y 1 hour</remarks>
     <schedulename />
-    <schedulesettings>startat=15:52:08;beginat=06:46:09;endat=21:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=0</schedulesettings>
+    <schedulesettings>startat=15:52:08;beginat=07:00:00;endat=21:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=0</schedulesettings>
     <settings></settings>
     <settingsxml>
       <settings>
@@ -353,7 +353,7 @@ WHERE 1=1
     AND p.Status NOT IN ('C', 'B')</datasource>
         <contentbody></contentbody>
         <mapping></mapping>
-        <disable>1</disable>
+        <disable>0</disable>
         <remarks></remarks>
         <replace></replace>
         <seqno>140</seqno>
@@ -472,7 +472,7 @@ ORDER BY Productieorder, Artikel, ob.rowstatus</datasource>
         <remarks></remarks>
         <replace></replace>
         <seqno>160</seqno>
-        <settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=sysint@orlaco.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=barmbx01.stoneridge.com;emailport=25;emailssl=False;emailto=lenard.schouten@stoneridge.com;emailcc=l.van.veldhuizen@absc.nl;emailbcc=;emailsub=Production order auto-complete;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Productieorder,Artikel,Serienummer,Aantal,Aantal_Ontvangen,Opmerking;mex_connectionid=0;</settings>
+        <settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=sysint@orlaco.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=barmbx01.stoneridge.com;emailport=25;emailssl=False;emailto=lenard.schouten@stoneridge.com;emailcc=;emailbcc=;emailsub=Production order auto-complete;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Productieorder,Artikel,Serienummer,Aantal,Aantal_Ontvangen,Opmerking;mex_connectionid=0;</settings>
         <settingsxml>
           <settings>
             <general>
