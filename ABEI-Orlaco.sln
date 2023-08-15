@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Taak 330", "Taak 330", "{8E8E58CD-95DB-4F3E-89C7-18A33D2ADC3D}"
 	ProjectSection(SolutionItems) = preProject
 		ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_! EG; Productieorder gereedmelden en rework.xml = ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_! EG; Productieorder gereedmelden en rework.xml
+		ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_TEST_! EG; Productieorder gereedmelden en rework.xml = ProductieOrder-Gereedmelding\Taak 330\ABEI_Job_TEST_! EG; Productieorder gereedmelden en rework.xml
 		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30-ProdGlobe.dbo._AB_sp_Report_Status_Prod.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo30-ProdGlobe.dbo._AB_sp_Report_Status_Prod.sql
 		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo40-ProdGLobe.dbo._AB_sp_New_interf_2_table.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo40-ProdGLobe.dbo._AB_sp_New_interf_2_table.sql
 		ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo70.ProdGlobe.dbo._AB_sp_Report_Status_Interfiliaal.sql = ProductieOrder-Gereedmelding\Taak 330\Job330-SeqNo70.ProdGlobe.dbo._AB_sp_Report_Status_Interfiliaal.sql

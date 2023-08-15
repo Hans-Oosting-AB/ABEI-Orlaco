@@ -1,0 +1,956 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<jobs>
+	<instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid>
+	<job>
+		<id>550</id>
+		<jobname>TEST-! EG: Productieorder gereedmelden en rework</jobname>
+		<disable>True</disable>
+		<emailbody></emailbody>
+		<emailmode>1</emailmode>
+		<emailsubject></emailsubject>
+		<emailto>lennart.meeuse@stoneridge.com</emailto>
+		<remarks>
+			Copied from TaskId 330
+			AB Docu (219) 00.950.029
+		</remarks>
+		<schedulename></schedulename>
+		<schedulesettings></schedulesettings>
+		<settings></settings>
+		<settingsxml>
+			<settings>
+				<schedule>
+					<allowmultipleprocessorinstances>false</allowmultipleprocessorinstances>
+					<schedules>
+						<scheduledetails>
+							<scheduleid>0</scheduleid>
+							<allowmultipleprocessorinstances>False</allowmultipleprocessorinstances>
+							<freq>10</freq>
+							<timescale>minutes</timescale>
+							<frequency>daily</frequency>
+							<frequency_recurrence>1</frequency_recurrence>
+							<frequency_dayofmonth>1</frequency_dayofmonth>
+							<frequency_dayofmonth_day>1</frequency_dayofmonth_day>
+							<frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos>
+							<frequency_dayofmonth_type>nr</frequency_dayofmonth_type>
+							<scheduledenabled>-1</scheduledenabled>
+							<startat>15:59:37</startat>
+							<beginat>06:00:00</beginat>
+							<endat>23:00:00</endat>
+							<day1>-1</day1>
+							<day2>-1</day2>
+							<day3>-1</day3>
+							<day4>-1</day4>
+							<day5>-1</day5>
+							<day6>-1</day6>
+							<day7>-1</day7>
+							<duration_start>2022-02-13</duration_start>
+							<duration_end>2073-08-10</duration_end>
+						</scheduledetails>
+					</schedules>
+				</schedule>
+				<general>
+					<maxjobstepactions>200</maxjobstepactions>
+				</general>
+				<jobparams />
+			</settings>
+		</settingsxml>
+		<steps>
+			<step>
+				<id>4027</id>
+				<entity>-none-</entity>
+				<action>process</action>
+				<source>0</source>
+				<target>80</target>
+				<datasource>
+					SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+					FROM (VALUES (0)) l(v)
+					LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+					ON r.jobid = %jobid%
+					AND r.runid &lt;&gt; '%runid%'
+					AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+					AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>0</seqno>
+				<settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>doQuit</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+						<systemtarget>
+							<systemtarget_param2 />
+							<systemtarget_param3 />
+							<systemtarget_skiptoseqno />
+							<systemtarget_sleep>0</systemtarget_sleep>
+							<systemtarget_user />
+							<systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd>
+						</systemtarget>
+					</settings>
+				</settingsxml>
+				<stepname>Quit if running</stepname>
+			</step>
+			<step>
+				<id>4028</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>0</target>
+				<datasource>
+					INSERT INTO [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					( [ProductionOrder] ,[Itemcode] ,[QtyPlanned] ,[QtyReceived] ,[QtyReady] ,[QtyReject] ,[OrderStatus] ,[Quantity], [RunId] )
+
+					SELECT TOP 100 PERCENT ep.ProductionOrder, ep.Itemcode, ep.ExactPlanned,
+					ISNULL(er.ExactReceived,0) as QtyReceived,
+					ISNULL(pr.ProductionReady,0) as QtyReady,
+					ISNULL(px.ProductionReject,0) as QtyReject,
+					ISNULL(pr.OrderStatus,0) as OrderStatus,
+					CASE WHEN ISNULL(pr.OrderStatus,0) = 1
+					THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0)
+					ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END as Quantity,
+					'%runid%' as runid
+					from [ExactData].[dbo].[_ST_PRD_Exact_Planned_Open] ep
+					left join [ExactData].[dbo].[_ST_PRD_Exact_Received_Open] er on ep.ProductionOrder = er.ProductionOrder
+					left join [ExactData].[dbo].[_ST_PRD_Prod_Ready] pr on ep.ProductionOrder = pr.ProductionOrder
+					left join [ExactData].[dbo].[_ST_PRD_Prod_Reject] px on ep.ProductionOrder = px.ProductionOrder
+					where ep.itemcode in ('1003030', '1003050')
+					AND CASE WHEN ISNULL(pr.OrderStatus,0) = 1
+					THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0)
+					ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END &gt; 0
+					AND ep.ProductionOrder NOT IN (SELECT ProductionOrder collate database_Default FROM [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative] WHERE Status &lt; 2)
+					ORDER BY ep.ProductionOrder
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>5</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>Add component orders</stepname>
+			</step>
+			<step>
+				<id>4017</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					exec [ProdGlobe_live].dbo._AB_sp_New_prod_2_table
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>10</seqno>
+				<settings></settings>
+				<settingsxml />
+				<stepname>Check for new records productie ontvangst</stepname>
+			</step>
+			<step>
+				<id>4031</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>130</target>
+				<datasource>
+					BEGIN TRANSACTION;
+
+					WITH CTE AS(
+					SELECT serienummer, Status_ProdGer, Imp_attempts, ROW_NUMBER() OVER(PARTITION BY serienummer ORDER BY serienummer) AS RowNum
+					FROM [ProdGlobe_live].._AB_GerProd_proces
+					WHERE  serienummer IS NOT NULL AND status_Prodger != '3'
+					),
+					Duplicates AS (
+					SELECT serienummer
+					FROM CTE
+					GROUP BY serienummer
+					HAVING COUNT(*) &gt; 1
+					)
+					UPDATE CTE
+					SET Status_ProdGer = 0, Imp_attempts = 0
+					WHERE RowNum = 1 AND serienummer IN (SELECT serienummer FROM Duplicates);
+
+					WITH CTE AS(
+					SELECT serienummer, Status_ProdGer, Imp_attempts, ROW_NUMBER() OVER(PARTITION BY serienummer ORDER BY serienummer) AS RowNum
+					FROM [ProdGlobe_live].._AB_GerProd_proces
+					WHERE  serienummer IS NOT NULL AND status_Prodger != '3'
+					),
+					Duplicates AS (
+					SELECT serienummer
+					FROM CTE
+					GROUP BY serienummer
+					HAVING COUNT(*) &gt; 1
+					)
+					DELETE FROM CTE WHERE RowNum = 2 AND serienummer IN (SELECT serienummer FROM Duplicates);
+
+					COMMIT;
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>15</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>--Delete double Serialnumber inconsistency of sync production system</stepname>
+			</step>
+			<step>
+				<id>4018</id>
+				<entity>ProductionReceipt</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					--Optimized query:
+					SELECT DISTINCT * FROM (
+					SELECT TOP 999
+					CONCAT(FORMAT(GETDATE(), 'yyyyMMddHHmm'), FORMAT(ROW_NUMBER() OVER (ORDER BY (SELECT NULL)), '000')) AS UniqueID,
+					CASE WHEN gbk.BlockItem = 1 THEN 0 ELSE gbk.ID END as ID,
+					ob.Productieorder as HeaderID,
+					ob.artikel as artcode,
+					ob.Productieorder as Project,
+					ob.Serienummer as facode,
+					'Receipt by ABEI' as YourRef,
+					ISNULL(SUM(ob.aantal), 1) as actualquantity,
+					10152 as res_id,
+					gbk.magcode as warehouse
+					FROM [ProdGlobe_live].dbo._AB_GerProd_proces as ob with (nolock)
+					CROSS APPLY (
+					SELECT TOP 1 g.id, g.blockitem, pr.magcode
+					FROM [400].dbo.PRProject as pr with (nolock)
+					INNER JOIN [400].dbo.gbkmut as g with (nolock)  ON g.project = pr.ProjectNr
+					INNER JOIN [400].dbo.Items as i with (nolock)  ON i.itemcode = g.artcode AND i.GLAccountDistribution = g.reknr
+					WHERE pr.type = 'P'
+					AND pr.status = 'A'
+					AND g.transsubtype = 'A'
+					AND g.transtype = 'B'
+					AND g.freefield1 = 'P'
+					AND i.IsBatchItem = 0
+					AND g.artcode = ob.Artikel COLLATE DATABASE_DEFAULT
+					AND pr.projectnr = ob.Productieorder COLLATE DATABASE_DEFAULT
+					ORDER BY g.blockitem, g.ID ASC, pr.projectnr, i.itemcode
+					) as gbk
+					WHERE ISNULL(ob.productieorder, '') &lt;&gt; ''
+					AND (ob.Status_ProdGer = 0 OR (ob.Status_ProdGer = 4 AND ob.Imp_attempts &lt; 5))
+					GROUP BY gbk.BlockItem, gbk.ID, ob.Productieorder, ob.artikel, ob.Serienummer, gbk.magcode
+					ORDER BY ob.Productieorder, ob.Serienummer, gbk.BlockItem, gbk.ID, ob.artikel, gbk.magcode
+					) SUB
+
+
+
+					--Original Query Below:
+
+
+					--SELECT DISTINCT TOP 1000
+					-- CASE WHEN gbk.BlockItem = 1 THEN 0 ELSE gbk.ID END as ID
+					-- , ob.Productieorder as HeaderID
+					-- , ob.Productieorder as Project
+					--
+					-- , 'Receipt by ABEI' as YourRef
+					-- , ob.artikel as artcode
+					-- , isnull(SUM(ob.aantal), 1) as actualquantity
+					-- , ob.Serienummer as facode
+					-- , 10152 as res_id
+					-- , gbk.magcode as warehouse
+					--
+					--
+					--FROM    [ProdGlobe_live].dbo._AB_GerProd_proces as ob with (nolock)
+					--        CROSS APPLY (SELECT TOP 1 g.id, g.blockitem, pr.magcode
+					--                     FROM   [400].dbo.PRProject as pr with (nolock)
+					--                            INNER JOIN [400].dbo.gbkmut as g with (NOLOCK) on g.project = pr.ProjectNr
+					--                            INNER JOIN [400].dbo.Items as i WITH (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+					--
+					--                     WHERE 1=1
+					--                     and pr.type = 'P'
+					--                     AND pr.status = 'A'
+					--                     AND g.transsubtype = 'A'
+					--                     AND g.transtype = 'B'
+					--                     AND g.freefield1 = 'P'
+					--                     AND i.IsBatchItem = 0
+					--                     AND g.artcode = ob.Artikel COLLATE DATABASE_DEFAULT
+					--                     AND pr.projectnr = ob.Productieorder COLLATE DATABASE_DEFAULT
+					--
+					--                     ORDER BY g.blockitem, g.ID ASC
+					--                     ) as gbk
+					--where
+					---- (ob.Serienummer IS NULL OR ob.Serienummer not in (select top 100 percent number FROM [400].[dbo].[ItemNumbers] WITH (NOLOCK) )) LS 2020-2-26 05.048.511
+					-- isnull(ob.productieorder,'') &lt;&gt; ''
+					--and (ob.Status_ProdGer = 0 OR (ob.Status_ProdGer = 4 and ob.Imp_attempts &lt; 5))
+					----and ob.proddatum = CONVERT(DATE, GETDATE())
+					--
+					--GROUP BY gbk.BlockItem , gbk.ID
+					-- , ob.Productieorder
+					-- , ob.Productieorder
+					-- , ob.artikel
+					-- , ob.Serienummer
+					-- , gbk.magcode
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>20</seqno>
+				<settings>uniquekey=UniqueID;retryunique=1;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>UniqueID</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>ID</name>
+									<type>Int32</type>
+								</datacolumn>
+								<datacolumn>
+									<name>HeaderID</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>artcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Project</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>facode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>YourRef</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>actualquantity</name>
+									<type>Decimal</type>
+								</datacolumn>
+								<datacolumn>
+									<name>res_id</name>
+									<type>Int32</type>
+								</datacolumn>
+								<datacolumn>
+									<name>warehouse</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Productie ontvangst aanmaken</stepname>
+			</step>
+			<step>
+				<id>4019</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					update [ProdGlobe_live].dbo._AB_GerProd_proces with(rowlock,nowait) set Status_ProdGer = '1' where Status_prodger = '0' or (Status_ProdGer = '4' and Imp_attempts &lt;5)
+
+					update [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					Set Status = 2 WHERE runid = '%runid%'
+
+					exec [ProdGlobe_live].dbo._AB_sp_Report_Status_Prod
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>30</seqno>
+				<settings></settings>
+				<settingsxml />
+				<stepname>Update status productieontvangsten</stepname>
+			</step>
+			<step>
+				<id>4020</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>exec [ProdGlobe_live].dbo._AB_sp_New_interf_2_table</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>40</seqno>
+				<settings></settings>
+				<settingsxml />
+				<stepname>Check for new records rework</stepname>
+			</step>
+			<step>
+				<id>4026</id>
+				<entity>WarehouseStock</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					select distinct
+					artikel as artcode,
+					'95' as magcode
+					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces aip with (nolock)
+					where 1=1
+					and not exists (select 1 from [%abeitargetdb%].dbo.voorrd vrd with (nolock) where vrd.magcode = '95' and vrd.artcode = aip.artikel)
+					and
+					((aip.Productieorder is not null and aip.productieorder &lt;&gt;'' and aip.Status_Interfiliaal = '0')
+					or (aip.Productieorder is not null and aip.Productieorder &lt;&gt;'' and aip.Status_Interfiliaal = '4' and aip.Imp_attempts &lt;3))
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>45</seqno>
+				<settings>uniquekey=;retryunique=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>artcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>magcode</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Artikelen toekennen aan magazijn 95 (Rework)</stepname>
+			</step>
+			<step>
+				<id>4021</id>
+				<entity>FinancialLine</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					select
+					ID as HeaderID
+					--Productieorder as HeaderID
+					--, 'N' as TransType
+					,'G' as TransSubType
+					,'B' as Regelcode
+					,'100' as TransactionType
+					,proddatum As 'Datum'
+					,vrrdrek as Reknr
+					,'Productieorder: '+ productieorder As oms25
+					,'600' As kstplcode
+					,Artikel AS artcode
+
+					,Serienummer AS facode
+
+					,'95' As warehouse
+					,'REWORK' As project
+					,ISNULL(Aantal,1) as aantal
+					,cast(ISNULL(Aantal,1) * CostPriceStandard as numeric (18,3)) as bdr_hfl
+					,proddatum As 'docdate'
+					--proddatum As 'ReportDate'
+					,rtrim(ltrim(eenheid)) as UnitCode
+					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					where 1=1
+					and
+					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
+					or (Productieorder is not null and Productieorder &lt;&gt;'' and Status_Interfiliaal = '4' and Imp_attempts &lt;3)
+
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>50</seqno>
+				<settings>uniquekey=;retryunique=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>HeaderID</name>
+									<type>Int32</type>
+								</datacolumn>
+								<datacolumn>
+									<name>TransSubType</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Regelcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>TransactionType</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Datum</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Reknr</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>oms25</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>kstplcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>artcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>facode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>warehouse</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>project</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>aantal</name>
+									<type>Decimal</type>
+								</datacolumn>
+								<datacolumn>
+									<name>bdr_hfl</name>
+									<type>Decimal</type>
+								</datacolumn>
+								<datacolumn>
+									<name>docdate</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>UnitCode</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Financiele boeking rework Debit</stepname>
+			</step>
+			<step>
+				<id>4022</id>
+				<entity>FinancialLine</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					select
+					ID as HeaderID
+					--, 'N' as TransType
+					,'G' as TransSubType
+					,'B' as Regelcode
+					,'100' as TransactionType
+					,proddatum As 'Datum'
+					,vrrdrek as Reknr
+					,'Productieorder: '+ productieorder As oms25
+					,'600' As kstplcode
+					,Artikel AS artcode
+
+					,Serienummer AS facode
+
+					,mag As warehouse
+					,'REWORK' As project
+					,ISNULL(-Aantal,-1) as aantal
+					,cast(ISNULL(-Aantal,-1) * CostPriceStandard as numeric (18,3)) as bdr_hfl
+					,proddatum As 'docdate'
+					--proddatum As 'ReportDate'
+					,rtrim(ltrim(eenheid)) as UnitCode
+					from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					where 1=1
+					and
+					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
+					or (Productieorder is not null and Productieorder &lt;&gt;'' and Status_Interfiliaal = '4' and Imp_attempts &lt;3)
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>50</seqno>
+				<settings>uniquekey=;retryunique=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>HeaderID</name>
+									<type>Int32</type>
+								</datacolumn>
+								<datacolumn>
+									<name>TransSubType</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Regelcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>TransactionType</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Datum</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>Reknr</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>oms25</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>kstplcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>artcode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>facode</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>warehouse</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>project</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>aantal</name>
+									<type>Decimal</type>
+								</datacolumn>
+								<datacolumn>
+									<name>bdr_hfl</name>
+									<type>Decimal</type>
+								</datacolumn>
+								<datacolumn>
+									<name>docdate</name>
+									<type>String</type>
+								</datacolumn>
+								<datacolumn>
+									<name>UnitCode</name>
+									<type>String</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Financiele boeking rework Credit</stepname>
+			</step>
+			<step>
+				<id>4023</id>
+				<entity>FinancialHeader</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					select ID as HeaderID, 70 as dagbknr from [ProdGlobe_live].dbo._AB_Interfiliaal_proces with (nolock)
+					where 1=1
+					and
+					(Productieorder is not null and productieorder &lt;&gt;'' and Status_Interfiliaal = '0')
+					or (Productieorder is not null and Productieorder &lt;&gt;'' and Status_Interfiliaal = '4' and Imp_attempts &lt;3)
+					group by ID
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>50</seqno>
+				<settings>uniquekey=;retryunique=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<referencekey />
+							<datacolumns>
+								<datacolumn>
+									<name>HeaderID</name>
+									<type>Int32</type>
+								</datacolumn>
+								<datacolumn>
+									<name>dagbknr</name>
+									<type>Int32</type>
+								</datacolumn>
+							</datacolumns>
+						</general>
+					</settings>
+				</settingsxml>
+				<stepname>Financiele boeking rework Header</stepname>
+			</step>
+			<step>
+				<id>4024</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>105</target>
+				<datasource>
+					update [ProdGlobe_live].dbo._AB_Interfiliaal_proces with(rowlock,nowait) set Status_Interfiliaal = '1' where Status_Interfiliaal = '0' or (Status_Interfiliaal = '4' and Imp_attempts &lt;3)
+
+
+					update [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative]
+					Set Status = 3 WHERE runid = '%runid%'
+
+
+					exec [ProdGlobe_live].dbo._AB_sp_Report_Status_Interfiliaal
+				</datasource>
+				<contentbody></contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>70</seqno>
+				<settings></settings>
+				<settingsxml />
+				<stepname>Update Status Rework</stepname>
+			</step>
+			<step>
+				<id>4025</id>
+				<entity>-none-</entity>
+				<action>create</action>
+				<source>0</source>
+				<target>6</target>
+				<datasource>
+					SELECT
+					[runid]
+					,[jobstepid]
+					,[Entity]
+					,[Property]
+					,[Action]
+					,[valueString]
+					,[HeaderID]
+					,[errormessage]
+					,[sequenceno]
+					,[syscreated]
+					,[RecordValue]
+					FROM [ABEI].[dbo].[_AB_Entity_results_log]
+					where jobid = %jobid% and runid = '%runid%' and rowstatus =-1 and Entity != 'FinancialLine'
+				</datasource>
+				<contentbody>
+					&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;De volgende fouten zijn opgetreden bij Productiegereedmelding en/of rework boeking&lt;/P&gt;
+					&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+					&lt;P&gt;
+					&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+					&lt;TBODY&gt;
+					&lt;TR bgColor=skyblue&gt;
+					&lt;TD&gt;runid&lt;/TD&gt;
+					&lt;TD&gt;jobstepid&lt;/TD&gt;
+					&lt;TD&gt;Entity&lt;/TD&gt;
+					&lt;TD&gt;Property&lt;/TD&gt;
+					&lt;TD&gt;Action&lt;/TD&gt;
+					&lt;TD&gt;valueString&lt;/TD&gt;
+					&lt;TD&gt;HeaderID&lt;/TD&gt;
+					&lt;TD&gt;errormessage&lt;/TD&gt;
+					&lt;TD&gt;sequenceno&lt;/TD&gt;
+					&lt;TD&gt;syscreated&lt;/TD&gt;
+					&lt;TD&gt;RecordValue&lt;/TD&gt;&lt;/TR&gt;
+					&lt;TR class=abei_dynamic_row&gt;
+					&lt;TD&gt;%runid%&lt;/TD&gt;
+					&lt;TD&gt;%jobstepid%&lt;/TD&gt;
+					&lt;TD&gt;%Entity%&lt;/TD&gt;
+					&lt;TD&gt;%Property%&lt;/TD&gt;
+					&lt;TD&gt;%Action%&lt;/TD&gt;
+					&lt;TD&gt;%valueString%&lt;/TD&gt;
+					&lt;TD&gt;%HeaderID%&lt;/TD&gt;
+					&lt;TD&gt;%errormessage%&lt;/TD&gt;
+					&lt;TD&gt;%sequenceno%&lt;/TD&gt;
+					&lt;TD&gt;%syscreated%&lt;/TD&gt;
+					&lt;TD&gt;%RecordValue%&lt;/TD&gt;&lt;/TR&gt;
+					&lt;TR bgColor=silver color="black"&gt;
+					&lt;TD colSpan=11&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;&lt;/HTML&gt;
+				</contentbody>
+				<mapping></mapping>
+				<disable>0</disable>
+				<remarks></remarks>
+				<replace></replace>
+				<seqno>80</seqno>
+				<settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Fout bij productiegereedmelding en rework;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=runid,jobstepid,Entity,Property,Action,valueString,HeaderID,errormessage,sequenceno,syscreated,RecordValue;mex_connectionid=0;</settings>
+				<settingsxml>
+					<settings>
+						<general>
+							<gen_datasource_method>0</gen_datasource_method>
+							<target_override />
+							<gen_usevb6processor>false</gen_usevb6processor>
+							<referencekey />
+						</general>
+						<email>
+							<emailattachment_allowduplicate>false</emailattachment_allowduplicate>
+							<emailimpersonation_account />
+							<emailbodytype>html</emailbodytype>
+							<attachments />
+						</email>
+					</settings>
+				</settingsxml>
+				<stepname>Mail failing jobsteps without financial lines</stepname>
+			</step>
+			<step>
+				<id>4029</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>0</target>
+				<datasource>
+					INSERT INTO [ProdGlobe_live].._AB_Gerprod_Receiptless (Productieorder, Artikel, Serienummer, Proddatum, sysmessage, status)
+					SELECT Productieorder, Artikel, Serienummer, Proddatum, sysmessage, '0' as Status
+					FROM [ProdGlobe_live].[dbo].[_AB_GerProd_proces] with (NOLOCK)
+					WHERE Status_ProdGer = '4' and Imp_attempts = '5' and ch_aantal IS NULL
+					and sysmessage = 'No receipt found' and SourceId IS NOT NULL and SysCreated &gt; Getdate() -7
+					ORDER BY Productieorder
+
+					DELETE
+					FROM [ProdGlobe_live].[dbo].[_AB_GerProd_proces]
+					WHERE
+					Status_ProdGer = '4' and
+					Imp_attempts = '5' and
+					ch_aantal IS NULL and
+					sysmessage = 'No receipt found' and
+					SourceId IS NOT NULL and
+					SysCreated &gt; Getdate() -7
+					AND Serienummer NOT IN (SELECT Serienummer FROM [ProdGlobe_live].._AB_Gerprod_Receiptless Where status = '1')
+
+					Update [ProdGlobe_live].._AB_Gerprod_Receiptless
+					Set status = 1 Where status = '0'
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>90</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>--Step to Delete Rows without receipt to retry</stepname>
+			</step>
+			<step>
+				<id>4030</id>
+				<entity>-none-</entity>
+				<action>exec SQL</action>
+				<source>0</source>
+				<target>0</target>
+				<datasource>
+					WITH PlannedOpen AS (
+					SELECT
+					po.ProductionOrder,
+					po.ExactPlanned
+					FROM
+					[ExactData].dbo.[_ST_PRD_Exact_Planned_Open] po WITH (NOLOCK)
+					),
+					ReceivedOpen AS (
+					SELECT
+					ro.ProductionOrder,
+					ro.ExactReceived
+					FROM
+					[ExactData].dbo.[_ST_PRD_Exact_Received_Open] ro WITH (NOLOCK)
+					),
+					ProductionProcess AS (
+					SELECT
+					pp.ProductionOrder,
+					pp.ProcessReady,
+					pp.LastModified
+					FROM
+					[ExactData].dbo.[_ST_PRD_Prod_Process] pp WITH (NOLOCK)
+					WHERE
+					pp.ProductionOrder != 'PROD00198101.002'
+					AND pp.LastModified &lt; DATEADD(DAY, -1, GETDATE())
+					AND pp.LastModified &gt; DATEADD(DAY, -182, GETDATE())
+					),
+					ProdGlobeLiveProces AS (
+					SELECT
+					pg.Productieorder,
+					COUNT(*) AS ExactPlannedCount
+					FROM
+					[ProdGlobe_Live].._AB_Gerprod_Proces pg WITH (NOLOCK)
+					GROUP BY
+					pg.Productieorder
+					),
+					FilteredRows AS (
+					SELECT
+					pgl.*,
+					ROW_NUMBER() OVER (PARTITION BY pgl.Productieorder ORDER BY (CASE WHEN pgl.aantal = 1 THEN 1 ELSE 2 END), pgl.Productieorder) AS RowNumber
+					FROM
+					[ProdGlobe_live].._AB_GerProd_proces pgl
+					INNER JOIN
+					ProductionProcess pp ON pgl.Productieorder = pp.ProductionOrder
+					INNER JOIN
+					PlannedOpen po ON pp.ProductionOrder = po.ProductionOrder
+					LEFT JOIN
+					ReceivedOpen ro ON pp.ProductionOrder = ro.ProductionOrder
+					INNER JOIN
+					ProdGlobeLiveProces pg ON pp.ProductionOrder = pg.Productieorder AND po.ExactPlanned = pg.ExactPlannedCount
+					WHERE
+					pp.ProcessReady &gt;= po.ExactPlanned
+					AND (ro.ExactReceived &lt; po.ExactPlanned AND ro.ExactReceived &lt; pp.ProcessReady)
+					AND pgl.Serienummer IS NULL
+					AND pgl.status_prodger = 1
+					)
+					UPDATE fr
+					SET
+					fr.status_prodger = 0,
+					fr.sysmessage = 'Retry Row To Fill Up Missing Quantity'
+					FROM
+					FilteredRows fr
+					WHERE
+					fr.RowNumber = 1
+				</datasource>
+				<contentbody />
+				<mapping />
+				<disable>0</disable>
+				<remarks />
+				<replace />
+				<seqno>100</seqno>
+				<settings />
+				<settingsxml />
+				<stepname>--Step to Retry missing quantity rows for PO without Serial</stepname>
+			</step>
+		</steps>
+	</job>
+</jobs>
