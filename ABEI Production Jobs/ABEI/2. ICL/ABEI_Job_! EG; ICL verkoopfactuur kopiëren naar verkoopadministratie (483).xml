@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>366</id><jobname>! EG: ICL verkoopfactuur kopiëren naar verkoopadministratie (483)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=hours;startat=00:00:00;beginat=07:00:00;endat=20:00:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1755</id><entity>Document</entity><action>retrieve</action><source>107</source><target>5</target><datasource>select top 150 CONVERT(varchar(50),b400.id) AS ID,  b400.Filename 
+from [483].dbo.gbkmut as g483 with (nolock)
+ INNER JOIN [483].dbo.cicmpy as c483 on c483.crdnr = g483.crdnr 
+ INNER JOIN [400].dbo.BacoDiscussions as b400 with (nolock) on b400.OurRef = g483.docnumber 
+ LEFT OUTER JOIN [483].dbo.BacoDiscussions as b483  with (nolock) on b483.Type = 7 and b483.YOurRef = b400.OurRef
+where 1=1
+ and g483.transtype = 'N'
+ and g483.transsubtype = 'T'
+ and g483.reknr = '     1601' 
+ and b483.id IS NULL
+ and b400.CreatedDate &gt; (CURRENT_TIMESTAMP - 365)
+Order by b400.hid desc</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc= ;emailbcc= ;emailsub= ;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;filebodyfile=;fileattachmentfile=%abeipath%\Temp\%runid%\%filename%;fileoverwrite=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>String</type></datacolumn><datacolumn><name>Filename</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes /></xmloutbound><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents /><documentnodes /></xmlinboud><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname></stepname></step><step><id>1756</id><entity>Document</entity><action>create</action><source>107</source><target>126</target><datasource>select top 150  '7' as Type, '%abeipath%Temp/%runid%/' +  b400.Filename as FileName ,b400.Subject ,   bkstnr_sub as OrderNumber, g483.faktuurnr as OurRef, g483.docnumber as YourRef, c483.cmp_wwn as Associate, c483.cnt_id as AccContactID, 'Uploaded by ABEI' as Body, 'I' as Source
+from [483].dbo.gbkmut as g483 with (nolock)
+ INNER JOIN [483].dbo.cicmpy as c483 on c483.crdnr = g483.crdnr 
+ INNER JOIN [400].dbo.BacoDiscussions as b400 with (nolock) on b400.OurRef = g483.docnumber 
+ LEFT OUTER JOIN [483].dbo.BacoDiscussions as b483  with (nolock) on b483.Type = 7 and b483.YOurRef = b400.OurRef
+where 1=1
+ and g483.transtype = 'N'
+ and g483.transsubtype = 'T'
+ and g483.reknr = '     1601' 
+ and b483.id IS NULL
+ and b400.CreatedDate &gt; (CURRENT_TIMESTAMP - 365)
+Order by b400.hid desc</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname></stepname></step></steps></job></jobs>

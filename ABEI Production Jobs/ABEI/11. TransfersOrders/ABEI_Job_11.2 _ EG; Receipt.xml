@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>452</id><jobname>11.2 - EG: Receipt</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>freq=1;timescale=hours;startat=00:37:38;beginat=04:52:52;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2586</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+FROM (VALUES (0)) l(v)
+    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+        ON r.jobid = '%jobid%'
+        AND r.runid &lt;&gt; '%runid%'
+        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+        
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if running already</stepname></step><step><id>2570</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET 
+    marked_for_receipt = 1, mfr_date = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_TransfersAbsenceIdReg t 
+    INNER JOIN dbo._AB_sy_absences a WITH (NOLOCK)
+    ON a.ID = t.absenceid AND a.FreeBoolField_01 = 1 AND a.FreeBoolField_02 = 1
+WHERE 1=1
+    AND t.marked_for_receipt = 0</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>Register new requests that are marked for receipt</stepname></step><step><id>2593</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>WITH req AS (
+    SELECT t.HID as palletno, t.purchase_ordernr as ordernr, t.itemcode, SUM(t.quantity) as req
+    FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+        INNER JOIN dbo._AB_tb_TransfersAbsenceIdReg r WITH (NOLOCK)
+            ON r.absenceID = t.absenceID
+    WHERE 1=1
+        AND t.purchase_ordernr IS NOT NULL
+        AND r.marked_for_receipt = 1
+        AND t.rowstatus2 = 0
+    GROUP BY t.HID, t.purchase_ordernr, t.itemcode
+)
+SELECT req.palletno, req.Ordernr, req.Itemcode, req.req as [Required], ISNULL(av.av, 0) as Available
+    , CONCAT(req.Ordernr, req.Itemcode) as ReferenceValue
+FROM req
+    OUTER APPLY (
+        SELECT r.artcode, SUM(esr_aantal) as av
+        FROM [dbo].[_AB_sy_US_orkrg] k WITH (NOLOCK)
+            INNER JOIN [dbo].[_AB_sy_US_orsrg] r WITH (NOLOCK)
+                ON r.ordernr = k.ordernr
+        WHERE 1=1
+            AND k.ord_soort = 'B'
+            AND k.ordernr = req.ordernr COLLATE DATABASE_DEFAULT
+            AND r.artcode = req.itemcode COLLATE DATABASE_DEFAULT
+            AND r.ar_soort != 'P'   
+            AND r.uitgifte = 0
+        GROUP BY r.artcode
+    ) av
+WHERE 1=1
+    AND ISNULL(av.av, 0) &lt; req.req
+    -- Not send yet
+    AND NOT EXISTS (
+        SELECT 1
+        FROM [%abeidb%].[dbo].[_AB_Entity_results] r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.ExactProduct = 'EMAIL'
+            AND r.jobid = %jobid%
+            AND CAST(r.syscreated as date) = CAST(CURRENT_TIMESTAMP as date)
+            AND r.rowstatus = 2
+            AND r.NewKeyvalue = 'Email send'
+            AND r.ReferenceValue = CONCAT(req.Ordernr, req.Itemcode)
+    )</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;There are not enough rows available to complete this receipt. Please add the required rows in the correct order.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;palletno&lt;/td&gt;&lt;td&gt;Ordernr&lt;/td&gt;&lt;td&gt;Itemcode&lt;/td&gt;&lt;td&gt;Required&lt;/td&gt;&lt;td&gt;Available&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%palletno%&lt;/td&gt;&lt;td&gt;%Ordernr%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%Required%&lt;/td&gt;&lt;td&gt;%Available%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>15</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=l.van.veldhuizen@absc.nl;emailbcc=;emailsub=Receipt - Not enough rows available;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=palletno,Ordernr,Itemcode,Required,Available;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceValue</referencekey><datacolumns><datacolumn><name>palletno</name><type>Int32</type></datacolumn><datacolumn><name>Ordernr</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>Required</name><type>Double</type></datacolumn><datacolumn><name>Available</name><type>Double</type></datacolumn><datacolumn><name>ReferenceValue</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Check availability of rows</stepname></step><step><id>2571</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    runid2 = '%runid%'
+    , rowstatus2 = 1
+    , sysmodified = CURRENT_TIMESTAMP 
+FROM dbo._AB_tb_TransfersOrders t
+WHERE 1=1
+    AND t.purchase_ordernr IS NOT NULL
+    AND t.rowstatus2 = 0
+    AND t.ID IN ( 
+        SELECT TOP (100) t.ID
+        FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+            INNER JOIN dbo._AB_tb_TransfersAbsenceIdReg r WITH (NOLOCK)
+                ON r.absenceid = t.absenceid AND r.marked_for_receipt = 1
+            INNER JOIN dbo._AB_sy_US_orkrg k WITH (NOLOCK)
+                ON k.ordernr = t.purchase_ordernr COLLATE DATABASE_DEFAULT AND k.ord_soort = 'B' AND k.afgehandld = 0
+        WHERE 1=1   
+            AND t.purchase_ordernr IS NOT NULL
+            AND t.rowstatus2 = 0
+        ORDER BY t.absenceid, t.itemcode --t.syscreated, t.ID
+    )</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings></settings><settingsxml /><stepname>Select next 100 lines for receipt</stepname></step><step><id>2572</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT TOP (1) 
+ 0 as doQuit
+FROM dbo._AB_tb_TransfersOrders r with (nolock)
+WHERE 1=1
+    AND r.runid2 = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if nothing to do</stepname></step><step><id>2581</id><entity>SDK-PurchaseOrder-PrintProcess</entity><action>process</action><source>129</source><target>112</target><datasource>SELECT DISTINCT k.ordernr as ordernr 
+    , 1 as IsFinal
+    , 2 as PrintDestination
+    , 'INK_EN_5' as PrintLayout
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+    INNER JOIN dbo._AB_sy_US_orkrg k WITH (NOLOCK)
+        ON k.ordernr = t.purchase_ordernr COLLATE DATABASE_DEFAULT AND k.ord_soort = 'B' AND k.afgehandld = 0
+            AND k.ordbv_afgd = 0
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 1</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>35</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>IsFinal</name><type>Int32</type></datacolumn><datacolumn><name>PrintDestination</name><type>Int32</type></datacolumn><datacolumn><name>PrintLayout</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>SDK Confirm order (set target to Globe)</stepname></step><step><id>2573</id><entity>SDK-PurchaseOrder-ReceiptLine</entity><action>process</action><source>129</source><target>112</target><datasource>SELECT r.ordernr as HeaderID, t.ItemCode as artcode, t.quantity as esr_aantal, r.ID, t.ItemNumber as serie_num
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+    -- Get the first orderline we can use to deliver this
+    CROSS APPLY (
+        SELECT TOP (1) r.ordernr, r.ID
+        FROM dbo._AB_sy_US_orsrg r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.ordernr = t.purchase_ordernr COLLATE DATABASE_DEFAULT
+            AND r.artcode = t.ItemCode COLLATE DATABASE_DEFAULT
+            AND r.uitgifte = 0 -- Not delivered yet
+        ORDER BY r.regel
+    ) r
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 1</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>esr_aantal</name><type>Double</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>serie_num</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>SDK Receipt Line (set target to Globe)</stepname></step><step><id>2574</id><entity>SDK-PurchaseOrder-ReceiptHeader</entity><action>process</action><source>129</source><target>112</target><datasource>SELECT DISTINCT k.ordernr as HeaderID, k.ordernr as ordernr 
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+    INNER JOIN dbo._AB_sy_US_orkrg k WITH (NOLOCK)
+        ON k.ordernr = t.purchase_ordernr COLLATE DATABASE_DEFAULT AND k.ord_soort = 'B' AND k.afgehandld = 0
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 1</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>InvoiceGenerate</name><type>Int32</type></datacolumn><datacolumn><name>magcode</name><type>String</type></datacolumn><datacolumn><name>PrintDestination</name><type>Int32</type></datacolumn><datacolumn><name>PrintLayout</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>SDK Receipt Header (set target to Globe)</stepname></step><step><id>2575</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus2 = CASE WHEN ISNULL(g.Qty, 0) &gt;= t.quantity THEN 2 ELSE -1 END
+    , errormessage2 = CASE WHEN ISNULL(g.Qty, 0) &lt; t.quantity THEN CONCAT('No delivery found, q:', ISNULL(g.Qty, 0)) END
+    , sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_TransfersOrders t 
+    LEFT JOIN (
+        SELECT g.bkstnr_sub as ordernr, g.artcode, g.facode--, g.datum as afldat
+            , SUM(g.aantal) as Qty--, g.Faktuurnr as OurRef, g.docnumber AS yourref, g.bkstnr AS entryno
+        FROM dbo._AB_sy_US_gbkmut g WITH (NOLOCK)
+            INNER JOIN dbo._AB_sy_US_Items i WITH (NOLOCK)
+                ON i.ItemCode = g.artcode AND i.GLAccountDistribution = g.reknr
+        WHERE 1=1
+            AND g.transtype IN ('N', 'C', 'P') 
+            AND g.transsubtype = 'A'
+            AND g.oorsprong = 'R' -- Exact filter
+            AND g.crdnr = '151048' -- default orlaco products creditor
+            --AND g.bkstnr_sub = t.sales_ordernr COLLATE DATABASE_DEFAULT
+            --AND g.artcode = t.ItemCode COLLATE DATABASE_DEFAULT
+            -- We need a date filter, otherwise this takes forever; take yesterday too in case we process from 12 - 1
+            AND g.datum IN (CAST(CURRENT_TIMESTAMP as date), CAST(DATEADD(DAY, -1, CURRENT_TIMESTAMP) as date)) 
+        GROUP BY g.bkstnr_sub, g.artcode, g.facode
+    ) g ON g.ordernr = t.purchase_ordernr COLLATE DATABASE_DEFAULT
+        AND g.artcode = t.itemcode COLLATE DATABASE_DEFAULT
+        AND (t.isSerialNumberItem = 0 OR (t.isSerialNumberItem = 1 AND g.facode = t.ItemNumber COLLATE DATABASE_DEFAULT))
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 1</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings></settings><settingsxml /><stepname>Check result in Exact</stepname></step><step><id>2576</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus2 = 0
+    , retrycounter2 = t.retrycounter2 + 1
+FROM dbo._AB_tb_TransfersOrders t 
+WHERE 1=1
+    AND t.runid2 = '%runid%'  
+    AND t.rowstatus2 &lt;&gt; 2
+    AND t.retrycounter2 &lt; 5</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>60</seqno><settings></settings><settingsxml /><stepname>Retry</stepname></step><step><id>2577</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT HID as Pallet_no, t.ItemCode, t.ItemNumber, t.Quantity, t.purchase_ordernr, t.errormessage2 as [Message]
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid2 = '%runid%'  
+    AND t.rowstatus2 = -1 -- errors
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Following pallet lines could not be received automatically, please receive them by hand:&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Pallet_no&lt;/td&gt;&lt;td&gt;ItemCode&lt;/td&gt;&lt;td&gt;ItemNumber&lt;/td&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Purchase_Ordernr&lt;/td&gt;&lt;td&gt;Message&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Pallet_no%&lt;/td&gt;&lt;td&gt;%ItemCode%&lt;/td&gt;&lt;td&gt;%ItemNumber%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%purchase_ordernr%&lt;/td&gt;&lt;td&gt;%Message%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>70</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.dusschoten@orlaco.com%semicolon%j.molen@orlaco.com%semicolon%E.Elings@orlaco.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%Martien.Bakkenes@stoneridge.com%semicolon%logisticscontrol@orlaco.com;emailcc=l.van.veldhuizen@absc.nl;emailbcc=;emailsub=Receipt - Actions required for Transfer orders pallet no %Pallet_no%;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Pallet_no,ItemCode,ItemNumber,Quantity,purchase_ordernr,Message;mex_connectionid=0;emailsplitcolumn=Pallet_no;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Pallet_no</name><type>Int32</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ItemNumber</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>purchase_ordernr</name><type>String</type></datacolumn><datacolumn><name>Message</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail for errors</stepname></step><step><id>2578</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT DISTINCT t.HID as Pallet_no, t.Purchase_ordernr
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 2
+    AND NOT EXISTS (SELECT 1 FROM dbo._AB_tb_TransfersOrders t1 WITH (NOLOCK) WHERE t1.absenceid = t.absenceid AND t1.rowstatus2 &lt;&gt; 2)</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;The receipt for pallet %Pallet_no% is finished.&lt;/p&gt;&lt;p&gt;Ordernumber: %Purchase_ordernr%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>80</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.dusschoten@orlaco.com%semicolon%j.molen@orlaco.com%semicolon%E.Elings@orlaco.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%Martien.Bakkenes@stoneridge.com%semicolon%logisticscontrol@orlaco.com;emailcc=;emailbcc=;emailsub=Receipt - Finished receipt for pallet no %Pallet_no%;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Pallet_no,ItemCode,ItemNumber,Quantity,Sales_ordernr,Message;mex_connectionid=0;emailsplitcolumn=Pallet_no;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Pallet_no</name><type>Int32</type></datacolumn><datacolumn><name>Purchase_ordernr</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail for finished receipts</stepname></step><step><id>2588</id><entity>Request</entity><action>update</action><source>129</source><target>1</target><datasource>SELECT DISTINCT t.absenceID as ID, 4 as status
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid2 = '%runid%'
+    AND t.rowstatus2 = 2
+    AND NOT EXISTS (SELECT 1 FROM dbo._AB_tb_TransfersOrders t1 WITH (NOLOCK) WHERE t1.absenceid = t.absenceid AND t1.rowstatus2 &lt;&gt; 2)</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>85</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>status</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Finish request for finished receipts</stepname></step><step><id>2579</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>90</seqno><settings>uniquekey=;retryunique=0;sysaction=9;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>5</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Wait a little</stepname></step><step><id>2580</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [ABEI].[dbo].[_AB_Entity_trigger_table] (jobid, syscreated) VALUES (%jobid%, CURRENT_TIMESTAMP)</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>Start again</stepname></step></steps></job></jobs>

@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>440</id><jobname>Kardex continues synchronisation</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=minutes;startat=08:00:00;beginat=07:00:00;endat=21:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2396</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER]..MATERIALS_TO_KARDEX (STATUS, ARTICLE, DESCRIPTION_1, MAINSUPPLIER, EAN, UOM, DESCRIPTION_5, SYSCREATED, SYSMODIFIED) 
+SELECT 0 AS STATUS, 
+i.Itemcode AS ARTICLE, 
+SUBSTRING( i.Description, 0, 50) AS DESCRIPTION_1, 
+SUBSTRING((LTRIM(c.crdcode) + ' - ' + c.cmp_name), 0, 50) AS MAINSUPPLIER, 
+ia.ItemCodeAccount AS EAN, 
+i.PackageDescription AS UOM,
+i.UserNumber_11 AS DESCRIPTION_5,
+GETDATE() AS SYSCREATED, 
+GETDATE() AS SYSMODIFIED
+FROM [400]..Items i (nolock) 
+LEFT JOIN [400]..cicmpy c (nolocK) on c.crdnr = i.lev_crdnr
+LEFT JOIN [400]..ItemAccounts ia (nolock) ON i.ItemCode = ia.ItemCode AND ia.crdnr = c.crdnr
+WHERE  i.UserNumber_11 IN (1,2,12) 
+AND i.itemcode collate database_default NOT IN 
+    (select MaterialName from [PowerPick_TEST]..MaterialBase)
+AND i.itemcode collate database_default NOT IN 
+    (SELECT ARTICLE FROM [PPG_TRANSFER]..MATERIALS_TO_KARDEX WHERE STATUS BETWEEN 0 AND 3 AND CONVERT(DATE,SYSCREATED) = CONVERT(DATE,GETDATE()))</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Insert Material</stepname></step><step><id>2459</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX]
+([STATUS],[ORDERNR],[PRIORITY],[WAREHOUSE],[LINE],[ARTICLE],[QTY],[DIRECTION],[OH_INFO1],[OH_INFO2],[OH_INFO3],[OL_INFO1],[SYSMODIFIED],[SYSCREATED])
+
+SELECT 0 AS STATUS,
+    gmt.bkstnr_sub AS ORDERNR,
+    1 AS PRIORITY,
+    'Onderdelen_Mag' AS WAREHOUSE,
+    ROW_NUMBER() OVER (PARTITION BY gmt.bkstnr_sub ORDER BY gmt.bkstnr_sub, gmt.artcode) AS LINE,
+    gmt.artcode AS ARTICLE, 
+    gmt.aantal AS QTY,
+    1 AS DIRECTION,
+    'Purchase Order' AS OH_INFO1,
+    LEFT(gmt.oms25, 50) AS OH_INFO2, 
+    LEFT(LTRIM(RTRIM(cmp.crdcode + ' - ' + cmp.cmp_name)),50) AS OH_INFO3, 
+    LEFT(i.Description_0,50) AS OL_INFO1,
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+FROM [400]..gbkmut gmt WITH (NOLOCK)
+ INNER JOIN [400]..grtbk gbk  WITH (NOLOCK) ON gbk.reknr = gmt.reknr AND gbk.omzrek NOT IN ('C','D','V')
+ INNER JOIN [400]..Items i  WITH (NOLOCK) ON i.ItemCode = gmt.artcode AND (gmt.reknr=i.GLAccountDistribution OR gmt.reknr=i.GLAccountAsset) 
+ LEFT JOIN [400]..cicmpy cmp  WITH (NOLOCK) ON cmp.crdnr = gmt.crdnr AND cmp.crdnr IS NOT NULL AND gmt.crdnr IS NOT NULL 
+WHERE transtype IN ('X','N','C','P') AND gmt.oorsprong ='R' 
+ AND gmt.transsubtype IN ('A')
+ AND gmt.bkstnr_sub IS NOT NULL  AND i.Type &lt;&gt; 'P' 
+ AND gmt.datum = CONVERT(DATE, GETDATE()) 
+ AND gmt.warehouse = '1'
+ AND i.UserNumber_11 IN (2,12)
+ AND gmt.bkstnr_sub NOT IN (SELECT [ORDERNR] COLLATE DATABASE_DEFAULT FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] WHERE gmt.artcode COLLATE DATABASE_DEFAULT = ARTICLE AND  CONVERT(DATE, SYSCREATED) = CONVERT(DATE, gmt.syscreated)  )
+ORDER BY gmt.bkstnr_sub,gmt.artcode
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Insert Purchase Orders</stepname></step><step><id>2460</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] 
+    ([STATUS] ,[ORDERNR], [PRIORITY], [WAREHOUSE], [LINE], [ARTICLE], [QTY], [DIRECTION], [OH_INFO1], [OH_INFO2], [OL_INFO1], [OL_INFO2], [SYSMODIFIED], [SYSCREATED])
+
+
+SELECT 0 AS STATUS,
+    p.Projectnr AS ORDERNR,
+    1 AS PRIORITY,
+    'Onderdelen_Mag' AS WAREHOUSE,
+    ROW_NUMBER() OVER (PARTITION BY p.Projectnr ORDER BY p.Projectnr, ir.ItemCode) AS LINE, 
+    ir.ItemCode as ARTICLE,
+    SUM(gi.aantal)  AS QTY,
+    2 AS DIRECTION,
+    'Production Order' AS OH_INFO1,
+    g.artcode AS OH_INFO2,
+    LEFT(ir.Description_0,50) AS OL_INFO1, 
+    COUNT(*) AS OL_INFO2, 
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+FROM [400]..PrProject p WITH (NOLOCK)
+ JOIN [400]..gbkmut g WITH (NOLOCK) ON p.ProjectNr=g.project AND g.bud_vers='MRP'  AND g.transtype='B' AND g.freefield1='P' AND g.transsubtype = 'A' AND g.BlockItem=0 AND g.Reviewed=1 AND g.Checked=1  and not g.TransactionGuid2 is null
+ JOIN [400]..gbkmut gi WITH (NOLOCK) ON p.ProjectNr=gi.project AND gi.bud_vers='MRP'  AND gi.transtype='B' AND gi.freefield1='P' AND gi.transsubtype = 'B' AND gi.Reviewed=1 AND gi.Checked=1 and gi.TransactionGuid2 is null
+ JOIN [400]..Items ir WITH (NOLOCK) ON ir.ItemCode=gi.artcode
+ 
+WHERE p.Type='P'
+ AND g.Selcode IN ('PM', 'PS')
+ AND ir.UserNumber_11 IN (2,12) 
+ AND p.ProjectNr NOT IN (SELECT [ORDERNR] COLLATE DATABASE_DEFAULT FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] WHERE ir.ItemCode COLLATE DATABASE_DEFAULT = ARTICLE AND CONVERT(DATE, SYSCREATED) = CONVERT(DATE, GETDATE()) )
+
+GROUP BY p.ProjectNr,g.artcode,ir.Itemcode, ir.Description_0
+ORDER BY p.ProjectNr, ir.ItemCode 
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>Insert Production Orders</stepname></step><step><id>2461</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] 
+    ([STATUS] ,[ORDERNR], [PRIORITY], [WAREHOUSE], [LINE], [ARTICLE], [QTY], [DIRECTION], [OH_INFO1], [OH_INFO2], [OH_INFO3], [OL_INFO1], [SYSMODIFIED], [SYSCREATED])
+
+SELECT 0 AS STATUS,
+    g2.bkstnr AS ORDERNR,
+    CASE WHEN (g.oms25 LIKE 'HOT%') THEN 4 ELSE 1 END  AS PRIORITY,
+    'Onderdelen_Mag' AS WAREHOUSE,
+    1 AS LINE, 
+    g2.artcode as ARTICLE,
+    ABS(g2.aantal) AS QTY,
+    CASE WHEN (g2.aantal &gt; 0) THEN 1 ELSE 2 END AS DIRECTION,
+    'Internal Order' AS OH_INFO1,
+    LEFT(g2.oms25,50)  AS OH_INFO2,
+    g2.faktuurnr  AS OH_INFO3,
+    LEFT(i.Description_0,50) AS OL_INFO1, 
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+    
+FROM [400]..gbkmut g WITH (NOLOCK,INDEX(IX_gbkmut_InternalUse)) 
+JOIN [400]..gbkmut g2 WITH (NOLOCK) ON g.faktuurnr = g2.faktuurnr AND g2.Transtype = 'N' and g2.Transsubtype = 'B'
+JOIN [400]..Items i WITH (NOLOCK) ON g2.artcode = i.ItemCode AND g2.reknr=i.GLAccountDistribution and i.type not in ('L','P')  
+WHERE g.Transtype = 'B' and g.Transsubtype = 'B' and g.freefield1 = 'I' AND g.bud_vers = 'MRP' AND NOT g.TransactionGuid2 IS NULL 
+  AND g.datum = CONVERT(DATE, GETDATE()) 
+  --AND g.sysmodified &gt; DATEADD(MINUTE, -3, GETDATE())
+  AND g.warehouse = '1'
+  AND i.UserNumber_11 IN (2,12)
+  AND g2.bkstnr NOT IN (SELECT [ORDERNR] COLLATE DATABASE_DEFAULT FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] WHERE g2.artcode COLLATE DATABASE_DEFAULT = ARTICLE )
+ORDER BY g2.bkstnr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>50</seqno><settings /><settingsxml /><stepname>Insert Internal Orders</stepname></step><step><id>2462</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] 
+    ([STATUS] ,[ORDERNR], [PRIORITY], [WAREHOUSE], [LINE], [ARTICLE], [QTY], [DIRECTION], [OH_INFO1], [OH_INFO2], [OL_INFO1], [SYSMODIFIED], [SYSCREATED])
+    
+SELECT 0 AS STATUS,
+    g.IBTDeliveryNr AS ORDERNR,
+    CASE WHEN (g.oms25 LIKE 'HOT%') THEN 4 ELSE 1 END  AS PRIORITY,
+    'Onderdelen_Mag' AS WAREHOUSE,
+    1 AS LINE, 
+    i.ItemCode as ARTICLE,
+    ABS(SUM(g.aantal)) AS QTY,
+    CASE WHEN (SUM(g.aantal) &lt; 0) THEN 2 ELSE 1 END AS DIRECTION,
+    'Interbranch Transfer' AS OH_INFO1,
+    LEFT(g.oms25,50)  AS OH_INFO2,
+    LEFT(i.Description_0,50) AS OL_INFO1, 
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+    
+FROM [400]..gbkmut g WITH (NOLOCK) 
+JOIN [400]..Items i WITH (NOLOCK) ON g.artcode = i.ItemCode  and g.reknr=i.GLAccountDistribution
+
+WHERE g.Transtype = 'B' AND g.bud_vers = 'MRP' and g.Checked = 1 and g.Reviewed = 1 and g.BlockItem = 1 
+ AND g.Status = 5 and g.type IN(1150, 1151) AND NOT g.IBTDeliveryNr IS NULL 
+ AND g.datum = CONVERT(DATE, GETDATE()) 
+ --AND g.sysmodified &gt; DATEADD(MINUTE, -3, GETDATE())
+ AND g.warehouse = '1'
+ AND i.UserNumber_11 IN (2,12) 
+ AND g.IBTDeliveryNr NOT IN (SELECT [ORDERNR] COLLATE DATABASE_DEFAULT FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] WHERE g.artcode COLLATE DATABASE_DEFAULT = ARTICLE )
+ AND g.IBTDeliveryNr NOT IN
+    (SELECT DISTINCT g.IBTDeliveryNr 
+     FROM [400]..gbkmut g WITH (NOLOCK) 
+     JOIN [400]..Items i WITH (NOLOCK) ON g.artcode = i.ItemCode  and g.reknr=i.GLAccountDistribution
+     WHERE g.Transtype = 'B' AND g.bud_vers = 'MRP' and g.Checked = 1 and g.Reviewed = 1 and g.BlockItem = 1 
+      AND g.Status = 5 and g.type IN(1150, 1151) AND NOT g.IBTDeliveryNr IS NULL 
+      AND g.datum = CONVERT(DATE, GETDATE()) 
+      AND (g.warehouse IN('S20', '4', '91') OR (g.warehouse = '90' AND g.aantal &lt; 0))
+      AND i.UserNumber_11 IN (2,12) )
+GROUP BY g.IBTDeliveryNr, g.oms25, i.ItemCode, i.Description_0
+ORDER BY g.IBTDeliveryNr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>60</seqno><settings /><settingsxml /><stepname>Insert Interbranch Transfers</stepname></step><step><id>2467</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] 
+    ([STATUS] ,[ORDERNR], [PRIORITY], [WAREHOUSE], [LINE], [ARTICLE], [QTY], [DIRECTION], [OH_INFO1], [OH_INFO2], [OH_INFO3], [OL_INFO1], [SYSMODIFIED], [SYSCREATED])
+
+SELECT 0 AS STATUS,
+    o.ordernr AS ORDERNR,
+    1  AS PRIORITY,
+    'Onderdelen_Mag' AS WAREHOUSE,
+    r.regel AS LINE, 
+    r.artcode as ARTICLE,
+    ABS(r.esr_aantal - r.aant_gelev) AS QTY,
+    CASE WHEN ((r.esr_aantal - r.aant_gelev) &lt; 0) THEN 1 ELSE 2 END AS DIRECTION,
+    'Sales Order' AS OH_INFO1,
+    LEFT(o.refer,50)  AS OH_INFO2,
+    LEFT(o.debnr + ' - ' + ord_debtor_name,50)  AS OH_INFO3,
+    LEFT(i.Description_0,50) AS OL_INFO1, 
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED --,o.afgehandld and o.approved not is null
+
+FROM [400]..orsrg r WITH (NOLOCK)
+JOIN [400]..orkrg o WITH (NOLOCK) ON r.ordernr = o.ordernr
+JOIN [400]..items i WITH (NOLOCK) ON r.artcode = i.ItemCode
+WHERE r.afldat = CONVERT(DATE, GETDATE())  AND o.afgehandld = 0 AND NOT o.Approved IS NULL
+  AND r.magcode = '1' AND o.ord_soort = 'V'
+  AND i.UserNumber_11 IN (2,12)
+  AND (r.esr_aantal - r.aant_gelev) &lt;&gt; 0
+  AND o.ordernr NOT IN (SELECT [ORDERNR] COLLATE DATABASE_DEFAULT FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] WHERE CONVERT(DATE, syscreated) = CONVERT(DATE, GETDATE()) AND r.artcode COLLATE DATABASE_DEFAULT = ARTICLE )
+ORDER BY o.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>70</seqno><settings /><settingsxml /><stepname>Insert Sales Orders</stepname></step></steps></job></jobs>

@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>480</id><jobname>! EG: Set BTW code to Orlaco GMBH for ICP</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=07:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2874</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO [ExactData].dbo._ST_LOG_Invoice_VAT
+SELECT fh.faknr, 'DE293308756' as VATNumber_new, fh.VATNumber as VATNumber_old, GETDATE() as runtime
+FROM [400].dbo.frhkrg fh WITH (NOLOCK)
+WHERE  fh.fakdebnr = '100044'
+AND fh.VATNumber != 'DE293308756'
+AND fh.syscreated &gt; DATEADD(MONTH,-1,GETDATE())</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>5</seqno><settings /><settingsxml /><stepname>Log Old BTW code</stepname></step><step><id>2873</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>UPDATE dbo.frhkrg WITH (ROWLOCK) SET VATNumber = 'DE293308756'
+WHERE  fakdebnr = '100044'
+AND VATNumber != 'DE293308756'
+AND syscreated &gt; DATEADD(MONTH,-1,GETDATE())</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Set BTW code to Orlaco GmbH for ICP</stepname></step></steps></job></jobs>

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>499</id><jobname>EDI orders - update description</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=minutes;startat=10:38:06;beginat=06:00:00;endat=23:00:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3043</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, o.debnr, 
+CASE WHEN refer1 IS NOT NULL AND refer2 IS NOT NULL 
+    THEN LEFT(refer1 + ' | ' + refer2,20) 
+    ELSE  ISNULL(refer1,'') + ISNULL(refer2,'') END AS refer
+from orkrg o with (NOLOCK) 
+inner join cicmpy c with (NOLOCK) on c.debnr = o.debnr
+where afgehandld = 0 AND ( c.YesNofield4 = 1 ) AND ( c.YesNofield5 = 1 ) 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+order by ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update refer CAT EDI ORDERS</stepname></step><step><id>3044</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, MIN(r.id) as id
+from orkrg o with (NOLOCK) 
+inner join orsrg r with (NOLOCK) on o.ordernr = r.ordernr
+inner join cicmpy c with (NOLOCK) on c.debnr = o.debnr
+where afgehandld = 0 AND ( c.YesNofield4 = 1 ) AND ( c.YesNofield5 = 1 ) 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+group by o.ordernr
+order by ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update refer CAT EDI ORDERS - rows</stepname></step><step><id>3041</id><entity>SalesOrderHeader</entity><action>update</action><source>112</source><target>112</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, o.debnr, 
+CASE WHEN refer1 IS NOT NULL AND refer2 IS NOT NULL 
+    THEN LEFT(refer1 + ' | ' + refer2,20) 
+    ELSE  ISNULL(refer1,'') + ISNULL(refer2,'') END AS refer
+from orkrg o with (NOLOCK) 
+inner join cicmpy c with (NOLOCK) on c.debnr = o.debnr
+where afgehandld = 0 AND ( c.YesNofield4 = 1 ) AND ( c.YesNofield5 = 1 ) 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+order by ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Update refer CAT EDI ORDERS</stepname></step><step><id>3042</id><entity>SalesOrderLine</entity><action>update</action><source>112</source><target>112</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, MIN(r.id) as id
+from orkrg o with (NOLOCK) 
+inner join orsrg r with (NOLOCK) on o.ordernr = r.ordernr
+inner join cicmpy c with (NOLOCK) on c.debnr = o.debnr
+where afgehandld = 0 AND ( c.YesNofield4 = 1 ) AND ( c.YesNofield5 = 1 ) 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+group by o.ordernr
+order by ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Update refer CAT EDI ORDERS - rows</stepname></step><step><id>3039</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select TOP 100 PERCENT ordernr as headerid, ordernr, debnr, 
+CASE WHEN refer1 IS NOT NULL AND refer2 IS NOT NULL 
+    THEN refer1 + ' | ' + RIGHT(refer2, 17 - LEN(refer1))
+    ELSE  ISNULL(refer1,'') + ISNULL(refer2,'') END AS refer
+from orkrg  with (NOLOCK) 
+where afgehandld = 0 and debnr in ('040447','040448', '974605', '975195') 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+order by ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Update refer DAF EDI ORDERS</stepname></step><step><id>3040</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, MIN(r.id) as id
+from orkrg o with (NOLOCK) 
+inner join orsrg r with (NOLOCK) on o.ordernr = r.ordernr
+where o.afgehandld = 0 and o.debnr in ('040447','040448', '974605', '975195') 
+and ( ISNULL(refer,'') = '' )  and (ISNULL(refer1,'') != '' OR ISNULL(refer2,'') != '')
+group by o.ordernr
+order by o.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Update refer DAF EDI ORDERS - rows</stepname></step></steps></job></jobs>

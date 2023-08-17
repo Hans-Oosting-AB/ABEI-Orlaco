@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>223</id><jobname>! EG: Variant gelijk maken in administraties</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Variant artikelen in administratie 482 en 484 en 483 worden gelijk gemaakt aan variantartikelen in administratie 400.</remarks><schedulename /><schedulesettings>freq=1;timescale=hours;startat=21:00:41;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1060</id><entity>ItemRelation</entity><action>delete</action><source>112</source><target>112</target><datasource>select 
+ir.ID as id
+from itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Delete' </datasource><contentbody></contentbody><mapping></mapping><disable /><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml /><stepname></stepname></step><step><id>1056</id><entity>ItemRelation</entity><action>create</action><source>112</source><target>112</target><datasource>select 
+ir400.type as type
+,ir400.itemcode as itemcode
+,ir400.itemcoderelated as itemcoderelated
+,ir400.quantity as quantity
+,ir400.itemcode as variant,
+case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+     when ir400.itemcode is null then 'Delete'
+     when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+     when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END AS Action
+
+from        itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+inner join items i1 with (nolock) on i1.itemcode = ir400.ItemCode
+inner join items i2 with (nolock) on i2.itemcode = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Create' 
+</datasource><contentbody></contentbody><mapping></mapping><disable /><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml /><stepname></stepname></step><step><id>1059</id><entity>ItemRelation</entity><action>update</action><source>112</source><target>112</target><datasource>select 
+ir.ID as id
+,ir400.type as type
+,ir400.itemcode as itemcode
+,ir400.itemcoderelated as itemcoderelated
+,ir400.quantity as quantity
+,ir400.itemcode as variant,
+case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+     when ir400.itemcode is null then 'Delete'
+     when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+     when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END AS Action
+
+from        itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+inner join items i1 with (nolock) on i1.itemcode = ir400.ItemCode
+inner join items i2 with (nolock) on i2.itemcode = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Update' 
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable /><remarks></remarks><replace></replace><seqno>12</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml /><stepname></stepname></step><step><id>1770</id><entity>ItemRelation</entity><action>delete</action><source>126</source><target>126</target><datasource>select 
+ir.ID as id
+from itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Delete' 
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml /><stepname></stepname></step><step><id>1771</id><entity>ItemRelation</entity><action>create</action><source>126</source><target>126</target><datasource>select 
+ir400.type as type
+,ir400.itemcode as itemcode
+,ir400.itemcoderelated as itemcoderelated
+,ir400.quantity as quantity
+,ir400.itemcode as variant,
+case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+     when ir400.itemcode is null then 'Delete'
+     when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+     when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END AS Action
+
+from        itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+inner join items i1 with (nolock) on i1.itemcode = ir400.ItemCode
+inner join items i2 with (nolock) on i2.itemcode = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Create' 
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>21</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml /><stepname></stepname></step><step><id>1062</id><entity>ItemRelation</entity><action>update</action><source>126</source><target>126</target><datasource>select 
+ir.ID as id
+,ir400.type as type
+,ir400.itemcode as itemcode
+,ir400.itemcoderelated as itemcoderelated
+,ir400.quantity as quantity
+,ir400.itemcode as variant,
+case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+     when ir400.itemcode is null then 'Delete'
+     when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+ when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END AS Action
+
+from        itemrelations ir with(nolock)
+full outer join [400]..itemrelations ir400 with (nolock) on ir.itemcode = ir400.itemcode and ir.ItemCodeRelated = ir400.ItemCodeRelated
+inner join items i1 with (nolock) on i1.itemcode = ir400.ItemCode
+inner join items i2 with (nolock) on i2.itemcode = ir400.ItemCodeRelated
+where case when ir.itemcoderelated is null and ir400.itemcoderelated is not null Then 'Create' 
+           when ir400.itemcode is null then 'Delete'
+           when ir.quantity &lt;&gt; ir400.quantity then 'Update' 
+           when ir.type &lt;&gt; ir400.type then 'Update' ELSE 'No action' END = 'Update' 
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>22</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml /><stepname></stepname></step></steps></job></jobs>

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>400</id><jobname>! EG : Opschonen dubbele budgetregels inkoop</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>
+Sinds de update naar batch 414 ontstaan er dubbele budgetregels bij sommige (lijkt willekeurig) bestelregels. Dit geeft uiteraard enorme problemen binnen MRP. Exact heeft hier nog geen oplossing voor.
+
+Deze taak zet het transtype van de laatste aangemaakte (hoogste id) dubbele regel naar "V" (Void), waardoor MRP er geen last van heeft.
+
+Taak is een tijdelijke oplossing totdat Exact dit heeft opgelost.
+</remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=16:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>2075</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>--STEP 1: Insert double budget lines into temporary table
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DoubleBudgetlines')  DROP TABLE DoubleBudgetLines
+--Go
+select s1.ordernr, s1.regel as orsrgregel, s1.artcode as orsrgartcode, OrsrgAantal, Issued, bkstnr_sub, g1.regel as gbkmutregel, g1.artcode as gbkmutartcode, g1.entryguid, AantRegels, GbkmutAant, mingbkmutid, maxgbkmutid
+into DoubleBudgetLines
+from
+(select s.ordernr, regel, artcode, sum(esr_aantal*unitfactor) as OrsrgAantal, min(uitgifte) as Issued
+from orsrg s
+join orkrg k on s.ordernr = k.ordernr
+INNER JOIN Items ON s.artcode = Items.Itemcode
+where ord_soort = 'B' and Items.GLAccountDistribution &lt;&gt; Items.GLAccountCost
+group by s.ordernr, regel, artcode) s1
+full outer join
+(select bkstnr_sub, regel, artcode, entryguid, count(*) as AantRegels, sum(aantal) as GbkmutAant, min(g.id) as mingbkmutid, max(g.id) as maxgbkmutid
+FROM gbkmut g
+INNER JOIN Items ON g.artcode = Items.Itemcode and g.reknr = Items.GLAccountDistribution
+WHERE g.bud_vers = 'MRP' AND g.transtype = 'B' AND g.transsubtype = 'A' AND g.freefield1 = 'B' and Items.GLAccountDistribution &lt;&gt; Items.GLAccountCost
+group by bkstnr_sub, regel, artcode, entryguid) g1 on s1.ordernr = g1.bkstnr_sub and s1.regel = g1.regel
+where AantRegels &gt; 1
+order by s1.ordernr
+
+
+--STEP 2: Void double budget lines
+
+update gbkmut
+set transtype = 'V', sysmodified=getdate()
+where id in (
+select id from gbkmut g1
+where transactionguid in
+(select transactionguid from gbkmut g
+inner join DoubleBudgetLines d on g.id = d.maxgbkmutid)
+or transactionguid2 in
+(select transactionguid from gbkmut g
+inner join DoubleBudgetLines d on g.id = d.maxgbkmutid)
+)
+
+--STEP 3: Drop temporary table
+DROP TABLE DoubleBudgetLines</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Opschonen dubbele budgetregels</stepname></step></steps></job></jobs>

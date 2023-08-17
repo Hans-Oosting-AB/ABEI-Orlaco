@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>545</id><jobname>! EG: Rework Process to warehouse 1</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>15</freq><timescale>minutes</timescale><frequency>daily</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>11:41:14</startat><beginat>07:00:00</beginat><endat>22:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>-1</day6><day7>-1</day7><duration_start>2022-08-02</duration_start><duration_end>2073-08-02</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3843</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE  [ProdGlobe_live].[dbo].[ReworkProcess]
+SET Status = 1, runid = '%runid%', sysmodified = GETDATE(), RetryCnt = RetryCnt+1
+WHERE status &lt; 2 and scrap = 0 and RetryCnt &lt; 5</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update Status Rework</stepname></step><step><id>3839</id><entity>FinancialLine</entity><action>create</action><source>0</source><target>107</target><datasource>select top 100 percent
+    r.ID as HeaderID
+    --, 'N' as TransType
+    ,'G' as TransSubType
+    ,'B' as Regelcode
+    ,'100' as TransactionType
+    ,GETDATE() As 'Datum'
+    ,i.GLAccountDistribution as Reknr
+    ,'REWORK: '+ r.Ordernr As oms25
+    ,'600' As kstplcode
+    ,i.Itemcode AS artcode
+
+    ,r.[Serialnr] AS facode
+
+    ,r.warehouse As warehouse
+    ,'REWORK' As project
+    ,ISNULL(r.[Quantity],1) as aantal
+    ,cast(ISNULL(r.[Quantity],1) * i.CostPriceStandard as numeric (18,3)) as bdr_hfl
+    ,GETDATE() As 'docdate'
+    --proddatum As 'ReportDate'
+    ,rtrim(ltrim(i.PackageDescription)) as UnitCode
+from [ProdGlobe_live].dbo.ReworkProcess r with (nolock)   
+inner join [%abeitargetdb%].dbo.[Items] i with (nolock) on i.itemcode = r.itemcode        
+where r.status = 1 and r.runid = '%runid%' and r.scrap = 0 
+order by r.id
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Financiele boeking rework Debit</stepname></step><step><id>3840</id><entity>FinancialLine</entity><action>create</action><source>0</source><target>107</target><datasource>select top 100 percent
+    r.ID as HeaderID
+    --, 'N' as TransType
+    ,'G' as TransSubType
+    ,'B' as Regelcode
+    ,'100' as TransactionType
+    ,GETDATE() As 'Datum'
+    ,i.GLAccountDistribution as Reknr
+    ,'REWORK: '+ r.Ordernr As oms25
+    ,'600' As kstplcode
+    ,i.Itemcode AS artcode
+
+    ,r.[Serialnr] AS facode
+
+    ,'95' As warehouse
+    ,'REWORK' As project
+    ,-ISNULL(r.[Quantity],1) as aantal
+    ,-cast(ISNULL(r.[Quantity],1) * i.CostPriceStandard as numeric (18,3)) as bdr_hfl
+    ,GETDATE() As 'docdate'
+    --proddatum As 'ReportDate'
+    ,rtrim(ltrim(i.PackageDescription)) as UnitCode
+from [ProdGlobe_live].dbo.ReworkProcess r with (nolock)   
+inner join [%abeitargetdb%].dbo.[Items] i with (nolock) on i.itemcode = r.itemcode        
+where r.status = 1 and r.runid = '%runid%' and r.scrap = 0 
+order by r.id</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Financiele boeking rework Credit</stepname></step><step><id>3841</id><entity>FinancialHeader</entity><action>create</action><source>0</source><target>107</target><datasource>select top 100 percent r.ID as HeaderID, 70 as dagbknr
+FROM [ProdGlobe_live].[dbo].[ReworkProcess] r with (nolock) 
+inner join [%abeitargetdb%].dbo.[Items] i with (nolock) on i.itemcode = r.itemcode  
+where r.Status = 1 and r.runid = '%runid%' and r.scrap = 0
+order by r.id</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Financiele boeking rework Header</stepname></step><step><id>3842</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [ProdGlobe_live].[dbo].[ReworkProcess] 
+SET Status = 2, Sysmodified = GETDATE()
+ FROM [ProdGlobe_live].[dbo].[ReworkProcess] r
+  inner join [400]..items i with (NOLOCK) on r.itemcode = i.itemcode 
+  inner join  [400]..gbkmut g with (NOLOCK) on 
+    g.TransSubType = 'G' and
+    g.Regelcode = 'B' and
+    g.TransactionType = '100' and
+    g.datum = CONVERT(date,r.sysmodified) and 
+    g.Reknr = i.GLAccountDistribution and
+    g.oms25 = 'REWORK: '+ r.Ordernr and
+    g.kstplcode = '600' and
+    g.artcode = r.Itemcode and
+    ((r.serialnr is null and g.facode is null) or (g.facode = r.Serialnr)) and
+    g.warehouse = r.warehouse and
+    g.project  = 'REWORK' and 
+    g.aantal = ISNULL(r.[Quantity],1) 
+    
+WHERE r.status = 1 and r.runid = '%runid%' and r.scrap = 0 and g.id is not null</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>70</seqno><settings></settings><settingsxml /><stepname>Update Status Rework</stepname></step></steps></job></jobs>

@@ -1,0 +1,231 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>490</id><jobname>Pricelist change logging</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Daily at 6.00 new pricelists are created and uploaded to partners</remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2971</id><entity>-none-</entity><action>create</action><source>133</source><target>6</target><datasource>SELECT 
+i.[Itemcode] AS [Itemcode], 
+i.userfield_04 AS [PMC], 
+i.Userfield_02 AS [Category1],
+i.Userfield_03 AS [Category2],
+ISNULL(i.Userfield_05, i.[Description]) as [SalesDescription], 
+i.sysmodified AS ItemModified,
+h.fullname AS ItemModifier, 
+ISNULL(h.mail, 'iss@orlaco.com') as Email
+FROM [orlaco].dbo.items i with (NOLOCK) 
+INNER JOIN [orlaco].dbo.humres h with (NOLOCK) ON h.res_id = i.sysmodifier
+WHERE i.UserYesNo_03 = 1 AND i.Condition = 'A' 
+AND (i.UserField_02 IS NULL or i.UserField_03 is NULL or i.UserField_04 IS NULL)
+ORDER BY Itemcode</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear user,&lt;/p&gt;&lt;p&gt;The following items are recently added to the pricelist but the PMC or Category is not set. &lt;/p&gt;&lt;p&gt;Please correct the data in Synergy to make them visible in the sales pricelist.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Itemcode&lt;/td&gt;&lt;td&gt;PMC&lt;/td&gt;&lt;td&gt;Category1&lt;/td&gt;&lt;td&gt;Category2&lt;/td&gt;&lt;td&gt;SalesDescription&lt;/td&gt;&lt;td&gt;ItemModified&lt;/td&gt;&lt;td&gt;ItemModifier&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%PMC%&lt;/td&gt;&lt;td&gt;%Category1%&lt;/td&gt;&lt;td&gt;%Category2%&lt;/td&gt;&lt;td&gt;%SalesDescription%&lt;/td&gt;&lt;td&gt;%ItemModified%&lt;/td&gt;&lt;td&gt;%ItemModifier%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="8"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Kind regards,&lt;/p&gt;&lt;p&gt;Your automation team&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>1</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com%semicolon%%Email%;emailcc=;emailbcc=;emailsub=Pricelist items without category;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Itemcode,PMC,Category1,Category2,SalesDescription,ItemModified,ItemModifier;mex_connectionid=0;emailsplitcolumn=Email;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>PMC</name><type>String</type></datacolumn><datacolumn><name>Category1</name><type>String</type></datacolumn><datacolumn><name>Category2</name><type>String</type></datacolumn><datacolumn><name>SalesDescription</name><type>String</type></datacolumn><datacolumn><name>ItemModified</name><type>DateTime</type></datacolumn><datacolumn><name>ItemModifier</name><type>String</type></datacolumn><datacolumn><name>Email</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail for items without category</stepname></step><step><id>2967</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>-----------------------------------------------------------------
+--- Log price list changes VIEW [ExactData].[dbo].[_ST_VW_ItemPricelist]
+--- Created on: 14-01-2021
+--- Created by: Lenard Schouten
+---------------------------------------------------------------
+
+---------------------------------------------------------------
+-- NEW Items
+---------------------------------------------------------------
+-- 1.0. SELECT NEW
+--SELECT Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount
+--FROM [ExactData].[dbo].[_ST_VW_ItemPricelist]
+--WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_ItemPricelist])
+
+-- 1.1. Log NEW
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, NewValue, Description, ItemModified, ItemModifier)
+SELECT a.Itemcode, 'NewItem' AS Field, a.Itemcode as NewValue, 'Added to pricelist' +
+CASE WHEN a.Category1 IS NULL THEN '' ELSE ' in category ' + a.Category1 + ' - ' + ISNULL(a.Category2,'') END, ItemModified, ItemModifier
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_ItemPricelist])
+
+-- 1.2. INSERT NEW
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistHistory] 
+(Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount, 
+Number, ItemModified, ItemModifier)
+SELECT Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount, 
+(SELECT COUNT(*) FROM [ExactData].[dbo].[_ST_ItemPricelistHistory] a1 WHERE a1.Itemcode = a2.Itemcode) AS Number, ItemModified, ItemModifier
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a2
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_ItemPricelist])
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelist] 
+(Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount)
+SELECT Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist]
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_ItemPricelist])</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Pricelist Log new items</stepname></step><step><id>2968</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>
+---------------------------------------------------------------
+-- Changed Items
+---------------------------------------------------------------
+-- 2.0. SELECT Differences
+--SELECT a.* FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+--INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+--WHERE a.[PMC] &lt;&gt; l.[PMC] OR 
+--a.[OrdCat1] &lt;&gt; l.[OrdCat1] OR 
+--a.[OrdCat2] &lt;&gt; l.[OrdCat2] OR 
+--a.[SalesDescription] &lt;&gt; l.[SalesDescription] OR 
+--a.[NL_EUR] &lt;&gt; l.[NL_EUR] OR 
+--a.[USA_USD] &lt;&gt; l.[USA_USD] OR 
+--a.[USA_EUR] &lt;&gt; l.[USA_EUR] OR 
+--a.[NL_Leadtime] &lt;&gt; l.[NL_Leadtime] OR 
+--a.[USA_Leadtime] &lt;&gt; l.[USA_Leadtime] OR 
+--a.[DiscountCode] &lt;&gt; l.[DiscountCode] 
+
+-- 2.1. Log Differences
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'PMC' AS Field, l.PMC as OldValue, a.PMC as NewValue,ItemModifier, ItemModified, 'PMC changed from ''' + ISNULL(l.PMC,'') + ''' to ''' + ISNULL(a.PMC,'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.[PMC],'') &lt;&gt; ISNULL(l.[PMC],'') 
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'Category1' AS Field, l.Category1 as OldValue, a.Category1 as NewValue,ItemModifier, ItemModified, 'Category 1 changed from ''' + ISNULL(l.Category1,'') + ''' to ''' + ISNULL(a.Category1,'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.OrdCat1,0) &lt;&gt; ISNULL(l.OrdCat1,0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'Category2' AS Field, l.Category2 as OldValue, a.Category2 as NewValue,ItemModifier, ItemModified, 'Category 2 changed from ''' + ISNULL(l.Category2,'') + ''' to ''' + ISNULL(a.Category2,'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.OrdCat2,0) &lt;&gt; ISNULL(l.OrdCat2,0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'SalesDescription' AS Field, l.SalesDescription as OldValue, a.SalesDescription as NewValue,ItemModifier, ItemModified, 'Sales Description changed from ''' + ISNULL(l.SalesDescription,'') + ''' to ''' + ISNULL(a.SalesDescription,'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.SalesDescription,'') &lt;&gt; ISNULL(l.SalesDescription,'')
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'NL_EUR' AS Field, CONVERT(varchar,l.NL_EUR) as OldValue, CONVERT(varchar,a.NL_EUR) as NewValue,ItemModifier, ItemModified, 'NL Euro price changed from ''' + ISNULL(CONVERT(varchar,l.NL_EUR),'') + ''' to ''' + ISNULL(CONVERT(varchar,a.NL_EUR),'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.NL_EUR,.0) &lt;&gt; ISNULL(l.NL_EUR,.0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'USA_USD' AS Field, CONVERT(varchar,l.USA_USD) as OldValue, CONVERT(varchar,a.USA_USD) as NewValue,ItemModifier, ItemModified, 'USA USD price changed from ''' + ISNULL(CONVERT(varchar,l.USA_USD),'') + ''' to ''' + ISNULL(CONVERT(varchar,a.USA_USD),'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.USA_USD,.0) &lt;&gt; ISNULL(l.USA_USD,.0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'USA_EUR' AS Field, CONVERT(varchar,l.USA_EUR) as OldValue, CONVERT(varchar,a.USA_EUR) as NewValue,ItemModifier, ItemModified, 'USA EUR price changed from ''' + ISNULL(CONVERT(varchar,l.USA_EUR),'') + ''' to ''' + ISNULL(CONVERT(varchar,a.USA_EUR),'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.USA_EUR,.0) &lt;&gt; ISNULL(l.USA_EUR,.0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'NL_Leadtime' AS Field, CONVERT(varchar,l.NL_Leadtime) as OldValue, CONVERT(varchar,a.NL_Leadtime) as NewValue,ItemModifier, ItemModified, 'NL Leadtime changed from ''' + ISNULL(CONVERT(varchar,l.NL_Leadtime),'') + ''' to ''' + ISNULL(CONVERT(varchar,a.NL_Leadtime),'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.NL_Leadtime,0) &lt;&gt; ISNULL(l.NL_Leadtime,0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'USA_Leadtime' AS Field, CONVERT(varchar,l.USA_Leadtime) as OldValue, CONVERT(varchar,a.USA_Leadtime) as NewValue,ItemModifier, ItemModified, 'USA Leadtime changed from ''' + ISNULL(CONVERT(varchar,l.USA_Leadtime),'') + ''' to ''' + ISNULL(CONVERT(varchar,a.USA_Leadtime),'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.USA_Leadtime,0) &lt;&gt; ISNULL(l.USA_Leadtime,0)
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, NewValue,ItemModifier, ItemModified, Description)
+SELECT a.Itemcode, 'Discount' AS Field, l.DiscountCode as OldValue, a.DiscountCode as NewValue,ItemModifier, ItemModified, 'Max discount changed from ''' + ISNULL(l.Discount,'') + ''' to ''' + ISNULL(a.Discount,'') + ''''
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.DiscountCode,'') &lt;&gt; ISNULL(l.DiscountCode,'')
+
+
+-- 2.2. UPDATE Differences
+UPDATE [ExactData].[dbo].[_ST_ItemPricelistHistory] SET Active = 0 
+WHERE ItemCode IN 
+(SELECT a.Itemcode FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.[PMC],'') &lt;&gt; ISNULL(l.[PMC],'') OR 
+ISNULL(a.[OrdCat1],0) &lt;&gt; ISNULL(l.[OrdCat1],0) OR 
+ISNULL(a.[OrdCat2],0) &lt;&gt; ISNULL(l.[OrdCat2],0) OR
+ISNULL(a.[Category1],'') &lt;&gt; ISNULL(l.[Category1],'') OR 
+ISNULL(a.[Category2],'') &lt;&gt; ISNULL(l.[Category2],'') OR 
+ISNULL(a.[SalesDescription],'') &lt;&gt; ISNULL(l.[SalesDescription],'')OR 
+ISNULL(a.[NL_EUR],.0) &lt;&gt; ISNULL(l.[NL_EUR],.0) OR 
+ISNULL(a.[USA_USD],.0) &lt;&gt; ISNULL(l.[USA_USD],.0) OR 
+ISNULL(a.[USA_EUR],.0) &lt;&gt; ISNULL(l.[USA_EUR],.0) OR 
+ISNULL(a.[NL_Leadtime],0) &lt;&gt; ISNULL(l.[NL_Leadtime],0) OR 
+ISNULL(a.[USA_Leadtime],0) &lt;&gt; ISNULL(l.[USA_Leadtime],0) OR 
+ISNULL(a.[DiscountCode],'') &lt;&gt; ISNULL(l.[DiscountCode],'') OR
+ISNULL(a.[Discount],'') &lt;&gt; ISNULL(l.[Discount],''))
+
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistHistory] 
+(Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount, Number,ItemModifier, ItemModified)
+SELECT a.Itemcode, a.PMC, a.Category1, a.Category2, a.OrdCat1, a.OrdCat2, a.SalesDescription, a.NL_EUR, a.USA_USD, a.USA_EUR, a.NL_Leadtime, a.USA_Leadtime, a.DiscountCode, a.Discount, 
+(SELECT COUNT(*) FROM [ExactData].[dbo].[_ST_ItemPricelistHistory] a1 WHERE a1.Itemcode = a.Itemcode) AS Number,ItemModifier, ItemModified
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.[PMC],'') &lt;&gt; ISNULL(l.[PMC],'') OR 
+ISNULL(a.[OrdCat1],0) &lt;&gt; ISNULL(l.[OrdCat1],0) OR 
+ISNULL(a.[OrdCat2],0) &lt;&gt; ISNULL(l.[OrdCat2],0) OR
+ISNULL(a.[Category1],'') &lt;&gt; ISNULL(l.[Category1],'') OR 
+ISNULL(a.[Category2],'') &lt;&gt; ISNULL(l.[Category2],'') OR 
+ISNULL(a.[SalesDescription],'') &lt;&gt; ISNULL(l.[SalesDescription],'')OR 
+ISNULL(a.[NL_EUR],.0) &lt;&gt; ISNULL(l.[NL_EUR],.0) OR 
+ISNULL(a.[USA_USD],.0) &lt;&gt; ISNULL(l.[USA_USD],.0) OR 
+ISNULL(a.[USA_EUR],.0) &lt;&gt; ISNULL(l.[USA_EUR],.0) OR 
+ISNULL(a.[NL_Leadtime],0) &lt;&gt; ISNULL(l.[NL_Leadtime],0) OR 
+ISNULL(a.[USA_Leadtime],0) &lt;&gt; ISNULL(l.[USA_Leadtime],0) OR 
+ISNULL(a.[DiscountCode],'') &lt;&gt; ISNULL(l.[DiscountCode],'') OR
+ISNULL(a.[Discount],'') &lt;&gt; ISNULL(l.[Discount],'')
+
+UPDATE [ExactData].[dbo].[_ST_ItemPricelist]
+SET 
+[PMC] = a.[PMC],
+[OrdCat1] = a.[OrdCat1],
+[OrdCat2] =a.[OrdCat2],
+[Category1] = a.[Category1],
+[Category2] =a.[Category2],
+[SalesDescription] = a.[SalesDescription],
+[NL_EUR] = a.[NL_EUR], 
+[USA_USD] =  a.[USA_USD], 
+[USA_EUR] = a.[USA_EUR],
+[NL_Leadtime] = a.[NL_Leadtime],
+[USA_Leadtime] = a.[USA_Leadtime], 
+[DiscountCode] = a.[DiscountCode],
+[Discount] = a.[Discount],
+Sysmodified = GETDATE()
+FROM [ExactData].[dbo].[_ST_VW_ItemPricelist] a
+INNER JOIN [ExactData].[dbo].[_ST_ItemPricelist] l ON l.Itemcode = a.Itemcode
+WHERE ISNULL(a.[PMC],'') &lt;&gt; ISNULL(l.[PMC],'') OR 
+ISNULL(a.[OrdCat1],0) &lt;&gt; ISNULL(l.[OrdCat1],0) OR 
+ISNULL(a.[OrdCat2],0) &lt;&gt; ISNULL(l.[OrdCat2],0) OR
+ISNULL(a.[Category1],'') &lt;&gt; ISNULL(l.[Category1],'') OR 
+ISNULL(a.[Category2],'') &lt;&gt; ISNULL(l.[Category2],'') OR 
+ISNULL(a.[SalesDescription],'') &lt;&gt; ISNULL(l.[SalesDescription],'')OR 
+ISNULL(a.[NL_EUR],.0) &lt;&gt; ISNULL(l.[NL_EUR],.0) OR 
+ISNULL(a.[USA_USD],.0) &lt;&gt; ISNULL(l.[USA_USD],.0) OR 
+ISNULL(a.[USA_EUR],.0) &lt;&gt; ISNULL(l.[USA_EUR],.0) OR 
+ISNULL(a.[NL_Leadtime],0) &lt;&gt; ISNULL(l.[NL_Leadtime],0) OR 
+ISNULL(a.[USA_Leadtime],0) &lt;&gt; ISNULL(l.[USA_Leadtime],0) OR 
+ISNULL(a.[DiscountCode],'') &lt;&gt; ISNULL(l.[DiscountCode],'') OR
+ISNULL(a.[Discount],'') &lt;&gt; ISNULL(l.[Discount],'')
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>12</seqno><settings /><settingsxml /><stepname>Pricelist Log changed items</stepname></step><step><id>2969</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>
+---------------------------------------------------------------
+-- Removed Items
+---------------------------------------------------------------
+-- 3.0. SELECT Removed
+--SELECT Itemcode, PMC, Category1, Category2, OrdCat1, OrdCat2, SalesDescription, NL_EUR, USA_USD, USA_EUR, NL_Leadtime, USA_Leadtime, DiscountCode, Discount
+--FROM [ExactData].[dbo].[_ST_ItemPricelist]
+--WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_ItemPricelist])
+
+-- 3.1. Log Removed
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistLog](Itemcode, Field, OldValue, Description)
+SELECT Itemcode, 'DeleteItem' AS Field, Itemcode as OldValue, 'Removed from pricelist'
+FROM [ExactData].[dbo].[_ST_ItemPricelist] 
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_VW_ItemPricelist])
+
+-- 3.2. Delete Removed
+UPDATE [ExactData].[dbo].[_ST_ItemPricelistHistory] SET Active = 0 
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_VW_ItemPricelist])
+
+DELETE FROM [ExactData].[dbo].[_ST_ItemPricelist] 
+WHERE Itemcode NOT IN (SELECT Itemcode FROM [ExactData].[dbo].[_ST_VW_ItemPricelist])</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Pricelist Log removed items</stepname></step><step><id>2970</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>DECLARE @nextversion varchar(10)
+SELECT @nextversion = RIGHT(CONVERT(VARCHAR,YEAR(GETDATE())),2) + '.' + 
+RIGHT('000' + CONVERT(VARCHAR,CONVERT(INT,MAX(RIGHT(Version,3)))+1),3)
+FROM [ExactData].[dbo].[_ST_ItemPricelistVersions] 
+
+INSERT INTO [ExactData].[dbo].[_ST_ItemPricelistVersions] (Version) 
+SELECT @nextversion
+WHERE (SELECT COUNT(*) FROM [ExactData].[dbo].[_ST_ItemPricelistHistory] WHERE Version IS NULL) &gt; 0
+
+UPDATE [ExactData].[dbo].[_ST_ItemPricelistLog] SET Version = @nextversion WHERE Version IS NULL
+UPDATE [ExactData].[dbo].[_ST_ItemPricelistHistory] SET Version = @nextversion WHERE Version IS NULL</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Create pricelist version</stepname></step><step><id>2975</id><entity>-none-</entity><action>process</action><source>133</source><target>80</target><datasource>select * FROM [ExactData].[dbo].[_ST_ItemPricelistVersions] WHERE Syscreated BETWEEN DATEADD(HOUR,-1,GETDATE()) AND GETDATE()</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;sysaction=1;sysfilefolder=C:\APPS\Pricelists\documentation\DownloadPricelistsTOProom.cmd;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>Id</name><type>Int32</type></datacolumn><datacolumn><name>Version</name><type>String</type></datacolumn><datacolumn><name>Syscreated</name><type>DateTime</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2>C:\APPS\Pricelists\</systemtarget_param2><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Save reports to PROOM when version is created</stepname></step><step><id>3402</id><entity>-none-</entity><action>process</action><source>133</source><target>80</target><datasource>select * FROM [ExactData].[dbo].[_ST_ItemPricelistVersions] WHERE Syscreated BETWEEN DATEADD(HOUR,-1,GETDATE()) AND GETDATE()</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>31</seqno><settings>uniquekey=;retryunique=0;sysaction=1;sysfilefolder=C:\APPS\Pricelists\documentation\DownloadPricelistsLocal.cmd;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>Id</name><type>Int32</type></datacolumn><datacolumn><name>Version</name><type>String</type></datacolumn><datacolumn><name>Syscreated</name><type>DateTime</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2>C:\APPS\Pricelists\</systemtarget_param2><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Backup reports when version is created</stepname></step></steps></job></jobs>

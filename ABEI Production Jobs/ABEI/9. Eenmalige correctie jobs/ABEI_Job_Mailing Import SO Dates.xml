@@ -1,0 +1,539 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>517</id><jobname>Mailing Import SO Dates</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=15:33:24;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3391</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>------------------- SEND EMAIL --------------------</stepname></step><step><id>3400</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT  DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK) ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+LEFT JOIN [483]..orkrg io with (NOLOCK) on io.ordernr = RIGHT(i.SODescription, 8) COLLATE DATABASE_DEFAULT
+where i.state = 2 AND i.SelectionCode IN ('1','2','5','7') -- except 28,99 and 83
+  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0 
+AND io.ordernr is null
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New Ship Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>101</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=TEST - New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>TEST - Send mail 400 to MV</stepname></step><step><id>3396</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+      ,h.mail as AccountManager
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK) ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+LEFT JOIN [483]..orkrg io with (NOLOCK) on io.ordernr = RIGHT(i.SODescription, 8) COLLATE DATABASE_DEFAULT
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where i.state = 2 AND i.SelectionCode IN ('1','2','5','7') -- except 28,99 and 83
+  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0 
+AND io.ordernr is null
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+      ,h.mail
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New Ship Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>102</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%EmailAddress%;emailcc=;emailbcc=support.netherlands@stoneridge.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%a.brands@orlaco.com%semicolon%%AccountManager%;emailsub=New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>AccountManager</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to customer 400</stepname></step><step><id>3388</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET EmailSent = 1,  [EmailAddress] = LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))), sysmodified = GETDATE()
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN [400]..orsrg r WITH (NOLOCK) ON i.OrderNr = r.ordernr 
+inner join [400]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  [400]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+LEFT JOIN [483]..orkrg io with (NOLOCK) on io.ordernr = RIGHT(i.SODescription, 8) COLLATE DATABASE_DEFAULT
+where i.SelectionCode IN ('1','2','5','7','99')  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0 
+AND io.ordernr is null</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>103</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name /><type /></datacolumn></datacolumns></general><query><query_separator /></query></settings></settingsxml><stepname>Set mail state 400</stepname></step><step><id>3392</id><entity>-none-</entity><action>create</action><source>127</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK)  ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.state = 2 AND i.SelectionCode IN ('1','2','5','7','83') -- except 28 and 99
+ and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>111</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=TEST - New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>TEST - Send mail 483 to MV</stepname></step><step><id>3397</id><entity>-none-</entity><action>create</action><source>127</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+      ,h.mail as AccountManager
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK)  ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where i.state = 2 AND  i.SelectionCode IN ('1','2','5','7','83') -- except 28 and 99
+ and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+      ,h.mail
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>112</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%EmailAddress%;emailcc=;emailbcc=support.netherlands@stoneridge.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%%AccountManager%;emailsub=New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>AccountManager</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to customer 483</stepname></step><step><id>3393</id><entity>-none-</entity><action>exec SQL</action><source>127</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET EmailSent = 1,  [EmailAddress] = LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))), sysmodified = GETDATE()
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN [483]..orsrg r WITH (NOLOCK) ON i.OrderNr = r.ordernr 
+inner join [483]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  [483]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.SelectionCode IN ('1','2','5','7','99','83')  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>113</seqno><settings /><settingsxml /><stepname>Set mail state 483</stepname></step><step><id>3389</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..orsrg r WITH (NOLOCK)  ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join [483]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join [483]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.state = 2 AND  i.SelectionCode IN ('1','2','5','7','83') -- except 28 and 99
+ AND do.ord_contactemail IS NOT NULL and i.EmailSent = 0
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>115</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=TEST - New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>TEST - Send mail 483 FROM 400 to MV</stepname></step><step><id>3398</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+      ,h.mail as AccountManager
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..orsrg r WITH (NOLOCK)  ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join [483]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join [483]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where i.state = 2 AND  i.SelectionCode IN ('1','2','5','7','83') -- except 28 and 99
+ AND do.ord_contactemail IS NOT NULL and i.EmailSent = 0
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+      ,h.mail
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>116</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%EmailAddress%;emailcc=;emailbcc=support.netherlands@stoneridge.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%a.brands@orlaco.com%semicolon%%AccountManager%;emailsub=New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>AccountManager</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to customer 483 FROM 400</stepname></step><step><id>3390</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET EmailSent = 1,  [EmailAddress] = LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))), sysmodified = GETDATE()
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..orsrg r WITH (NOLOCK) ON do.ordernr = r.ordernr 
+inner join [483]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join [483]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.SelectionCode IN ('1','2','5','7','83','99') AND do.ord_contactemail IS NOT NULL and i.EmailSent = 0
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>117</seqno><settings /><settingsxml /><stepname>Set mail state 483 FROM 400</stepname></step><step><id>3394</id><entity>-none-</entity><action>create</action><source>112</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK)   ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.state = 2 AND  i.SelectionCode IN ('1','2','5','7') -- except 28 and 99
+  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>121</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=TEST - New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>TEST - Send mail 484 to MV</stepname></step><step><id>3399</id><entity>-none-</entity><action>create</action><source>112</source><target>6</target><datasource>SELECT DISTINCT
+      do.[OrderNr]
+      ,[DebtorNr]
+      ,[Name]
+      ,do.docnumber AS SODescription
+      ,i.[SODate]
+      ,r.regel as [RowNr]
+      ,MAX(ISNULL(CONVERT(varchar,EGPlannedDate,103),'')) AS [EGPlannedDate]
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END AS [NewDeliveryDate]
+      ,r.artcode as [Itemcode]
+      ,r.oms45 as [ItemDescription]
+      ,r.esr_aantal as [Quantity]
+      ,LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))) AS [EmailAddress]
+      ,ia.ItemCodeAccount
+      ,h.mail as AccountManager
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN orsrg r WITH (NOLOCK)   ON r.orderNr = do.ordernr and r.regel = i.rownr and r.artcode = i.itemcode collate database_default
+inner join cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where i.state = 2 AND  i.SelectionCode IN ('1','2','5','7') -- except 28 and 99
+  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0
+GROUP BY
+ do.[OrderNr]
+ ,i.[DebtorNr]
+ ,i.[Name]
+      ,do.docnumber 
+      ,i.[SODate]
+      ,r.regel 
+      ,CASE 
+            WHEN r.afldat = '2099-12-31' THEN 'T.B.A'
+            ELSE CONVERT(varchar, r.afldat, 103) 
+       END
+      ,r.artcode
+      ,r.oms45 
+      ,r.esr_aantal
+      ,ISNULL(EmailAddress,do.ord_contactemail) 
+      ,ia.ItemCodeAccount
+      ,h.mail
+ORDER BY EmailAddress, OrderNr, RowNr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;
+
+&lt;p&gt;To: %Name% - %EmailAddress%&lt;/p&gt;
+&lt;span lang="EN"&gt;&lt;p align="LEFT" dir="LTR"&gt;Dear Customer,&lt;/p&gt;&lt;p align="LEFT" dir="LTR"&gt;We want to inform you about an upcoming change in delivery times for your open orders. Based on the current situation/information in regards to the availability of the components we have rescheduled your orders, which you will see below.&lt;br&gt; If the situation changes again we will inform you accordingly.&lt;/p&gt;&lt;/span&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;&lt;/p&gt;&lt;/span&gt;
+
+
+
+
+
+&lt;br&gt;&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;New &lt;/strong&gt;&lt;strong&gt;Ship&lt;/strong&gt; &lt;strong&gt;Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%SODescription%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%ItemDescription%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%NewDeliveryDate%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="15"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>122</seqno><settings>retryunique=0;uniquekey=;emailfrom=support.netherlands@stoneridge.com;emailname=Stoneridge - Orlaco Global Support team;emailreplyto=support.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%EmailAddress%;emailcc=;emailbcc=support.netherlands@stoneridge.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%%AccountManager%;emailsub=New order confirmation - Changed delivery date;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=OrderNr,SODescription,Itemcode,ItemDescription,Quantity,NewDeliveryDate;mex_connectionid=0;emailsplitcolumn=EmailAddress;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebtorNr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>SODescription</name><type>String</type></datacolumn><datacolumn><name>SODate</name><type>DateTime</type></datacolumn><datacolumn><name>RowNr</name><type>String</type></datacolumn><datacolumn><name>EGPlannedDate</name><type>String</type></datacolumn><datacolumn><name>NewDeliveryDate</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescription</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>AccountManager</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to customer 484</stepname></step><step><id>3395</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET EmailSent = 1,  [EmailAddress] = LOWER(LTRIM(RTRIM(ISNULL(EmailAddress,do.ord_contactemail)))), sysmodified = GETDATE()
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [484]..orkrg do with (NOLOCK) on do.ordernr = i.ordernr
+INNER JOIN [484]..orsrg r WITH (NOLOCK) ON i.OrderNr = r.ordernr 
+inner join [484]..cicmpy c with (NOLOCK) on do.debnr = c.debnr
+left join  [484]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = r.artcode
+where i.SelectionCode IN ('1','2','5','7','99')  and i.EmailSent = 0 AND do.ord_contactemail IS NOT NULL
+AND r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'P' AND r.ar_soort &lt;&gt; 'T' and do.afgehandld = 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>123</seqno><settings /><settingsxml /><stepname>Set mail state 484</stepname></step></steps></job></jobs>

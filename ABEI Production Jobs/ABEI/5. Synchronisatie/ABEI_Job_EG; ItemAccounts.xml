@@ -1,0 +1,271 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>399</id><jobname>EG: ItemAccounts</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>freq=15;timescale=minutes;startat=15:03:52;beginat=07:00:00;endat=23:59:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2066</id><entity>ItemAccount</entity><action>delete</action><source>1</source><target>107</target><datasource>select i.id
+from [%abeitargetdb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeitargetdb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeisourcedb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeisourcedb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and i2.id is null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>Delete ItemAccount Synergy -&gt; 400 </stepname></step><step><id>2067</id><entity>ItemAccount</entity><action>create</action><source>1</source><target>107</target><datasource>select c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+    left outer join [%abeitargetdb%].dbo.items it with (nolock) on i.itemcode = it.itemcode
+where 1=1
+    and i2.id is null
+    and it.id is not null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create ItemAccount Synergy -&gt; 400</stepname></step><step><id>2068</id><entity>ItemAccount</entity><action>update</action><source>1</source><target>107</target><datasource>select i2.id, c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    inner join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    inner join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and c.cmp_status = 'A'
+    and c.cmp_type = 'C'
+    and i.itemcodeaccount != i2.itemcodeaccount</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>12</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update ItemAccount Synergy -&gt; 400</stepname></step><step><id>2072</id><entity>ItemAccount</entity><action>delete</action><source>1</source><target>126</target><datasource>select i.id
+from [%abeitargetdb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeitargetdb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeisourcedb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeisourcedb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and i2.id is null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings></settings><settingsxml /><stepname>Delete ItemAccount Synergy -&gt; 483</stepname></step><step><id>2070</id><entity>ItemAccount</entity><action>create</action><source>1</source><target>126</target><datasource>select c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+    left outer join [%abeitargetdb%].dbo.items it with (nolock) on i.itemcode = it.itemcode
+where 1=1
+    and i2.id is null
+    and it.id is not null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>21</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create ItemAccount Synergy -&gt; 483</stepname></step><step><id>2073</id><entity>ItemAccount</entity><action>update</action><source>1</source><target>126</target><datasource>select i2.id, c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      --      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    inner join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    inner join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and c.cmp_status = 'A'
+    and c.cmp_type = 'C'
+    and i.itemcodeaccount != i2.itemcodeaccount</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>22</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update ItemAccount Synergy -&gt; 483</stepname></step><step><id>2071</id><entity>ItemAccount</entity><action>delete</action><source>1</source><target>112</target><datasource>select i.id
+from [%abeitargetdb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeitargetdb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeisourcedb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeisourcedb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and i2.id is null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings></settings><settingsxml /><stepname>Delete ItemAccount Synergy -&gt; 484</stepname></step><step><id>2069</id><entity>ItemAccount</entity><action>create</action><source>1</source><target>112</target><datasource>select c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    left outer join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    left outer join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+    left outer join [%abeitargetdb%].dbo.items it with (nolock) on i.itemcode = it.itemcode
+where 1=1
+    and i2.id is null
+    and it.id is not null
+    and c2.id is not null
+    and c2.cmp_status = 'A'
+    and c2.cmp_type = 'C'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>31</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create ItemAccount Synergy -&gt; 484</stepname></step><step><id>2074</id><entity>ItemAccount</entity><action>update</action><source>1</source><target>112</target><datasource>select i2.id, c2.cmp_wwn as accountcode, i.itemcode
+      ,i.[crdnr]
+      ,i.[MainAccount]
+      ,i.[ItemCodeAccount]
+      ,i.[EANCode]
+      ,i.[PurchaseCurrency]
+      ,i.[PurchasePrice]
+      ,i.[PurchaseVATCode]
+      ,i.[PurchaseVATPerc]
+      ,i.[PurchaseVATIncl]
+      ,i.[PurchaseUnit]
+      ,i.[PurchasePackage]
+      ,i.[PurchaseUnitToInternalUnitFactor]
+      ,i.[PurchaseUnitToPurchasePackageFactor]
+      ,i.[PurchaseOrderSize]
+      ,i.[DiscountMargin]
+      ,i.[SalesPriceRecommended]
+      ,i.[SlsPkgsPerPurPkg]
+      ,i.[DeliveryTimeInDays]
+      ,i.[DeliverableFromStock]
+      ,i.[DocumentID]
+      ,i.[SupplierPreference]
+      ,i.[StatisticalFactor]
+      ,i.[Warranty]
+      ,i.[CountryOfOrigin]
+      ,i.[Division]
+      ,i.[syscreated]
+      ,i.[syscreator]
+      ,i.[sysmodified]
+      ,i.[sysmodifier]
+      ,i.[sysguid]
+      ,i.[timestamp]
+from [%abeisourcedb%].dbo.ItemAccounts i with (nolock)
+    inner join [%abeisourcedb%].dbo.cicmpy c with (nolock) on c.cmp_wwn = i.accountcode
+    inner join [%abeitargetdb%].dbo.cicmpy c2 with (nolock) on c.debnr = c2.debnr
+    inner join [%abeitargetdb%].dbo.ItemAccounts i2 with (nolock) on c2.cmp_wwn = i2.accountcode and i.itemcode = i2.itemcode
+where 1=1
+    and c.cmp_status = 'A'
+    and c.cmp_type = 'C'
+    and i.itemcodeaccount != i2.itemcodeaccount</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>32</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update ItemAccount Synergy -&gt; 484</stepname></step></steps></job></jobs>

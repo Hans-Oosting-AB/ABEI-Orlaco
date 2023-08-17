@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>325</id><jobname>EG/ESE: Verzoek export licentie</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>freq=1;timescale=once;startat=23:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1519</id><entity>Request</entity><action>create</action><source>107</source><target>1</target><datasource>select   s.cmp_wwn as CustomerID
+	, ok.ordernr as FreeTextField_01
+	, case when ok.syscreator = 10152 then 99999 else ok.syscreator end as EmpID
+	, 'Export Licentie Aanvragen ' + rtrim(ltrim(ok.ordernr)) as Description
+	, 6023 as type
+from 	orsrg os with (nolock)
+		inner join items i with (nolock) on os.artcode = i.ItemCode
+		inner join orkrg ok with (nolock) on ok.ordernr = os.ordernr
+		inner join cicmpy c with (nolock) on c.debnr = ok.verzdebnr
+
+		cross apply
+		(
+			select top(1) sc.cmp_wwn from [%abeitargetdb%].dbo.cicmpy sc with (nolock)
+			where 1=1
+			and rtrim(ltrim(sc.cmp_code)) = ok.verzdebnr
+		) s
+
+where	1=1
+	and ISNULL(i.UserNumber_06, 0) &gt; 0
+	and c.sct_code = 'ML'
+	and ok.ord_soort = 'V'
+	and ok.afgehandld = 0
+group by ok.ordernr, s.cmp_wwn, ok.syscreator
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=FreeTextField_01;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken verzoek export licentie</stepname></step><step><id>1521</id><entity>Request</entity><action>create</action><source>112</source><target>1</target><datasource>select   s.cmp_wwn as CustomerID
+	, ok.ordernr as FreeTextField_01
+	, case when ok.syscreator = 10152 then 99999 else ok.syscreator end as EmpID
+	, 'Export Licentie Aanvragen ' + rtrim(ltrim(ok.ordernr)) as Description
+	, 6023 as type
+from 	orsrg os with (nolock)
+		inner join items i with (nolock) on os.artcode = i.ItemCode
+		inner join orkrg ok with (nolock) on ok.ordernr = os.ordernr
+		inner join cicmpy c with (nolock) on c.debnr = ok.verzdebnr
+
+		cross apply
+		(
+			select top(1) sc.cmp_wwn from [%abeitargetdb%].dbo.cicmpy sc with (nolock)
+			where 1=1
+			and rtrim(ltrim(sc.cmp_code)) = ok.verzdebnr
+		) s
+
+where	1=1
+	and ISNULL(i.UserNumber_06, 0) &gt; 0
+	and c.sct_code = 'ML'
+	and ok.ord_soort = 'V'
+	and ok.afgehandld = 0
+group by ok.ordernr, s.cmp_wwn, ok.syscreator
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=FreeTextField_01;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken verzoek export licentie</stepname></step><step><id>1769</id><entity>Request</entity><action>create</action><source>126</source><target>1</target><datasource>select   s.cmp_wwn as CustomerID
+    , ok.ordernr as FreeTextField_01
+    , case when ok.syscreator = 10152 then 99999 else ok.syscreator end as EmpID
+    , 'Export Licentie Aanvragen ' + rtrim(ltrim(ok.ordernr)) as Description
+    , 6023 as type
+from    orsrg os with (nolock)
+        inner join items i with (nolock) on os.artcode = i.ItemCode
+        inner join orkrg ok with (nolock) on ok.ordernr = os.ordernr
+        inner join cicmpy c with (nolock) on c.debnr = ok.verzdebnr
+
+        cross apply
+        (
+            select top(1) sc.cmp_wwn from [%abeitargetdb%].dbo.cicmpy sc with (nolock)
+            where 1=1
+            and rtrim(ltrim(sc.cmp_code)) = ok.verzdebnr
+        ) s
+
+where   1=1
+    and ISNULL(i.UserNumber_06, 0) &gt; 0
+    and c.sct_code = 'ML'
+    and ok.ord_soort = 'V'
+    and ok.afgehandld = 0
+group by ok.ordernr, s.cmp_wwn, ok.syscreator
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=FreeTextField_01;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken verzoek export licentie</stepname></step></steps></job></jobs>

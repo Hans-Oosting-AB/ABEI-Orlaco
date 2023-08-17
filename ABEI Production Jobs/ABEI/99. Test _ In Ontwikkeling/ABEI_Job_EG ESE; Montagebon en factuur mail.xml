@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>324</id><jobname>EG/ESE: Montagebon en factuur mail</jobname><disable>True</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>startat=10:37:04;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>1514</id><entity>-none-</entity><action>exec SQL</action><source>105</source><target>0</target><datasource>insert into [ABEI].dbo._AB_tb_Mail_Documents (docid,dochid, ordernr, rowstatus, type, filename,  runid,syscreated, sysmodified)
+-- selecteer factuur pdf van montage order met selectiecode 29 waarvan ook een montagebon is
+select  distinct
+ bd.id, bd.hid, ok.ordernr, 0 as status , 0 as type , bd.filename,  '%RUNID%' as runid, current_timestamp as syscreated, current_timestamp as sysmodified
+from    dbo.BacoDiscussions bd with (nolock)
+            inner join dbo.orkrg ok with (nolock) on bd.OrderNumber = ok.ordernr
+where   1=1 
+        and bd.Type = 14 -- factuur
+        and bd.Warehouse = 4
+        and ok.selcode = '29' -- order selectiecode
+        and bd.filename like '%.pdf'
+        and ok.ordernr collate database_default not in (select ordernr from [ABEI].dbo._AB_tb_Mail_Documents)
+        and exists (select  a.id
+            from    [orlaco].dbo.Absences a
+            where   1=1
+                and a.FreeTextField_09 = ok.ordernr
+                and a.Type = 630  -- Montage verzoek
+                and a.status = 4  -- Verwerkt
+            )
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>Haal factuur op</stepname></step><step><id>1513</id><entity>-none-</entity><action>exec SQL</action><source>1</source><target>0</target><datasource>insert into [ABEI].dbo._AB_tb_Mail_Documents (docid,dochid, ordernr, rowstatus, type, filename,  runid,syscreated, sysmodified)
+
+select -- Selecteer montagebon uit montageverzoek met status verwerkt met factuur van een order met selectiecode 29
+        at.id as docid 
+        , b.hid as dochid
+        , LEFT(a.FreeTextField_09, 8) as ordernr 
+        , 0 as rowstatus 
+        , 1 as type, ISNULL(at.attachmentfilename, 'unknown') as filename
+        ,  '%runid%'  as runid
+        , current_timestamp as syscreated
+        , current_timestamp as sysmodified
+from    [orlaco].dbo.Absences a
+        inner join [orlaco].dbo.BacoDiscussions b WITH (NOLOCK)  on a.DocumentID = b.ID and b.Type = 239 -- Document VIS: Montagebon
+        inner join [orlaco].dbo.attachments at WITH (NOLOCK) on at.entity = b.ID 
+where   1=1
+        and a.Type = 630  -- Montage verzoek
+        and a.status = 4  -- Verwerkt
+        and a.FreeTextField_09 COLLATE DATABASE_DEFAULT in (select ordernr from [ABEI].dbo._AB_tb_Mail_Documents where rowstatus = 0 and type = 0) 
+        and a.FreeTextField_09 COLLATE DATABASE_DEFAULT not in (select ordernr from [ABEI].dbo._AB_tb_Mail_Documents where rowstatus = 0 and type = 1)
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings></settings><settingsxml /><stepname>Haal montagebon op</stepname></step><step><id>1530</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>select  bEG.document binary_bodyEG, atESE.attachment binary_bodyESE
+        , cast(af.dochid as varchar(30)) + '_' + af.filename as filenameEG
+        , cast(am.dochid as varchar(30)) + '_' + am.filename as filenameESE 
+        , ISNULL(ok.inv_contactemail, 'ar@orlaco.nl') as email
+        , af.ordernr
+from    [ABEI].dbo._AB_tb_Mail_Documents am with (nolock)
+        right outer join [ABEI].dbo._AB_tb_Mail_Documents af with (nolock) on am.type = 1 and af.type = 0 and am.ordernr = af.ordernr
+        left outer join [orlaco].dbo.Attachments atESE with (nolock) on am.docid = atESE.id
+        left outer join [100].dbo.bacodiscussions bEG with (nolock) on af.docid = bEG.id
+        inner join [100].dbo.orkrg ok with (nolock) on ok.ordernr = af.ordernr COLLATE DATABASE_DEFAULT
+where   1=1
+        and af.rowstatus = 0
+        and af.type = 0
+        and af.runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=test;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments><attachment><filename>%filenameEG%</filename><filepath /><filetype /><contentcolumn>binary_bodyEG</contentcolumn><isbinary>True</isbinary></attachment><attachment><filename>%filenameESE%</filename><filepath /><filetype /><contentcolumn>binary_bodyESE</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>Verzenden montagebon en factuur</stepname></step><step><id>1517</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>update [ABEI].dbo._AB_tb_Mail_Documents
+set rowstatus = 1
+from    (select  bEG.document binary_bodyEG, atESE.attachment binary_bodyESE
+        , cast(af.dochid as varchar(30)) + '_' + af.filename as filenameEG
+        , cast(am.dochid as varchar(30)) + '_' + am.filename as filenameESE 
+        , ISNULL(ok.inv_contactemail, 'ar@orlaco.nl') as email
+        , af.ordernr
+from    [ABEI].dbo._AB_tb_Mail_Documents am with (nolock)
+        right outer join [ABEI].dbo._AB_tb_Mail_Documents af with (nolock) on am.type = 1 and af.type = 0 and am.ordernr = af.ordernr
+        left outer join [orlaco].dbo.Attachments atESE with (nolock) on am.docid = atESE.id
+        left outer join [100].dbo.bacodiscussions bEG with (nolock) on af.docid = bEG.id
+        inner join [100].dbo.orkrg ok with (nolock) on ok.ordernr = af.ordernr COLLATE DATABASE_DEFAULT
+where   1=1
+        and af.rowstatus = 0
+        and af.type = 0
+        and af.runid = '%runid%') u inner join [ABEI].dbo._AB_tb_Mail_Documents d on u.ordernr = d.ordernr COLLATE DATABASE_DEFAULT
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings></settings><settingsxml /><stepname>Update status documenten</stepname></step></steps></job></jobs>

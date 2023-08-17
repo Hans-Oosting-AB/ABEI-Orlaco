@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>548</id><jobname>Update order rows to actual price pricelist</jobname><disable>False</disable><emailbody /><emailmode>0</emailmode><emailsubject /><emailto></emailto><remarks></remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>10</freq><timescale>hours</timescale><frequency>never</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>0</scheduledenabled><startat>08:55:23</startat><beginat>00:00:00</beginat><endat>23:59:59</endat><day1>0</day1><day2>0</day2><day3>0</day3><day4>0</day4><day5>0</day5><day6>0</day6><day7>0</day7><duration_start>2022-05-31</duration_start><duration_end>2073-05-31</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>param_0</name><type>String</type><value /></jobparam></jobparams></settings></settingsxml><steps><step><id>4002</id><entity>SalesOrderHeader</entity><action>update</action><source>127</source><target>127</target><datasource>select ordernr as headerid, ordernr 
+from orkrg with (NOLOCK) where ordernr IN (
+'52101296',
+'52200744',
+'52201312',
+'52201396',
+'52201398',
+'52201651',
+'52201678',
+'52201852',
+'52201853',
+'52201885',
+'52202192',
+'52202193',
+'52202282',
+'52300002',
+'52300003',
+'52300004',
+'52300005',
+'52300006',
+'52300007',
+'52300008',
+'52300009',
+'52300010',
+'52300011',
+'52300012',
+'52300013',
+'52300014',
+'52300015',
+'52300016',
+'52300017',
+'52300018',
+'52300019',
+'52300020',
+'52300021',
+'52300022',
+'52300023',
+'52300024',
+'52300025',
+'52300026',
+'52300027',
+'52300028',
+'52300029',
+'52300030',
+'52300031',
+'52300032',
+'52300033',
+'52300034',
+'52300035',
+'52300037',
+'52300038',
+'52300039',
+'52300062',
+'52300094',
+'52300108',
+'52300120',
+'52300121',
+'52300123',
+'52300175',
+'52300178',
+'52300179',
+'52300195',
+'52300254',
+'52300255',
+'52300256',
+'52300257',
+'52300297',
+'52300356',
+'52300377',
+'52300471',
+'52300472',
+'52300499',
+'52300510',
+'52300552',
+'52300554',
+'52300555',
+'52300603',
+'52300604',
+'52300613',
+'52300705',
+'52300708',
+'52300709',
+'52300710',
+'52300718',
+'52300719',
+'52300720',
+'52300721',
+'52300723',
+'52300796',
+'52300797',
+'52300827',
+'52300828',
+'52300829',
+'52300830',
+'52300842',
+'52300843',
+'52300865'
+)
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Header price</stepname></step><step><id>4003</id><entity>SalesOrderLine</entity><action>update</action><source>127</source><target>127</target><datasource>SELECT 
+    ordernr as headerid, 
+    ordernr, 
+    id, 
+    regel, 
+    artcode, 
+    prijs83 as old_prijs83, 
+    prijs_n as old_prijs_n,
+    (SELECT top 1
+        (CASE 
+            WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+            ELSE staffl.prijs83 
+         END)
+     FROM staffl
+     JOIN items ON items.ItemCode = staffl.artcode 
+     WHERE staffl.prijslijst = N'LIEBHERR''15-''18'
+     AND items.condition = 'A'
+     AND GETDATE() &gt; staffl.validfrom 
+     AND GETDATE() &lt; staffl.validto
+     AND items.ItemCode = r.artcode) as prijs83,
+    (SELECT top 1
+        (CASE 
+            WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+            ELSE staffl.prijs83 
+         END)
+     FROM staffl
+     JOIN items ON items.ItemCode = staffl.artcode 
+     WHERE staffl.prijslijst = N'LIEBHERR''15-''18'
+     AND items.condition = 'A'
+     AND GETDATE() &gt; staffl.validfrom 
+     AND GETDATE() &lt; staffl.validto
+     AND items.ItemCode = r.artcode) as prijs_n
+FROM 
+    orsrg r WITH (NOLOCK)
+WHERE 
+    r.ordernr IN (
+'52101296',
+'52200744',
+'52201312',
+'52201396',
+'52201398',
+'52201651',
+'52201678',
+'52201852',
+'52201853',
+'52201885',
+'52202192',
+'52202193',
+'52202282',
+'52300002',
+'52300003',
+'52300004',
+'52300005',
+'52300006',
+'52300007',
+'52300008',
+'52300009',
+'52300010',
+'52300011',
+'52300012',
+'52300013',
+'52300014',
+'52300015',
+'52300016',
+'52300017',
+'52300018',
+'52300019',
+'52300020',
+'52300021',
+'52300022',
+'52300023',
+'52300024',
+'52300025',
+'52300026',
+'52300027',
+'52300028',
+'52300029',
+'52300030',
+'52300031',
+'52300032',
+'52300033',
+'52300034',
+'52300035',
+'52300037',
+'52300038',
+'52300039',
+'52300062',
+'52300094',
+'52300108',
+'52300120',
+'52300121',
+'52300123',
+'52300175',
+'52300178',
+'52300179',
+'52300195',
+'52300254',
+'52300255',
+'52300256',
+'52300257',
+'52300297',
+'52300356',
+'52300377',
+'52300471',
+'52300472',
+'52300499',
+'52300510',
+'52300552',
+'52300554',
+'52300555',
+'52300603',
+'52300604',
+'52300613',
+'52300705',
+'52300708',
+'52300709',
+'52300710',
+'52300718',
+'52300719',
+'52300720',
+'52300721',
+'52300723',
+'52300796',
+'52300797',
+'52300827',
+'52300828',
+'52300829',
+'52300830',
+'52300842',
+'52300843',
+'52300865'    
+)
+    AND (ar_soort &lt;&gt; 'P') 
+    AND artcode NOT LIKE '%TXT%' 
+    AND prijs_n &gt; .1 
+    AND r.uitgifte = 0 
+    AND r.afldat &gt; GETDATE()
+    AND prijs83 &lt;&gt; (SELECT top 1
+                        (CASE 
+                            WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+                            ELSE staffl.prijs83 
+                         END)
+                     FROM staffl
+                     JOIN items ON items.ItemCode = staffl.artcode 
+                     WHERE staffl.prijslijst = N'LIEBHERR''15-''18'
+                     AND items.condition = 'A'
+                     AND GETDATE() &gt; staffl.validfrom 
+                     AND GETDATE() &lt; staffl.validto
+                     AND items.ItemCode = r.artcode)
+
+                     
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>old_prijs83</name><type>Double</type></datacolumn><datacolumn><name>old_prijs_n</name><type>Double</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update row price</stepname></step></steps></job></jobs>

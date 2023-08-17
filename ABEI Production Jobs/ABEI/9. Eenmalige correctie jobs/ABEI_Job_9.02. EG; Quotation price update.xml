@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>525</id><jobname>9.02. EG: Quotation price update</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=08:35:38;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>2000</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3464</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_ABEI_OrderPriceUpdate ([db]
+    ,[ord_soort],[ordernr],[ID],[regel],[artcode],[oms45],[esr_aantal]
+    ,[prijslijst],[prijs_n_old],[prijs83_old],[korting_old],[bdr_ev_ed_val]
+    ,[bdr_d_ev_val],[bdr_vat_val],[bdr_inv_d_val],[bdr_val],[prijs83],[prijs_n]
+    ,[fiattering],[ordbv_afdr],[ordbv_afgd],[runid],[rowstatus]
+    ,reverted
+    ,debnr 
+    ,fakdebnr  
+    ,ord_contactemail  
+    ,inv_contactemail 
+    ,emailsent 
+    ,accmanmail 
+    ,old_represent_id  
+    ,represent_id  )
+
+SELECT 
+    '%abeisourcedb%' as db
+    , k.ord_soort, k.ordernr, r.ID, r.regel, r.artcode, r.oms45, r.esr_aantal, r.prijslijst, r.prijs_n as prijs_n_old, r.prijs83 as prijs83_old, r.korting as korting_old
+    , r.bdr_ev_ed_val, r.bdr_d_ev_val, r.bdr_vat_val, r.bdr_inv_d_val, r.bdr_val
+
+    , CAST(ROUND(r.prijs83 * 1.065,2) as decimal(16,2)) as prijs83
+    , CAST(ROUND(r.prijs_n * 1.065,2) as decimal(16,2)) as prijs_n
+
+    , k.fiattering
+    , k.ordbv_afdr
+    , k.ordbv_afgd
+
+    , '%runid%'
+    , 1 as rowstatus
+    , 0 as reverted
+    ,k.debnr 
+    ,k.fakdebnr  
+    ,k.ord_contactemail  
+    ,k.inv_contactemail 
+    ,0 as emailsent 
+    ,ISNULL(h.mail,'ISS@orlaco.com') as  accmanmail
+    ,k.represent_id  
+    ,CASE WHEN ISNULL( h.ldatuitdienst, '2099-01-01' ) &lt; '2022-01-26' THEN 10710 ELSE h.res_id END   as represent_id 
+FROM [%abeisourcedb%].dbo.orkrg k WITH (NOLOCK)
+    INNER JOIN [%abeisourcedb%].dbo.orsrg r WITH (NOLOCK) ON r.ordernr = k.ordernr
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK) ON c.debnr = k.debnr
+    INNER JOIN [%abeisourcedb%].dbo.humres h with (NOLOCK) on h.res_id = k.represent_id
+WHERE 1=1
+    AND k.afgehandld = 0 -- Open orders
+    AND k.ord_soort = 'Q' -- Quotations
+    AND r.ar_soort != 'P' -- Exclude condition lines
+    AND r.artcode NOT LIKE 'TXT%'  -- exclude text items as spot buy, ZCOM and MAN
+    AND r.uitgifte = 0 and r.pakbon_afg = 0 -- Open rows
+    AND r.reeds_fakt = 0 -- include delivered but not invoiced rows
+    and r.prijs_n &gt; 0.1 -- Exclude zero and negative rows
+    AND ISNULL(k.debnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  )         
+    AND ISNULL(k.fakdebnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  )      
+    AND ISNULL(k.verzdebnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  ) 
+    AND ISNULL(r.prijslijst,'') not in ( SELECT DISTINCT pe.Pricelist collate database_default FROM [ExactData].[dbo].[_ST_PriceUpdate23_PricelistList] pe WITH (NOLOCK) )            
+    and k.syscreated &lt; '2022-12-19' -- quotions created before 19-12-2022
+    --and r.afldat &gt;= '2023-01-01' -- delivery date in 2023
+    and (r.korting &lt;= -6.6 or r.korting &gt;= -6.4 ) -- don't update rows that already have the new price
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+        WHERE 1=1
+            AND o.db = '%abeisourcedb%'
+            AND o.ID = r.ID)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Get orders for DB</stepname></step><step><id>3465</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>SELECT 1 as c</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>Loop start</stepname></step><step><id>3475</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>==== Start</stepname></step><step><id>3466</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>109</seqno><settings></settings><settingsxml /><stepname>==== Process</stepname></step><step><id>3467</id><entity>QuotationLine</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP (100) 
+     o.ordernr as HeaderID
+    , o.ordernr
+    , o.ID
+    --  , o.prijs83
+    --, o.prijs_n
+    , o.prijs83_old as prijs83
+    , o.prijs_n_old as prijs_n
+    , o.represent_id as res_id
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'Q'
+
+    --AND (r.prijs83 &lt;&gt; o.prijs83
+    --    OR r.prijs_n &lt;&gt; o.prijs_n)
+
+    AND o.reverted = 1
+    AND ( abs(r.prijs83 - o.prijs83_old) &gt; 0.01
+    OR abs(r.prijs_n - o.prijs_n_old) &gt; 0.01)
+    
+    -- Test
+    --AND o.ordernr = '12017403'--'11640141'--'11913948'--'11907729'--'11640141'
+ORDER BY o.ordernr, o.ID
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn><datacolumn><name>res_id</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order for DB</stepname></step><step><id>3468</id><entity>QuotationHeader</entity><action>update</action><source>129</source><target>112</target><datasource>WITH orderlines AS (
+    SELECT TOP (100) 
+         o.ordernr as HeaderID
+        , o.ordernr
+        , o.ID
+        , o.prijs83
+        , o.prijs_n
+        , o.represent_id 
+    FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+        INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+    WHERE 1=1
+        AND o.rowstatus = 1
+        AND o.db = '%abeitargetdb%'
+        AND o.prijs83 &gt; 0
+        AND o.ord_soort = 'Q'
+
+        --AND (r.prijs83 &lt;&gt; o.prijs83
+        --    OR r.prijs_n &lt;&gt; o.prijs_n)
+        
+        AND o.reverted = 1
+        AND ( abs(r.prijs83 - o.prijs83_old) &gt; 0.01
+        OR abs(r.prijs_n - o.prijs_n_old) &gt; 0.01)
+
+    ORDER BY o.ordernr, o.ID
+)
+SELECT DISTINCT
+    HeaderID, ordernr , represent_id 
+FROM orderlines</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order for DB - Header</stepname></step><step><id>3469</id><entity>QuotationLine</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT 
+     o.ordernr as HeaderID
+    , o.ordernr
+    , o.ID
+    , o.prijs_n
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'Q'
+
+    AND o.prijs_n = 0
+    AND (r.prijs_n &lt;&gt; o.prijs_n)
+
+    AND EXISTS (
+        SELECT 1 
+        FROM [%abeidb%].dbo._AB_Entity_results r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.jobid = %jobid%
+            AND r.runid = '%runid%'
+            AND r.Entity = 'SalesOrderLine'
+            AND r.[action] = 'update'
+            AND r.TargetDB = '%abeitargetdb%'
+            AND r.HeaderID = o.ordernr COLLATE DATABASE_DEFAULT
+    )
+            
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order to 0 for DB</stepname></step><step><id>3470</id><entity>QuotationHeader</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT DISTINCT 
+     o.ordernr as HeaderID
+    , o.ordernr
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'Q'
+
+    AND o.prijs_n = 0
+    AND (r.prijs_n &lt;&gt; o.prijs_n)
+
+    AND EXISTS (
+        SELECT 1 
+        FROM [%abeidb%].dbo._AB_Entity_results r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.jobid = %jobid%
+            AND r.runid = '%runid%'
+            AND r.Entity = 'SalesOrderLine'
+            AND r.[action] = 'update'
+            AND r.TargetDB = '%abeitargetdb%'
+            AND r.HeaderID = o.ordernr COLLATE DATABASE_DEFAULT
+    )
+            
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update order to 0 for DB - Header</stepname></step><step><id>3473</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>129</target><datasource>UPDATE o WITH (ROWLOCK, NOWAIT) SET
+-- SELECT
+    rowstatus = 2
+    , runid = '%runid%'
+    , sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o 
+    INNER JOIN [%abeisourcedb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeisourcedb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'Q'
+
+    --AND r.prijs83 = o.prijs83
+    --AND r.prijs_n = o.prijs_n   
+   
+    AND o.reverted = 1
+    AND ( abs(r.prijs83 - o.prijs83_old) &lt; 0.01
+    OR abs(r.prijs_n - o.prijs_n_old) &lt; 0.01) 
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>130</seqno><settings /><settingsxml /><stepname>Check result for DB</stepname></step><step><id>3474</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>9000</seqno><settings></settings><settingsxml /><stepname>==== Loop</stepname></step><step><id>3471</id><entity>-none-</entity><action>process</action><source>112</source><target>80</target><datasource>SELECT CASE WHEN l.ct &gt; 0 THEN 100 ELSE 9020 END as seqno
+FROM (
+    SELECT COUNT(o.ID) as ct
+    FROM [ABSC_Data].dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    WHERE 1=1
+        AND o.db = '%abeisourcedb%'
+        AND o.rowstatus = 1
+        AND o.ord_soort = 'Q'
+) l</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>9010</seqno><settings>uniquekey=;retryunique=0;sysaction=12;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>seqno</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno>%seqno%</systemtarget_skiptoseqno><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Loop back</stepname></step><step><id>3472</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>SELECT 1 as c</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>9020</seqno><settings /><settingsxml /><stepname>Loop end</stepname></step></steps></job></jobs>

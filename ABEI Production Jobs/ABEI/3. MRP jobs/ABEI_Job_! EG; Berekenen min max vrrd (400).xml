@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>215</id><jobname>! EG: Berekenen min max vrrd (400)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Berekenen min max vrrd  van artikelen in magazijn 1 en wegschrijven van deze waarden</remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:27;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>1357</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>truncate table [dbo].[_AB_Min_Max];
+
+Insert 
+into _AB_Min_Max (VoorrdID, Artcode, magcode, bestniv, maxvrd, status, syscreated)
+
+Select ID, Artcode, magcode, bestniv, maxvrd, '1' as Status, current_timestamp as syscreated from [dbo].[_AB_Min_Max_vrrd]
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>5</seqno><settings /><settingsxml /><stepname>Vul tijdelijke tabel</stepname></step><step><id>1353</id><entity>WarehouseStock</entity><action>update</action><source>107</source><target>107</target><datasource>SELECT v.ID, mm.artcode, mm.magcode
+    , mm.bestniv, mm.maxvrd 
+from [dbo].[_AB_Min_Max] mm WITH (NOLOCK)
+    INNER JOIN dbo.voorrd v WITH (NOLOCK)
+        ON v.artcode = mm.artcode AND v.magcode = mm.magcode
+WHERE 1=1
+    -- LVE 20200221 added diff check
+    AND (mm.bestniv &lt;&gt; v.bestniv 
+    OR mm.Maxvrd &lt;&gt; v.maxvrd)
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>magcode</name><type>String</type></datacolumn><datacolumn><name>bestniv</name><type>Double</type></datacolumn><datacolumn><name>maxvrd</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update min max vrrd per magazijn</stepname></step></steps></job></jobs>

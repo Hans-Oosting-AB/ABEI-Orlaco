@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>478</id><jobname>ESE: IFR - Restore waiting check</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2868</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_IFR_History
+    (aID,HID,syscreated,Waiting,WaitingReason,bkstknr,RequestComments,WorkflowComments,Approved,Status
+    ,prev_HID,prev_syscreated,prev_Waiting,prev_WaitingReason,prev_bkstknr,prev_RequestComments,prev_WorkflowComments,prev_Approved,prev_Status
+    ,first_created
+    ,runid,rowstatus)
+
+SELECT 
+    a.ID
+    , a.HID
+    , a.syscreated
+    , a.FreeBoolField_01 as Waiting
+    , a.FreeTextField_01 as WaitingReason
+    , a.FreeIntField_01 AS bkstknr
+    , a.RequestComments
+    , a.WorkflowComments
+    , a.Approved
+    , a.Status -- 2 = afgekeurd, 1 = Goedgekeurd, 0 = Open
+    , a_prev.*
+    , a_first.*
+    , '%runid%'
+    , 1
+FROM dbo._AB_sy_Absences a WITH (NOLOCK)
+    CROSS APPLY ( 
+        SELECT TOP (1) 
+            a1.HID as prev_HID
+            , a1.syscreated as prev_syscreated
+            , ISNULL(a1.FreeBoolField_01, 0) as prev_Waiting
+            , a1.FreeTextField_01 as prev_WaitingReason
+            , a1.FreeIntField_01 AS prev_bkstknr
+            , a1.RequestComments as prev_RequestComments
+            , a1.WorkflowComments as prev_WorkflowComments
+            , a1.Approved as prev_Approved
+            , a1.Status as prev_Status
+        FROM dbo._AB_sy_Absences a1 WITH (NOLOCK)
+        WHERE 1=1
+            AND a1.Type = a.Type
+            AND a1.FreeGuidField_02 = a.FreeGuidField_02
+            AND a1.syscreated &lt; a.syscreated
+        ORDER BY a1.syscreated DESC
+    ) a_prev
+    OUTER APPLY ( 
+        SELECT MIN(a2.syscreated) as first_created
+        FROM dbo._AB_sy_Absences a2 WITH (NOLOCK)
+        WHERE 1=1
+            AND a2.Type = a.Type
+            AND a2.FreeGuidField_02 = a.FreeGuidField_02
+        GROUP BY a2.FreeGuidField_02
+    ) a_first
+WHERE 1=1
+    AND a.Type = 260
+    AND a.Status = 0 -- Open (No need to change when approved or finished)
+    AND a_prev.Prev_Waiting = 1 -- Last request was waiting
+    AND a_prev.prev_Status = 2 -- Last request is Finished (not approved because this can be the request from the last approver)
+    AND a.FreeBoolField_01 = 0 -- Current request is not waiting
+    
+    AND NOT EXISTS (SELECT 1 FROM dbo._AB_tb_IFR_History h WITH (NOLOCK) WHERE h.aID = a.ID AND h.rowstatus IN (1, 2)) -- succesfully altered, or currently altering</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Register new requests</stepname></step><step><id>2869</id><entity>Request</entity><action>update</action><source>129</source><target>1</target><datasource>SELECT aID as ID
+    , prev_Waiting as FreeBoolField_01
+    , prev_WaitingReason as FreeTextField_01
+FROM dbo._AB_tb_IFR_History h WITH (NOLOCK)
+WHERE 1=1
+    AND h.rowstatus = 1
+    AND h.runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ID</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>FreeBoolField_01</name><type>Byte</type></datacolumn><datacolumn><name>FreeTextField_01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Alter request (set target to Synergy)</stepname></step><step><id>2870</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE h SET
+    rowstatus = ISNULL(r.rowstatus, -1)
+    , errormessage = ISNULL(r.errormessage, 'Not Processed')
+    , p_sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_IFR_History h WITH (ROWLOCK, NOWAIT)
+    LEFT JOIN [ABEI].dbo._AB_Entity_Results r WITH (NOLOCK)
+        ON r.jobid = %jobid%
+        AND r.runid = '%runid%'
+        AND r.ReferenceValue = h.aID
+WHERE 1=1
+    AND h.rowstatus = 1
+    AND h.runid = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Update status</stepname></step></steps></job></jobs>

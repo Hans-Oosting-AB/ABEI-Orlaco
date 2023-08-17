@@ -1,0 +1,391 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>509</id><jobname>11.9.1 - OUT VanReenen Inbound Order</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>3</freq><timescale>minutes</timescale><frequency>daily</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>19:11:20</startat><beginat>06:45:45</beginat><endat>19:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>-1</day6><day7>-1</day7><duration_start>2022-02-13</duration_start><duration_end>2073-02-23</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>param_0</name><type>String</type><value /></jobparam></jobparams></settings></settingsxml><steps><step><id>3246</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+FROM (VALUES (0)) l(v)
+    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+        ON r.jobid = '%jobid%'
+        AND r.runid &lt;&gt; '%runid%'
+        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+        
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if running already</stepname></step><step><id>3478</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>==== Purchase parts: Interbranch transfer</stepname></step><step><id>3974</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_VRTransferInterBranchGroup] ([bkstnr] ,[ibtdeliverynr] ,[oms25] ,[runid])
+
+
+SELECT top 1 a.bkstnr, a.faktuurnr, CONCAT(ISNULL(a.oms25, ''),ISNULL(a.ibtdeliverynr, '')), '%runid%'
+FROM (
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse, g.ibtdeliverynr
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'A' AND g.type in( 151, 152 ) AND g.warehouse = '32' 
+) a
+INNER JOIN ( 
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse, g.ibtdeliverynr
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'B' AND g.type in( 150, 152) AND g.warehouse = '1'  
+) b ON a.reknr = b.reknr AND a.datum = b.datum AND a.bkstnr = b.bkstnr AND a.dagbknr = b.dagbknr AND  isnull(a.oms25,'') = isnull(b.oms25,'') AND a.aantal = ( b.aantal * -1 ) 
+AND a.dbk_verwnr = b.dbk_verwnr AND a.verwerknrl = b.verwerknrl AND a.artcode = b.artcode  and a.faktuurnr = b.faktuurnr
+AND ((a.facode is null and b.facode is null ) OR a.facode = b.facode)
+WHERE a.faktuurnr not in  (SELECT DISTINCT IBTDeliverynr FROM [absc_data].[dbo].[_AB_tb_VRTransfersInterbranchReg])
+order by a.bkstnr, a.faktuurnr
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>108</seqno><settings /><settingsxml /><stepname>Select Interbranch Group</stepname></step><step><id>3975</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_VRTransferInterBranchGroupRows] ([bkstnr] ,[ibtdeliverynr] ,[oms25] ,[runid])
+
+SELECT DISTINCT TOP 100 PERCENT a.bkstnr, a.faktuurnr, ISNULL(a.oms25,''), '%runid%'
+FROM (
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse, g.ibtdeliverynr
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'A' AND g.type in( 151, 152 ) AND g.warehouse = '32' 
+) a
+INNER JOIN ( 
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse, g.ibtdeliverynr
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'B' AND g.type in( 150, 152) AND g.warehouse = '1'  
+) b ON a.reknr = b.reknr AND a.datum = b.datum AND a.bkstnr = b.bkstnr AND a.dagbknr = b.dagbknr AND  isnull(a.oms25,'') = isnull(b.oms25,'') AND a.aantal = ( b.aantal * -1 ) 
+AND a.dbk_verwnr = b.dbk_verwnr AND a.verwerknrl = b.verwerknrl AND a.artcode = b.artcode  and a.faktuurnr = b.faktuurnr
+AND ((a.facode is null and b.facode is null ) OR a.facode = b.facode)
+WHERE a.faktuurnr not in  (SELECT DISTINCT IBTDeliverynr FROM [absc_data].[dbo].[_AB_tb_VRTransfersInterbranchReg])
+AND CONCAT(ISNULL(a.oms25, ''),ISNULL(a.ibtdeliverynr, '')) = (SELECT g.oms25 collate database_default FROM [absc_data].[dbo].[_AB_tb_VRTransferInterBranchGroup] g WHERE runid = '%runid%') 
+ORDER BY a.faktuurnr </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>109</seqno><settings /><settingsxml /><stepname>Select bookings for IBTgroup</stepname></step><step><id>3480</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_VRTransfersInterbranchReg]
+([IBTDeliveryNr],[bkstnr],[Itemcode],[Itemnumber],[Quantity],[Description],[TotalPallets],[RegistrationDate],[Origin],[Destination],[RunId])
+
+SELECT a.faktuurnr as IBTDeliveryNr, a.bkstnr,
+a.artcode AS Itemcode, 
+a.facode AS Itemnumber, 
+a.aantal as Quantity, 
+a.oms25 as Description, 
+CASE WHEN isnumeric(LTRIM(RTRIM(a.oms25))) = 1 THEN CONVERT(INT, a.oms25) ELSE 1 END AS TotalPallets,
+a.datum as RegistrationDate, 
+b.warehouse as Origin, 
+a.warehouse as Destination,
+'%runid%' AS RunId
+FROM (
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'A' AND g.type in( 151, 152 ) AND g.warehouse = '32' 
+) a
+INNER JOIN ( 
+    select  g.ID, g.reknr, g.datum, g.bkstnr, g.dagbknr, g.oms25, g.aantal, g.dbk_verwnr, g.verwerknrl , g.artcode, g.facode, g.faktuurnr, g.warehouse
+    from [%abeisourcedb%]..gbkmut g with (NOLOCK)
+    inner join [%abeisourcedb%]..items i with (NOLOCK) on i.itemcode = g.artcode and i.GLAccountDistribution = g.reknr
+    where g.transtype = 'N'  AND g.transsubtype = 'B' AND g.type in( 150, 152) AND g.warehouse = '1'  
+    ) b ON a.reknr = b.reknr AND a.datum = b.datum AND a.bkstnr = b.bkstnr AND a.dagbknr = b.dagbknr AND isnull(a.oms25,'') = isnull(b.oms25,'') AND a.aantal = ( b.aantal * -1 ) 
+AND a.dbk_verwnr = b.dbk_verwnr AND a.verwerknrl = b.verwerknrl AND a.artcode = b.artcode  and a.faktuurnr = b.faktuurnr
+AND ((a.facode is null and b.facode is null ) OR a.facode = b.facode)
+WHERE a.faktuurnr in (select ibtdeliverynr from [absc_data].dbo.[_AB_tb_VRTransferInterBranchGroupRows] where runid = '%runid%')</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>Get Interbranch Transfer ID</stepname></step><step><id>3485</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_VRTransfersOrders]
+           ([bkstnr]
+           ,[HID]
+           ,[ItemCode]
+           ,[Description]
+           ,[ItemNumber]
+           ,[Quantity]
+           ,[TotalPallets]
+           ,[Pallets]
+           ,[isSerialNumberItem]
+           ,[CustomerItemCode]
+           ,[PcsWeight]
+           ,[NetWeight]
+           ,[runid]
+           ,[rowstatus]
+           ,[seqno])
+           
+SELECT t.bkstnr 
+   -- ,t.IBTDeliveryNr AS HID
+    ,(SELECT MIN(tx.IBTDeliveryNr) FROM  [dbo].[_AB_tb_VRTransfersInterbranchReg] tx with (NOLOCK) WHERE tx.RunId = '%runid%' AND ISNULL(t.description,1) = ISNULL(tx.description,1) ) AS HID
+    ,t.Itemcode
+    ,i.Description
+    ,t.Itemnumber
+    ,t.Quantity
+    ,t.TotalPallets
+    ,(SELECT (t.Quantity / SUM( tx.quantity )) * t.TotalPallets  FROM  [dbo].[_AB_tb_VRTransfersInterbranchReg] tx with (NOLOCK) WHERE tx.RunId = '%runid%' AND ISNULL(t.description,1) = ISNULL(tx.description,1) ) AS Pallets
+    --,ISNULL(t.description,1)
+    ,i.isSerialNumberItem
+    ,ia.ItemCodeAccount
+    ,i.NetWeight AS PcsWeight
+    ,i.NetWeight * t.Quantity as NetWeight
+    ,t.runid, 1, %seqno% 
+FROM  [dbo].[_AB_tb_VRTransfersInterbranchReg] t with (NOLOCK)
+INNER JOIN [%abeisourcedb%].dbo.Items i WITH (NOLOCK) ON t.ItemCode = i.ItemCode collate database_default
+LEFT JOIN [%abeisourcedb%].dbo.ItemAccounts ia with (NOLOCK) ON ia.itemcode = i.itemcode collate database_default and ia.accountcode = 'D026F37D-3D37-4031-A626-117DB7D67EE5' -- 974605
+WHERE t.RunId = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings></settings><settingsxml /><stepname>Save stock for current pallet</stepname></step><step><id>3220</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT ISNULL(
+(SELECT TOP (1) 
+ 300 as seqno
+FROM dbo._AB_tb_VRTransfersInterbranchReg r with (nolock)
+WHERE 1=1
+    AND r.runid = '%runid%')
+    , 200) as seqno
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>uniquekey=;retryunique=0;sysaction=12;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>seqno</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno>%seqno%</systemtarget_skiptoseqno><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Skip to 300 if Interbranch Transfer is found</stepname></step><step><id>3479</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings></settings><settingsxml /><stepname>==== Make parts: Production receipts</stepname></step><step><id>3219</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_VRTransfersAbsenceIdReg
+    (absenceid,HID,absencetype
+    ,registrationdate
+    ,prevregistrationdate
+    ,TotalPallets
+    ,runid,rowstatus)
+SELECT TOP (1) a.ID, a.HID, a.[Type]
+    , a.syscreated
+    , ISNULL(lrd.syscreated, '2021-01-01') as prevregdate
+    , a.FreeIntField_01 AS Totalpallets
+    , '%runid%',1
+FROM dbo._AB_sy_absences a WITH (NOLOCK)
+    -- Previous registration date
+    OUTER APPLY (
+        SELECT TOP (1) a1.syscreated, a1.HID
+        FROM dbo._AB_sy_absences a1 WITH (NOLOCK)
+        WHERE 1=1
+            AND a1.type = a.[type] -- same type
+            AND a1.ID &lt;&gt; a.ID -- different id
+            AND a1.syscreated &lt; a.syscreated -- but created before current request
+        ORDER BY a1.syscreated DESC
+    ) lrd
+WHERE 1=1
+    AND a.[type] = 6040
+    AND a.[status] = 0 -- open
+    AND NOT EXISTS (SELECT 1 FROM dbo._AB_tb_VRTransfersAbsenceIdReg r WITH (NOLOCK) WHERE r.absenceid = a.ID)
+ORDER BY a.syscreated -- oldest first</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>210</seqno><settings></settings><settingsxml /><stepname>Get absence ID (pallet) for this run</stepname></step><step><id>3221</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_VRTransfersOrders
+    (absenceid
+    ,HID
+    ,ItemCode
+    ,Description
+    ,ItemNumber
+    ,Quantity
+    ,TotalPallets
+    ,Pallets
+    ,isSerialNumberItem
+    ,PcsWeight
+    ,NetWeight
+    ,runid,rowstatus,seqno)
+SELECT r.absenceid
+    , r.HID
+    , g.artcode as itemcode
+    , i.Description
+    , g.facode as itemnumber
+    , SUM(g.aantal) as quantity 
+    , r.TotalPallets
+    , 1 as Pallets
+    , i.isSerialNumberItem
+    , i.NetWeight as PcsWeight
+    , i.NetWeight * SUM(g.aantal) as NetWeight
+    , r.runid, 1, %seqno%
+    FROM dbo._AB_tb_VRTransfersAbsenceIdReg r WITH (NOLOCK)
+    -- Stock at the time of registration
+    INNER JOIN [%abeisourcedb%].dbo.gbkmut g WITH (NOLOCK) ON g.syscreated BETWEEN r.prevregistrationdate AND r.registrationdate
+    INNER JOIN [%abeisourcedb%].dbo.Items i WITH (NOLOCK) ON g.reknr = i.GLAccountDistribution and g.artcode = i.ItemCode
+    -- INNER JOIN dbo._AB_sy_gbkmut g WITH (NOLOCK) ON g.syscreated BETWEEN r.prevregdate AND r.registrationdate
+    -- INNER JOIN dbo._AB_sy_Items i WITH (NOLOCK) ON g.reknr = i.GLAccountDistribution and g.artcode = i.ItemCode
+WHERE 1=1
+    AND r.runid = '%runid%'
+    AND g.transtype in ('N','C','X','P')
+    AND g.warehouse = '32   ' -- Dont use variable for this, you need the space for the index
+    AND g.datum &gt; '2021-01-01' -- Speed up the query by only taking data older than 2021-01-01
+    -- Exclude interbranch transfers for purchase parts
+    AND (g.IBTDeliveryNr IS NULL OR g.IBTDeliveryNr NOT IN (SELECT DISTINCT IBTDeliveryNr FROM [dbo].[_AB_tb_VRTransfersInterbranchReg]))
+    -- Exclude deliveries
+    AND NOT (g.transtype = 'N' AND g.transsubtype = 'B' AND g.bkstnr_sub IS NOT NULL 
+        AND EXISTS (SELECT 1 FROM dbo._AB_sy_orkrg k WITH (NOLOCK) WHERE k.ordernr = g.bkstnr_sub AND k.ord_soort = 'V'))
+    -- Not in table yet
+    AND NOT EXISTS (SELECT 1 FROM dbo._AB_tb_TransfersOrders tr WITH (NOLOCK) WHERE tr.absenceid = r.absenceid)
+    GROUP BY r.absenceid, r.HID, r.TotalPallets, g.artcode, i.Description, g.facode, i.isserialnumberitem, i.netweight, r.runid
+HAVING SUM(g.aantal) &gt; 0 -- exclude negative stock</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings></settings><settingsxml /><stepname>Save stock for current pallet</stepname></step><step><id>3492</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE dbo._AB_tb_VRTransfersOrders 
+Set Pallets = PalletCnt * Quantity
+FROM 
+(SELECT tx.HID, tx.TotalPallets, SUM(rx.Quantity) AS TotalQuantity, tx.TotalPallets/SUM(rx.Quantity) AS PalletCnt
+FROM  [dbo].[_AB_tb_VRTransfersAbsenceIdReg] tx with (NOLOCK)
+INNER JOIN dbo._AB_tb_VRTransfersOrders rx with (NOLOCK) on tx.hid = rx.hid 
+where tx.runid =  '%runid%'
+GROUP BY  tx.HID, tx.TotalPallets ) A
+
+WHERE A.HID = dbo._AB_tb_VRTransfersOrders.HID AND dbo._AB_tb_VRTransfersOrders.runid = '%runid%'
+
+--'698555a8-b3c4-4fed-b2c6-6f1f837b70f5'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>230</seqno><settings /><settingsxml /><stepname>Set pallet count</stepname></step><step><id>3483</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings></settings><settingsxml /><stepname>==== Create XML file</stepname></step><step><id>3228</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT TOP (1) 0 as doQuit FROM dbo._AB_tb_VRTransfersOrders r with (nolock) WHERE r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>310</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if nothing to do</stepname></step><step><id>3222</id><entity>-none-</entity><action>process</action><source>129</source><target>7</target><datasource>SELECT DISTINCT r.HID as TransferID
+    , CONCAT(r.HID, '.pdf') as [filename]
+    , r.HID as referenceID
+FROM dbo.[_AB_tb_VRTransfersOrders] r WITH (NOLOCK)
+WHERE isSerialNumberItem = 0
+    AND r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping>TransferID=%TransferID%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>320</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/Packing list van Reenen;ssrsformat=Printer;ssrsfile=;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referenceID</referencekey><datacolumns><datacolumn><name>TransferID</name><type>Int32</type></datacolumn><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>referenceID</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername>\\barprint01\BAR-ONTVANGST</printername><printertray>Default</printertray><printerpapername>A4 (210 x 297 mm)</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Create packingslip PDF purchase products, print</stepname></step><step><id>3852</id><entity>-none-</entity><action>process</action><source>129</source><target>7</target><datasource>SELECT DISTINCT r.HID as TransferID
+    , CONCAT(r.HID, '.pdf') as [filename]
+    , r.HID as referenceID
+FROM dbo.[_AB_tb_VRTransfersOrders] r WITH (NOLOCK)
+WHERE isSerialNumberItem = 1
+    AND r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping>TransferID=%TransferID%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>321</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/Packing list van Reenen;ssrsformat=Printer;ssrsfile=;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referenceID</referencekey><datacolumns><datacolumn><name>TransferID</name><type>Int32</type></datacolumn><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>referenceID</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername>RICOH Aficio MP 301 PCL 5e</printername><printertray>Default</printertray><printerpapername>A4 (210 x 297 mm)</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Create packingslip PDF make products, print</stepname></step><step><id>3976</id><entity>-none-</entity><action>process</action><source>129</source><target>7</target><datasource>SELECT DISTINCT r.HID as TransferID
+    , CONCAT(r.HID, '.pdf') as [filename]
+    , r.HID as referenceID
+FROM dbo.[_AB_tb_VRTransfersOrders] r WITH (NOLOCK)
+WHERE r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping>TransferID=%TransferID%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>322</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/Packing list van Reenen;ssrsformat=Printer;ssrsfile=;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referenceID</referencekey><datacolumns><datacolumn><name>TransferID</name><type>Int32</type></datacolumn><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>referenceID</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername>Default</printername><printertray>Default</printertray><printerpapername>A4 (210 x 297 mm)</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Create packingslip PDF TEST</stepname></step><step><id>3223</id><entity>-none-</entity><action>process</action><source>129</source><target>7</target><datasource>SELECT DISTINCT r.HID as TransferID
+    , CONCAT(r.HID, '.pdf') as [filename]
+    , r.HID as referenceID
+FROM dbo.[_AB_tb_VRTransfersOrders] r WITH (NOLOCK)
+WHERE 1=1
+    AND r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping>TransferID=%TransferID%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>325</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/Packing list van Reenen;ssrsformat=PDF;ssrsfile=\\datasrv02\data$\3. Proces\3. Logistiek\pdf  van 1 naar 32\%filename%;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>TransferID</name><type>Int32</type></datacolumn><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>referenceID</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>Letter</printerpapername><printercopies>1</printercopies><printerpaperheight>1100</printerpaperheight><printerpaperwidth>850</printerpaperwidth><printerpaperkind>1</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Create packingslip PDF, save</stepname></step><step><id>3224</id><entity>DocumentAttachment</entity><action>create</action><source>129</source><target>1</target><datasource>SELECT DISTINCT r.absenceID as documentID
+    , CONCAT('C:\APPS\VanReenen\PackingLists\', r.HID, '.pdf') as Attachmentfilename
+    , r.HID as referenceID
+    FROM [%abeisourcedb%].dbo._AB_tb_VRTransfersAbsenceIdReg r WITH (NOLOCK)
+WHERE 1=1
+    AND r.runid = '%runid%' and r.absenceID is not null
+    
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>326</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>documentID</name><type>Guid</type></datacolumn><datacolumn><name>Attachmentfilename</name><type>String</type></datacolumn><datacolumn><name>referenceID</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Save report in request</stepname></step><step><id>3253</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO _AB_tb_VRExportDocuments (absenceid, Ordernr, FileContent, FileName, FileType, Syscreated, runid)
+SELECT DISTINCT absenceid, HID as ordernr,
+
+CONVERT( VARCHAR(MAX), (
+    select  TOP 1
+        1 as company, -- 1=VanReenen 2=Tranex
+        13 as ediprovider, -- 13=Warehouse
+        CONCAT('WAREHOUSEINBOUND_',r.HID) AS sourcefilename,
+        (SELECT -- orders
+            (SELECT  -- order
+                1 as mutationtype, -- 1=inbound 2=outbound
+                (SELECT 1 AS [@matchmode], '73444' FOR XML PATH ('customer_id'), type) , -- customer id Orlaco
+                (SELECT 1 AS [@matchmode], '01' FOR XML PATH ('branch_id'), type) , -- 01=warehouse
+                (SELECT 0 AS [@matchmode], 26 FOR XML PATH ('warehouse_id'), type) , -- 26=VanReenen
+                LEFT(CONVERT(varchar,GETDATE(),120),10) AS orderdate,
+                HID AS reference,
+                LEFT(CONVERT(varchar,DATEADD(DAY,1,GETDATE()),120),10) as pickupdate,
+                '7:00' AS pickuptime,
+                '8:00' AS pickuptimetill,
+                (SELECT 11 AS [@matchmode], 'orlaco_ap42' FOR XML PATH ('address_id'), type) ,
+                'Orlaco Products. B.V.' AS addressname,
+                'Albert Plesmanstraat 42' AS addressstreet,
+                '3772 MN' AS addresszipcode,
+                (SELECT 4 AS [@matchmode], 'Barneveld' FOR XML PATH ('addresscity_id'), type) ,
+                (SELECT 2 AS [@matchmode], 'NL' FOR XML PATH ('addresscountry_id'), type) ,
+                HID AS pickupreference,
+                'Martien Bakkenes' AS pickupcontact,
+                '356' AS sender_id, -- sender id
+                HID AS edireference,
+                (SELECT -- orderlines
+                    ( SELECT -- orderline
+                        (SELECT 3 AS [@matchmode], '' + [Itemcode] FOR XML PATH ('article_id'), type) ,
+                        (SELECT -- article
+                            [Itemcode] AS [code],
+                            [description], 
+                            customeritemcode as ean13,
+                            (SELECT -- articlegroup
+                                'ORLDAFME2' AS code,
+                                'Orlaco DAF Mirror Eye-2' AS description
+                            FOR XML PATH ('articlegroup'), type),
+                            (SELECT 0 AS [@matchmode], '' + [Itemcode] FOR XML PATH ('product_id'), type) ,
+                            (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('stockunit_id'), type) ,
+                            (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('palletunit_id'), type) ,
+                            (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('inboundunit_id'), type) ,
+                            (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('outboundunit_id'), type) ,
+                            (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('inputunit_id'), type) ,
+                            (SELECT 0 AS [@matchmode], '0' FOR XML PATH ('outboundmethod_id'), type) , -- FIFO (6/3/23 set to 0)
+                            1 AS inbounddate_mandatory,
+                            --[isSerialNumberItem] as lot_mandatory,
+                            (SELECT -- units
+                                (SELECT -- unit
+                                    (SELECT 3 AS [@matchmode], 'STK' FOR XML PATH ('unit_id'), type) ,
+                                    1 as stockunits,
+                                    CONVERT(decimal(10,2),[pcsweight]) as [weight]
+                                FOR XML PATH ('unit'), type)                           
+                            FOR XML PATH ('units'), type)
+                        FOR XML PATH ('article'), type),
+                        'PAL' + CONVERT(VARCHAR,HID) AS type, -- PalletId
+                        'BLO' AS type2, -- Type pallet: EUR (europallet) | BLO (blokpallet)
+                        TotalPallets as type3, -- Aantal pallets
+                        --CONVERT(decimal(10,2),[Quantity]) AS unitamount,
+                        CONVERT(decimal(10,2),SUM([Quantity])) AS unitamount,
+                        (SELECT 1 AS [@matchmode], 'STK' FOR XML PATH ('unit_id'), type) ,
+                        LEFT(CONVERT(varchar,GETDATE(),120),10) AS inbounddate,
+                        --[Itemnumber] as lot,
+                        '' as lot,
+                        (SELECT 0 AS [@matchmode], 26 FOR XML PATH ('warehouse_id'), type) ,
+                        --CONVERT(decimal(10,2),[Quantity]) AS stockunits,
+                        CONVERT(decimal(10,2),SUM([Quantity])) AS stockunits,
+                        CONVERT(decimal(10,3),[pallets]) AS pallets, 
+                        (SELECT 1 AS [@matchmode], 'WWP' FOR XML PATH ('palletunit_id'), type) ,
+                        CONVERT(decimal(10,2),[NetWeight]) AS weigth, 
+                        HID AS reference,
+                        HID AS edireference,
+                        0 as autogeneratemutations
+                        FROM dbo._AB_tb_VRTransfersOrders x where x.runid = '%runid%' and x.hid = r.hid
+                        GROUP BY absenceid, bkstnr, hid, itemcode, description, quantity, totalpallets, pallets, isserialnumberitem, customeritemcode, pcsweight, netweight
+                    FOR XML PATH ('orderline'), type)
+                FOR XML PATH ('orderlines'), type)
+            FOR XML PATH ('order'), type)
+        FOR XML PATH ('orders'), type)
+    FROM dbo._AB_tb_VRTransfersOrders r  where r.runid = '%runid%'
+FOR XML PATH ('import') ,type ) ) AS filecontent, 
+CONCAT('WAREHOUSEINBOUND_', HID,'.xml') AS filename,
+'WAREHOUSEINBOUND' as FileType,
+GETDATE() AS Syscreated, 
+'%runid%' as runid
+FROM dbo._AB_tb_VRTransfersOrders r  where r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>330</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=\\datasrv02\data$\9. Implementatie Exact\VanReenenTransfers\WAREHOUSEINBOUND_%ordernr%.xml;fileoverwrite=True;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>content</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>Int32</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="2" parent="-1"><name>content</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%content%</value><fullname /><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Save WAREHOUSEINBOUND in database</stepname></step><step><id>3530</id><entity>-none-</entity><action>create</action><source>129</source><target>5</target><datasource>SELECT FileContent, FileName FROM [%abeisourcedb%].dbo._AB_tb_VRExportDocuments WHERE  runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>331</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=C:\APPS\VanReenen\EXPORT\WAREHOUSEINBOUND\%filename%;fileoverwrite=False;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>FileContent</name><type>String</type></datacolumn><datacolumn><name>FileName</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="3" parent="-1"><name>FileContent</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%FileContent%</value><fullname /><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Create WAREHOUSEINBOUND file</stepname></step><step><id>3252</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>332</seqno><settings>uniquekey=;retryunique=0;sysaction=1;sysfilefolder=C:\APPS\VanReenen\_CMDFILES\upload_inbound.bat;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Copy WAREHOUSEINBOUNDFILE to FTP</stepname></step><step><id>3251</id><entity>DocumentAttachment</entity><action>create</action><source>129</source><target>1</target><datasource>SELECT absenceid as documentid,
+CONCAT('C:\APPS\VanReenen\EXPORT\WAREHOUSEINBOUND/' , FileName) as AttachmentFileName
+ FROM [%abeisourcedb%].dbo._AB_tb_VRExportDocuments 
+ 
+ WHERE  runid = '%runid%' and absenceid is not null
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>333</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>documentid</name><type>Guid</type></datacolumn><datacolumn><name>AttachmentFileName</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Save WAREHOUSEINBOUND file in request</stepname></step><step><id>3225</id><entity>Request</entity><action>update</action><source>129</source><target>1</target><datasource>SELECT r.absenceID as ID, 1 as [status]
+FROM dbo._AB_tb_VRTransfersAbsenceIdReg r WITH (NOLOCK)
+WHERE 1=1
+    AND r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>340</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>status</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update status request</stepname></step><step><id>3531</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT filename from _AB_tb_VRExportDocuments where runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>350</seqno><settings>uniquekey=;retryunique=0;sysaction=8;sysfilefolder=C:\APPS\VanReenen\EXPORT\WAREHOUSEINBOUND\%filename%;sysparams=C:\APPS\VanReenen\EXPORT\WAREHOUSEINBOUND\Archive\%filename%;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>filename</name><type>String</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Move processed files</stepname></step><step><id>3484</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>400</seqno><settings></settings><settingsxml /><stepname>==== Checks TODO =====</stepname></step><step><id>3226</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t SET
+    original_quantity = t.quantity
+    , quantity = 1
+    , sysmodified = CURRENT_TIMESTAMP
+    FROM dbo._AB_tb_VRTransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.seqno = 30
+    AND t.rowstatus = 1
+    AND t.isSerialNumberItem = 1 -- Serialnumber items
+    AND t.quantity &gt; 1</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings></settings><settingsxml /><stepname>Check for duplicate serialnumbers</stepname></step><step><id>3245</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT t.HID as Pallet_no, t.ItemCode, t.ItemNumber, t.original_quantity as Total_Quantity_Registered    
+FROM dbo._AB_tb_VRTransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.seqno = 30
+    AND t.rowstatus = 1
+    AND t.isSerialNumberItem = 1 -- Serialnumber items
+    AND t.original_quantity IS NOT NULL</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Duplicate serialnumbers were detected, please correct the stock in Exact so that only 1 remains:&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Pallet_no&lt;/td&gt;&lt;td&gt;ItemCode&lt;/td&gt;&lt;td&gt;ItemNumber&lt;/td&gt;&lt;td&gt;Total_Quantity_Registered&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Pallet_no%&lt;/td&gt;&lt;td&gt;%ItemCode%&lt;/td&gt;&lt;td&gt;%ItemNumber%&lt;/td&gt;&lt;td&gt;%Total_Quantity_Registered%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="4"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>420</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.dusschoten@orlaco.com%semicolon%j.molen@orlaco.com%semicolon%E.Elings@orlaco.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%Martien.Bakkenes@stoneridge.com;emailcc=;emailbcc=;emailsub=Transfer orders - Duplicate serialnumbers detected;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Pallet_no,ItemCode,ItemNumber,Total_Quantity_Registered;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Pallet_no</name><type>Int32</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ItemNumber</name><type>String</type></datacolumn><datacolumn><name>Total_Quantity_Registered</name><type>Double</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail for duplicate serial numbers</stepname></step><step><id>3243</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT HID as Pallet_no, t.ItemCode, t.ItemNumber, t.quantity, t.errormessage as [Message]
+FROM dbo._AB_tb_VRTransfersOrders t WITH (NOLOCK)
+WHERE 1=1
+    AND t.runid = '%runid%'  
+    -- AND t.rowstatus = -1 -- errors</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Pallet %Pallet_no% is send to&amp;nbsp;Van Reenen. Please&amp;nbsp;check the message and take proper actions.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Pallet_no&lt;/td&gt;&lt;td&gt;ItemCode&lt;/td&gt;&lt;td&gt;ItemNumber&lt;/td&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Message&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Pallet_no%&lt;/td&gt;&lt;td&gt;%ItemCode%&lt;/td&gt;&lt;td&gt;%ItemNumber%&lt;/td&gt;&lt;td&gt;%quantity%&lt;/td&gt;&lt;td&gt;%Message%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="5"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>430</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.dusschoten@orlaco.com%semicolon%E.Elings@orlaco.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%Martien.Bakkenes@stoneridge.com%semicolon%voorraad@reenen.nl;emailcc=;emailbcc=;emailsub=Van Reenen transfer pallet no %Pallet_no%;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Pallet_no,ItemCode,ItemNumber,quantity,Message;mex_connectionid=0;emailsplitcolumn=Pallet_no;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Pallet_no</name><type>Int32</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ItemNumber</name><type>String</type></datacolumn><datacolumn><name>quantity</name><type>Double</type></datacolumn><datacolumn><name>Message</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for errors</stepname></step><step><id>3244</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>WITH stockrequired AS (
+    SELECT t.HID as palletno, t.ItemCode, t.ItemNumber, SUM(t.quantity) as q
+        , r.prevregistrationdate, r.registrationdate
+        FROM dbo._AB_tb_VRTransfersOrders t WITH (NOLOCK)
+        INNER JOIN dbo._AB_tb_VRTransfersAbsenceIdReg r WITH (NOLOCK)
+            ON r.absenceid = t.absenceid
+    WHERE 1=1
+        AND t.runid = '%runid%'  
+        AND t.seqno = 150
+        AND t.rowstatus = 2
+    GROUP BY t.HID, t.ItemCode, t.ItemNumber, r.prevregistrationdate, r.registrationdate
+)
+SELECT s.palletno, s.ItemCode, s.ItemNumber, s.q as q_required, vrrd.q as q_available
+    , s.prevregistrationdate, s.registrationdate
+FROM stockrequired s 
+    LEFT JOIN (
+        SELECT g.artcode, g.facode, SUM(g.aantal) as q
+        FROM dbo._AB_sy_gbkmut g WITH (NOLOCK)  
+            INNER JOIN dbo._AB_sy_Items i WITH (NOLOCK) ON g.reknr = i.GLAccountDistribution and g.artcode = i.ItemCode
+        WHERE 1=1
+            AND g.transtype in ('N','C','X','P')
+            AND g.warehouse = '60  ' -- Dont use variable for this, you need the space for the index 
+        GROUP BY g.warehouse, g.artcode, g.facode
+    ) vrrd 
+        ON vrrd.artcode = s.ItemCode COLLATE DATABASE_DEFAULT 
+        -- ISNULL because we can have items without serial numbers
+        AND ISNULL(vrrd.facode, '') = ISNULL(s.ItemNumber, '') COLLATE DATABASE_DEFAULT
+WHERE 1=1
+    AND s.q &gt; ISNULL(vrrd.q, 0) -- not enough available
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;For the following pallet, not enough stock is available for delivery. Please correct the stock for the following time slot:&lt;/p&gt;&lt;p&gt;From: %prevregistrationdate%&lt;/p&gt;&lt;p&gt;To: %registrationdate%&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Palletno&lt;/td&gt;&lt;td&gt;ItemCode&lt;/td&gt;&lt;td&gt;ItemNumber&lt;/td&gt;&lt;td&gt;Required&lt;/td&gt;&lt;td&gt;Available&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%palletno%&lt;/td&gt;&lt;td&gt;%ItemCode%&lt;/td&gt;&lt;td&gt;%ItemNumber%&lt;/td&gt;&lt;td&gt;%q_required%&lt;/td&gt;&lt;td&gt;%q_available%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;This email was automatically created by ABEI on %abeinowiso%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>440</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.dusschoten@orlaco.com%semicolon%j.molen@orlaco.com%semicolon%E.Elings@orlaco.com%semicolon%lennart.meeuse@stoneridge.com%semicolon%Martien.Bakkenes@stoneridge.com;emailcc=;emailbcc=;emailsub=Not enough stock available for pallet no %palletno%;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=palletno,ItemCode,ItemNumber,q_required,q_available;mex_connectionid=0;emailsplitcolumn=palletno;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>palletno</name><type>Int32</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ItemNumber</name><type>String</type></datacolumn><datacolumn><name>q_required</name><type>Double</type></datacolumn><datacolumn><name>q_available</name><type>Double</type></datacolumn><datacolumn><name>prevregistrationdate</name><type>DateTime</type></datacolumn><datacolumn><name>registrationdate</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail for not enough stock</stepname></step><step><id>3481</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>1220</seqno><settings></settings><settingsxml /><stepname>==== </stepname></step><step><id>3227</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    runid = '%runid%'
+    , rowstatus = 1
+    FROM dbo._AB_tb_VRTransfersOrders t 
+WHERE 1=1
+    AND t.rowstatus = 0</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>1270</seqno><settings></settings><settingsxml /><stepname>Set runid and rowstatus for retry entries</stepname></step><step><id>3482</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>
+DELETE FROM dbo._AB_tb_VRTransfersAbsenceIdReg
+DELETE FROM dbo._AB_tb_VRTransfersOrders
+DELETE FROM dbo._AB_tb_VRTransfersInterbranchReg</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>1280</seqno><settings /><settingsxml /><stepname>Remove test records</stepname></step></steps></job></jobs>

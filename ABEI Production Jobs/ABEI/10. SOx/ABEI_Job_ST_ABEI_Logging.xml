@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>427</id><jobname>ST_ABEI_Logging</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=23:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>2208</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>SELECT j.[id] AS LogJobId, NULL AS LogJobStepId, j.[jobname] AS [Name],j.[syscreated],j.[sysmodified],j.[jobgroup], j.[disable], null as [source], null as [target], null as [jobstepseqno]
+FROM [ABEI].[dbo].[_AB_Entity_jobs] j
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobs] lj1 ON j.id = lj1.jobid
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobs] lj2 ON j.id = lj2.jobid AND lj1.id &lt; lj2.id
+WHERE lj2.id IS NULL AND ( 
+    lj1.id IS NULL OR
+    j.[jobname] !=  lj1.[jobname] OR
+    j.[emailmode] !=  lj1.[emailmode] OR
+    j.[emailto] !=  lj1.[emailto] OR
+    j.[emailsubject] !=  lj1.[emailsubject] OR
+    CONVERT(VARCHAR(MAX),j.[emailbody]) !=  CONVERT(VARCHAR(MAX),lj1.[emailbody]) OR
+    j.[disable] !=  lj1.[disable] OR
+    j.[remarks] !=  lj1.[remarks] OR
+    j.[settings] !=  lj1.[settings] OR
+    j.[schedulename] !=  lj1.[schedulename] OR
+    j.[schedulesettings] !=  lj1.[schedulesettings] OR
+    j.[syscreated] !=  lj1.[syscreated] OR
+    j.[sysmodified] !=  lj1.[sysmodified] OR
+    j.[jobgroup] !=  lj1.[jobgroup] OR
+    CONVERT(VARCHAR(MAX), j.[settingsxml] ) !=  CONVERT(VARCHAR(MAX), lj1.[settingsxml] ))
+UNION
+SELECT js.[jobid] as LogJobId, js.[id] AS LogJobStepId, js.[stepname] AS [Name], js.[syscreated],js.[sysmodified],NULL AS JobGroup,js.[disable],jss.[name] AS [Source],jst.[name] AS [Target],js.[seqno] as [jobstepseqno]
+FROM [ABEI].[dbo].[_AB_Entity_jobsteps] js
+LEFT JOIN [ABEI].[dbo]._AB_Entity_connections jss on js.source = jss.id
+LEFT JOIN [ABEI].[dbo]._AB_Entity_connections jst on js.target = jst.id
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobsteps] ljs1 ON js.id = ljs1.jobstepid
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobsteps] ljs2 ON js.id = ljs2.jobstepid AND ljs1.id &lt; ljs2.id
+WHERE ljs2.id IS NULL AND ( 
+    ljs1.id IS NULL OR
+    js.[jobid] != ljs1.[jobid] OR
+    js.[stepname] != ljs1.[stepname] OR
+    js.[Entity] != ljs1.[Entity] OR
+    js.[action] != ljs1.[action] OR
+    js.[source] != ljs1.[source] OR
+    js.[target] != ljs1.[target] OR
+    js.[datasource] != ljs1.[datasource] OR
+    js.[seqno] != ljs1.[seqno] OR
+    js.[disable] != ljs1.[disable] OR
+    js.[mapping] != ljs1.[mapping] OR
+    js.[settings] != ljs1.[settings] OR
+    js.[remarks] != ljs1.[remarks] OR
+    js.[contentbody] != ljs1.[contentbody] OR
+    js.[replace] != ljs1.[replace] OR
+    js.[syscreated] != ljs1.[syscreated] OR
+    js.[sysmodified] != ljs1.[sysmodified] OR
+    CONVERT(VARCHAR(MAX), js.[settingsxml] ) !=  CONVERT(VARCHAR(MAX), ljs1.[settingsxml] ))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;The following jobs or jobsteps have been changed:&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;JobId&lt;/TD&gt;
+&lt;TD&gt;JobStepId&lt;/TD&gt;
+&lt;TD&gt;Name&lt;/TD&gt;
+&lt;TD&gt;syscreated&lt;/TD&gt;
+&lt;TD&gt;sysmodified&lt;/TD&gt;
+&lt;TD&gt;jobgroup&lt;/TD&gt;
+&lt;TD&gt;disable&lt;/TD&gt;
+&lt;TD&gt;source&lt;/TD&gt;
+&lt;TD&gt;target&lt;/TD&gt;
+&lt;TD&gt;seqno&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%LogJobId%&lt;/TD&gt;
+&lt;TD&gt;%LogJobStepId%&lt;/TD&gt;
+&lt;TD&gt;%Name%&lt;/TD&gt;
+&lt;TD&gt;%syscreated%&lt;/TD&gt;
+&lt;TD&gt;%sysmodified%&lt;/TD&gt;
+&lt;TD&gt;%jobgroup%&lt;/TD&gt;
+&lt;TD&gt;%disable%&lt;/TD&gt;
+&lt;TD&gt;%source%&lt;/TD&gt;
+&lt;TD&gt;%target%&lt;/TD&gt;
+&lt;TD&gt;%jobstepseqno%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=10&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;%abeinowiso%&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>retryunique=0;uniquekey=;emailfrom=ABEILogging@orlaco.com;emailname=ABEI Logging @ EWS01;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=ABEI Job changes;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=JobId,JobStepId,Name,syscreated,sysmodified,jobgroup,disable,source,target,seqno;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Mail changed jobs and jobsteps</stepname></step><step><id>2209</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>INSERT INTO [ABEI].[dbo].[_AB_LOG_Entity_jobs] ([logdate],[logcomments],[jobid],[jobname],[emailmode],[emailto],[emailsubject],[emailbody],[disable],[remarks],[settings],[schedulename],[schedulesettings],[syscreated],[sysmodified],[jobgroup],[settingsxml])
+SELECT GETDATE(), NULL, j.[id],j.[jobname],j.[emailmode],j.[emailto],j.[emailsubject],j.[emailbody],j.[disable],j.[remarks],j.[settings],j.[schedulename],j.[schedulesettings],j.[syscreated],j.[sysmodified],j.[jobgroup],j.[settingsxml]
+FROM [ABEI].[dbo].[_AB_Entity_jobs] j
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobs] lj1 ON j.id = lj1.jobid
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobs] lj2 ON j.id = lj2.jobid AND lj1.id &lt; lj2.id
+WHERE lj2.id IS NULL AND ( 
+    lj1.id IS NULL OR
+    j.[jobname] !=  lj1.[jobname] OR
+    j.[emailmode] !=  lj1.[emailmode] OR
+    j.[emailto] !=  lj1.[emailto] OR
+    j.[emailsubject] !=  lj1.[emailsubject] OR
+    CONVERT(VARCHAR(MAX),j.[emailbody]) !=  CONVERT(VARCHAR(MAX),lj1.[emailbody]) OR
+    j.[disable] !=  lj1.[disable] OR
+    j.[remarks] !=  lj1.[remarks] OR
+    j.[settings] !=  lj1.[settings] OR
+    j.[schedulename] !=  lj1.[schedulename] OR
+    j.[schedulesettings] !=  lj1.[schedulesettings] OR
+    j.[syscreated] !=  lj1.[syscreated] OR
+    j.[sysmodified] !=  lj1.[sysmodified] OR
+    j.[jobgroup] !=  lj1.[jobgroup] OR
+    CONVERT(VARCHAR(MAX), j.[settingsxml] ) !=  CONVERT(VARCHAR(MAX), lj1.[settingsxml] ))
+
+
+
+INSERT INTO [ABEI].[dbo].[_AB_LOG_Entity_jobsteps] ([logdate],[logcomments],[jobstepid],[jobid],[stepname],[Entity],[action],[source],[target],[datasource],[seqno],[disable],[mapping],[settings],[remarks],[contentbody],[replace],[syscreated],[sysmodified],[settingsxml])
+SELECT GETDATE(), NULL, js.[id],js.[jobid],js.[stepname],js.[Entity],js.[action],js.[source],js.[target],js.[datasource],js.[seqno],js.[disable],js.[mapping],js.[settings],js.[remarks],js.[contentbody],js.[replace],js.[syscreated],js.[sysmodified],js.[settingsxml]
+FROM [ABEI].[dbo].[_AB_Entity_jobsteps] js
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobsteps] ljs1 ON js.id = ljs1.jobstepid
+LEFT JOIN [ABEI].[dbo].[_AB_LOG_Entity_jobsteps] ljs2 ON js.id = ljs2.jobstepid AND ljs1.id &lt; ljs2.id
+WHERE ljs2.id IS NULL AND ( 
+    ljs1.id IS NULL OR
+    js.[jobid] != ljs1.[jobid] OR
+    js.[stepname] != ljs1.[stepname] OR
+    js.[Entity] != ljs1.[Entity] OR
+    js.[action] != ljs1.[action] OR
+    js.[source] != ljs1.[source] OR
+    js.[target] != ljs1.[target] OR
+    js.[datasource] != ljs1.[datasource] OR
+    js.[seqno] != ljs1.[seqno] OR
+    js.[disable] != ljs1.[disable] OR
+    js.[mapping] != ljs1.[mapping] OR
+    js.[settings] != ljs1.[settings] OR
+    js.[remarks] != ljs1.[remarks] OR
+    js.[contentbody] != ljs1.[contentbody] OR
+    js.[replace] != ljs1.[replace] OR
+    js.[syscreated] != ljs1.[syscreated] OR
+    js.[sysmodified] != ljs1.[sysmodified] OR
+    CONVERT(VARCHAR(MAX), js.[settingsxml] ) !=  CONVERT(VARCHAR(MAX), ljs1.[settingsxml] ))</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Save changes in log</stepname></step><step><id>2926</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>INSERT INTO [dbo]._ST_LOG_ABEI_Results (logid, runid, jobid, jobstepid, TargetDB, Entity, 
+KeyValue, HeaderId, RecordValue, Property, Action, ValueString, 
+rowstatus, errormessage, sequenceno, syscreated)
+SELECT id as logid, runid, jobid, jobstepid, TargetDB, Entity, 
+KeyValue, HeaderId, RecordValue, Property, Action, ValueString, 
+rowstatus, errormessage, sequenceno, syscreated
+FROM [abei].[dbo].[_AB_Entity_results_log] l
+WHERE l.rowstatus = -1 and l.targetDB = '400' and l.id not in (SELECT logid from [dbo]._ST_LOG_ABEI_Results)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Save errors to log</stepname></step><step><id>2927</id><entity>Request</entity><action>create</action><source>0</source><target>1</target><datasource>select 6024 as Type, GETDATE() as StartDate, '11D37ADF-7532-4218-B7ED-0848FD25A441' AS CustomerId,
+0 as EmpId, 'Error on job ' + CONVERT(varchar, r.jobid) as Description,
+'Lennart Meeuse' AS FreeTextField_01,'Lennart Meeuse' AS FreeTextField_02,'Lennart Meeuse' AS FreeTextField_04,
+'ABEI Job failure' AS FreeTextField_05,  1 as FreeBoolField_01, 1 AS Priority,
+'Job ' + CONVERT(varchar, r.jobid) + ': ' + j.jobname + ' 
+JobStep: ' + CONVERT(varchar, MIN(r.jobstepid)) + ' 
+On: ' + CONVERT(varchar, MIN(r.syscreated)) + ' 
+Error: ' + MAX(ISNULL(r.errormessage,'')) AS RequestComments
+from _ST_LOG_ABEI_Results r
+inner join _AB_Entity_jobs j on j.id = r.jobid
+where jobid NOT IN( 330,332,499 )-- Unknown status, therefore set to assumed failed
+AND CONVERT(date,logdate) = CONVERT(date, GETDATE()) 
+group by jobid, jobname </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>Create IT request for errors</stepname></step></steps></job></jobs>

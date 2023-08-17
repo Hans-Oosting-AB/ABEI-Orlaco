@@ -1,0 +1,448 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>496</id><jobname>Import Sales Order Planned Dates</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>1</freq><timescale>once</timescale><frequency>daily</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>18:00:00</startat><beginat>00:00:00</beginat><endat>23:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>-1</day6><day7>-1</day7><duration_start>2022-07-13</duration_start><duration_end>2073-07-13</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>param_0</name><type>String</type><value /></jobparam></jobparams></settings></settingsxml><steps><step><id>4015</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT CONVERT(VARCHAR, FORMAT(GETDATE(), 'dd-MM-yyyy HH:mm')) as StartTime;</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;The Job: Import Sales Order Planned Dates has started.&lt;br&gt;The starttime is:&lt;br&gt;&lt;br&gt;%StartTime%&lt;br&gt;&lt;br&gt;Please use this for RPA reference&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>1</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Monique.Velthoven@stoneridge.com%semicolon%Jelle.Ruiter@stoneridge.com;emailcc=Lennart.Meeuse@Stoneridge.com;emailbcc=;emailsub=Starttime replanning;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=StartTime;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>StartTime</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail with starttime to MV</stepname></step><step><id>3155</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource></datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>-------------------- 400 ORDERS ------------------</stepname></step><step><id>3026</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Filter rows that has been changed    
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 10 AS new_state, 'Itemcode or quantity changed' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = i.ordernr and r.regel = i.RowNr
+WHERE State = 0 and ( i.Itemcode collate database_default &lt;&gt; r.artcode or i.Quantity &lt;&gt; r.esr_aantal )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows with the correct date
+--INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+--SELECT i.ID as Import_id, 11 AS new_state, 'Date already set' as new_message, GETDATE() as syscreated
+--FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+--INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+--INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+--WHERE State = 0 and r.afldat = i.NewDeliveryDate
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+    
+-- Filter rows already delivered
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 12 AS new_state, 'Already delivered' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and ( r.aant_gelev &gt; 0 or k.ord_soort &lt;&gt; 'V' or k.afgehandld = 1 or r.pakbon_afg = 1 )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows in orders with sets
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, 'Order contains set items, change manual' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+WHERE State = 0 and ordernr in (
+    SELECT distinct ordernr FROM [400]..orsrg with (NOLOCK) 
+    where pakbon_afg = 0 and artcode in (
+        select distinct itemcode from [400]..ItemRelations with (NOLOCK)))
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Update rows to be processed
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, old_PlannedDate, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, '' as new_message,  r.PlannedDate, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel and r.artcode = i.itemcode collate database_default
+where State = 0 
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, EGPlannedDate = old_PlannedDate, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Set RunID and state</stepname></step><step><id>3023</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select DISTINCT TOP 100 PERCENT r.OrderNr as headerid, r.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>12</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3024</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>select TOP 100 PERCENT r.OrderNr as HeaderId, r.OrderNr, r.ID, i.RowNr as regel,
+i.NewDeliveryDate AS afldat,
+i.NewDeliveryDate AS PlanningDate
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.Ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>12</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3033</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [400]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V')  and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%'
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3034</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>WITH deldates AS( 
+select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [400]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V') and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%' 
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat
+)
+
+SELECT MIN(r.id) as ID, r.ordernr as HeaderID, r.ordernr
+FROM [400]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr
+GROUP BY r.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3099</id><entity>SalesOrderHeader</entity><action>update</action><source>126</source><target>126</target><datasource>select DISTINCT TOP 100 PERCENT do.OrderNr as headerid, do.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr
+INNER join [483]..[orkrg] do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..[orsrg] dr WITH (NOLOCK) ON do.ordernr = dr.ordernr and dr.regel = r.regel and dr.artcode = r.artcode
+where do.afgehandld = 0 and r.pakbon_afg = 0 and dr.pakbon_afg = 0 and r.afldat &lt;&gt; dr.afldat and dr.ar_soort in ('V','T')
+and i.State = 1 and i.RunId = '%runid%'
+ORDER BY do.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>14</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date 483 FROM 400</stepname></step><step><id>3100</id><entity>SalesOrderLine</entity><action>update</action><source>126</source><target>126</target><datasource>select DISTINCT TOP 100 PERCENT do.OrderNr as HeaderId, do.OrderNr, dr.ID, dr.regel,
+r.afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr
+INNER join [483]..[orkrg] do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..[orsrg] dr WITH (NOLOCK) ON do.ordernr = dr.ordernr and dr.regel = r.regel and dr.artcode = r.artcode
+where do.afgehandld = 0 and r.pakbon_afg = 0 and dr.pakbon_afg = 0 and r.afldat &lt;&gt; dr.afldat and dr.ar_soort in ('V','T')
+and i.State = 1 and i.RunId = '%runid%'
+ORDER BY do.Ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>14</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date 483 FROM 400</stepname></step><step><id>3101</id><entity>SalesOrderHeader</entity><action>update</action><source>126</source><target>126</target><datasource>select TOP 100 PERCENT do.ordernr as HeaderId, do.ordernr, do.afldat as old_date, MIN (dr.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+INNER join [483]..orkrg do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..orsrg dr WITH (NOLOCK) ON do.ordernr = dr.ordernr 
+where do.afgehandld = 0 and dr.pakbon_afg = 0 and dr.pakbon_afg = 0
+and dr.ar_soort IN ('T', 'V') 
+and i.State = 1 and i.RunId = '%runid%'
+group by do.ordernr, do.afldat 
+having  MIN (dr.afldat) &lt;&gt; do.afldat
+ORDER BY do.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Update Header Date 483 FROM 400</stepname></step><step><id>3102</id><entity>SalesOrderLine</entity><action>update</action><source>126</source><target>126</target><datasource>WITH deldates AS( 
+select TOP 100 PERCENT do.ordernr as HeaderId, do.ordernr, do.afldat as old_date, MIN (dr.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+INNER join [483]..orkrg do with (NOLOCK) on do.ordernr = RIGHT(i.SODescription, 8) collate database_default
+INNER JOIN [483]..orsrg dr WITH (NOLOCK) ON do.ordernr = dr.ordernr 
+where do.afgehandld = 0 and dr.pakbon_afg = 0 and dr.pakbon_afg = 0
+and dr.ar_soort IN ('T', 'V') 
+and i.State = 1 and i.RunId = '%runid%'
+group by do.ordernr, do.afldat 
+having  MIN (dr.afldat) &lt;&gt; do.afldat
+)
+
+SELECT TOP 100 PERCENT MIN(r.id) as ID, r.ordernr as HeaderID, r.ordernr
+FROM [483]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr
+GROUP BY r.ordernr
+order BY r.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Update Header Date 483 FROM 400</stepname></step><step><id>3027</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State =  2 
+from [400]..[orsrg] r with (NOLOCK) 
+where [_ST_EG_Import_SODeliveryDate].State = 1 and [_ST_EG_Import_SODeliveryDate].RunId = '%runid%' AND 
+[_ST_EG_Import_SODeliveryDate].OrderNr = r.ordernr and RowNr = r.regel and NewDeliveryDate = r.afldat
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State = 3, Message = 'Incorrect date or row not found' 
+where State = 1 and RunId = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>19</seqno><settings /><settingsxml /><stepname>Finish rows</stepname></step><step><id>3153</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource></datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>-------------------- 483 ORDERS -------------------</stepname></step><step><id>3147</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Filter rows that has been changed    
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 10 AS new_state, 'Itemcode or quantity changed' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+inner join [483]..orsrg r with (NOLOCK) on r.ordernr = i.ordernr and r.regel = i.RowNr
+WHERE State = 0 and ( i.Itemcode collate database_default &lt;&gt; r.artcode or i.Quantity &lt;&gt; r.esr_aantal )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows with the correct date
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 11 AS new_state, 'Date already set' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [483]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [483]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and r.afldat = i.NewDeliveryDate
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+    
+-- Filter rows already delivered
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 12 AS new_state, 'Already delivered' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [483]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [483]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and ( r.aant_gelev &gt; 0 or k.ord_soort &lt;&gt; 'V' or k.afgehandld = 1 or r.pakbon_afg = 1 )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows in orders with sets
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, 'Order contains set items, change manual' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+WHERE State = 0 and ordernr in (
+    SELECT distinct ordernr FROM [483]..orsrg with (NOLOCK) 
+    where pakbon_afg = 0 and artcode in (
+        select distinct itemcode from [483]..ItemRelations with (NOLOCK)))
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Update rows to be processed
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, old_PlannedDate, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, '' as new_message,  r.PlannedDate, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [483]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [483]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel and r.artcode = i.itemcode collate database_default
+where State = 0 
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, EGPlannedDate = old_PlannedDate, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>21</seqno><settings /><settingsxml /><stepname>Set RunID and state</stepname></step><step><id>3148</id><entity>SalesOrderHeader</entity><action>update</action><source>126</source><target>126</target><datasource>select DISTINCT TOP 100 PERCENT r.OrderNr as headerid, r.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [483]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>22</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3149</id><entity>SalesOrderLine</entity><action>update</action><source>126</source><target>126</target><datasource>select TOP 100 PERCENT r.OrderNr as HeaderId, r.OrderNr, r.ID, i.RowNr as regel,
+i.NewDeliveryDate AS afldat,
+i.NewDeliveryDate AS PlanningDate
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [483]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.Ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>22</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3151</id><entity>SalesOrderHeader</entity><action>update</action><source>126</source><target>126</target><datasource>select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [483]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V')  and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%'
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>23</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3152</id><entity>SalesOrderLine</entity><action>update</action><source>126</source><target>126</target><datasource>WITH deldates AS( 
+select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [483]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V') and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%' 
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat
+)
+
+SELECT MIN(r.id) as ID, r.ordernr as HeaderID, r.ordernr
+FROM [483]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr
+GROUP BY r.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>23</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3145</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select DISTINCT TOP 100 PERCENT do.OrderNr as headerid, do.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr
+INNER join [400]..[orkrg] do with (NOLOCK) on r.ordernr = RIGHT(do.docnumber, 8) 
+INNER JOIN [400]..[orsrg] dr WITH (NOLOCK) ON dr.ordernr = do.ordernr and dr.regel = r.regel and dr.artcode = r.artcode
+where do.afgehandld = 0 and r.pakbon_afg = 0 and dr.pakbon_afg = 0 and r.afldat &lt;&gt; dr.afldat and dr.ar_soort in ('V', 'T') 
+AND i.State = 1 and i.RunId = '%runid%'
+ORDER BY do.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>24</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date 400 FROM 483</stepname></step><step><id>3146</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>select DISTINCT TOP 100 PERCENT do.OrderNr as HeaderId, do.OrderNr, dr.ID, dr.regel,
+r.afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [483]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr
+INNER join [400]..[orkrg] do with (NOLOCK) on r.ordernr = RIGHT(do.docnumber, 8) 
+INNER JOIN [400]..[orsrg] dr WITH (NOLOCK) ON dr.ordernr = do.ordernr and dr.regel = r.regel and dr.artcode = r.artcode
+where do.afgehandld = 0 and r.pakbon_afg = 0 and dr.pakbon_afg = 0 and r.afldat &lt;&gt; dr.afldat and dr.ar_soort in ('V', 'T') 
+AND i.State = 1 and i.RunId = '%runid%'
+ORDER BY do.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>24</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date 400 FROM 483</stepname></step><step><id>3143</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select  TOP 100 PERCENT do.ordernr as HeaderId, do.ordernr, do.afldat as old_date, MIN (dr.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+INNER join [400]..[orkrg] do with (NOLOCK) on i.ordernr = RIGHT(do.docnumber, 8)
+INNER JOIN [400]..[orsrg] dr WITH (NOLOCK) ON do.ordernr = dr.ordernr 
+where do.afgehandld = 0 and dr.ar_soort IN ('T', 'V')  and dr.pakbon_afg = 0 
+and i.State = 1 and i.RunId = '%runid%'
+group by do.ordernr, do.afldat 
+having  MIN (dr.afldat) &lt;&gt; do.afldat
+ORDER BY do.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>25</seqno><settings /><settingsxml /><stepname>Update Header Date 400 FROM 483</stepname></step><step><id>3144</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>WITH deldates AS( 
+select  TOP 100 PERCENT do.ordernr as HeaderId, do.ordernr, do.afldat as old_date, MIN (dr.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+INNER join [400]..[orkrg] do with (NOLOCK) on i.ordernr = RIGHT(do.docnumber, 8)
+INNER JOIN [400]..[orsrg] dr WITH (NOLOCK) ON do.ordernr = dr.ordernr 
+where do.afgehandld = 0 and dr.ar_soort IN ('T', 'V')  and dr.pakbon_afg = 0 
+and i.State = 1 and i.RunId = '%runid%'
+group by do.ordernr, do.afldat 
+having  MIN (dr.afldat) &lt;&gt; do.afldat
+)
+
+SELECT  TOP 100 PERCENT MIN(r.id) as ID, r.ordernr as HeaderID, r.ordernr
+FROM [400]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr
+GROUP BY r.ordernr
+order BY r.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>25</seqno><settings /><settingsxml /><stepname>Update Header Date 400 FROM 483</stepname></step><step><id>3150</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State =  2 
+from [483]..[orsrg] r with (NOLOCK) 
+where State = 1 and RunId = '%runid%' AND 
+[_ST_EG_Import_SODeliveryDate].OrderNr = r.ordernr and RowNr = r.regel and NewDeliveryDate = r.afldat
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State = 3, Message = 'Incorrect date or row not found' 
+where State = 1 and RunId = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>29</seqno><settings /><settingsxml /><stepname>Finish rows</stepname></step><step><id>3154</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource></datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>-------------------- 484 ORDERS -------------------</stepname></step><step><id>3156</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Filter rows that has been changed    
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 10 AS new_state, 'Itemcode or quantity changed' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+inner join [484]..orsrg r with (NOLOCK) on r.ordernr = i.ordernr and r.regel = i.RowNr
+WHERE State = 0 and ( i.Itemcode collate database_default &lt;&gt; r.artcode or i.Quantity &lt;&gt; r.esr_aantal )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows with the correct date
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 11 AS new_state, 'Date already set' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [484]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [484]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and r.afldat = i.NewDeliveryDate
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+    
+-- Filter rows already delivered
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 12 AS new_state, 'Already delivered' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [484]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [484]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and ( r.aant_gelev &gt; 0 or k.ord_soort &lt;&gt; 'V' or k.afgehandld = 1 or r.pakbon_afg = 1 )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+-- Filter rows in orders with sets
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, 'Order contains set items, change manual' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+WHERE State = 0 and ordernr in (
+    SELECT distinct ordernr FROM [484]..orsrg with (NOLOCK) 
+    where pakbon_afg = 0 and artcode in (
+        select distinct itemcode from [484]..ItemRelations with (NOLOCK)))
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+-- Update rows to be processed
+INSERT INTO [ExactData].._ST_EG_Import_SODeliveryDate_States (Import_id, new_state, new_message, old_PlannedDate, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, '' as new_message,  r.PlannedDate, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i  with (NOLOCK)
+INNER JOIN [484]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [484]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel and r.artcode = i.itemcode collate database_default
+where State = 0 
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET [State] = new_state, [Message] = new_Message, EGPlannedDate = old_PlannedDate, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SODeliveryDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SODeliveryDate_States
+
+
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>31</seqno><settings /><settingsxml /><stepname>Set RunID and state</stepname></step><step><id>3157</id><entity>SalesOrderHeader</entity><action>update</action><source>112</source><target>112</target><datasource>select DISTINCT TOP 100 PERCENT r.OrderNr as headerid, r.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [484]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [484]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>32</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3158</id><entity>SalesOrderLine</entity><action>update</action><source>112</source><target>112</target><datasource>select TOP 100 PERCENT r.OrderNr as HeaderId, r.OrderNr, r.ID, i.RowNr as regel,
+i.NewDeliveryDate AS afldat,
+i.NewDeliveryDate AS PlanningDate
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [484]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [484]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where i.State = 1 and i.RunId = '%runid%'
+ORDER BY r.Ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>32</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3160</id><entity>SalesOrderHeader</entity><action>update</action><source>112</source><target>112</target><datasource>select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [484]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [484]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V')  and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%'
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>33</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3161</id><entity>SalesOrderLine</entity><action>update</action><source>112</source><target>112</target><datasource>WITH deldates AS( 
+select k.ordernr as HeaderId, k.ordernr, k.afldat as old_date, MIN (r.afldat) as afldat 
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [484]..orkrg k with (NOLOCK) on k.ordernr = i.ordernr
+inner join [484]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where r.ar_soort IN ('T', 'V') and r.pakbon_afg = 0 and i.State = 1 and i.RunId = '%runid%' 
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat
+)
+
+SELECT MIN(r.id) as ID, r.ordernr as HeaderID, r.ordernr
+FROM [484]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr
+GROUP BY r.ordernr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>33</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3159</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State =  2 
+from [484]..[orsrg] r with (NOLOCK) 
+where State = 1 and RunId = '%runid%' AND 
+[_ST_EG_Import_SODeliveryDate].OrderNr = r.ordernr and RowNr = r.regel and NewDeliveryDate = r.afldat
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] 
+SET State = 3, Message = 'Incorrect date or row not found' 
+where State = 1 and RunId = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>39</seqno><settings /><settingsxml /><stepname>Finish rows</stepname></step><step><id>4016</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT CONVERT(VARCHAR, FORMAT(GETDATE(), 'dd-MM-yyyy HH:mm')) as EndTime;</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;The Job: Import Sales Order Planned Dates has ended.&lt;br&gt;The EndTime is:&lt;br&gt;&lt;/p&gt;&lt;p&gt;%EndTime%&lt;br&gt;&lt;br&gt;Please use this for RPA reference&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Monique.Velthoven@stoneridge.com%semicolon%Jelle.Ruiter@stoneridge.com;emailcc=lennart.meeuse@stoneridge.com ;emailbcc=;emailsub=Endtime Replanning;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=EndTime;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>EndTime</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail with endtime to MV</stepname></step></steps></job></jobs>

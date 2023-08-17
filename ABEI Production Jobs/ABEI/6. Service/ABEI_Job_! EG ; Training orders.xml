@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>527</id><jobname>! EG : Training orders</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=4;timescale=hours;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3519</id><entity>Request</entity><action>create</action><source>107</source><target>1</target><datasource>SELECT   6045 as Type
+        , 1 as syscreator
+        , ci.cmp_wwn as CustomerID
+        , ok.projectnr as Project
+        , ok.del_debtor_name as FreeTextfield_13
+        , ok.del_contactperson as FreeTextfield_14
+        , ok.del_AddressLine1 as FreeTextField_07
+        , ok.del_PostCode as FreeTextField_08
+        , ok.del_City as FreeTextField_12
+        , ok.tot_bdr as FreeNumberField_04
+        , ok.ordernr as FreeTextField_09
+        , 0 as FreeBoolField_03
+        , 'Training ' + ok.del_debtor_name + '  /  '+ ok.del_city + ' / Order' +  ok.ordernr as Description
+        , 1 as FreeBoolField_01
+        , 10 as SecurityLevel
+        , cast(cast(ok.afldat as datetime) + cast('09:00' as datetime) as datetime) as StartDate
+        , cast(cast(ok.afldat as datetime) + cast('17:00' as datetime) as datetime)  as EndDate
+        , ok.docnumber as FreeTextField_04 --customer orderno--
+        , ok.selcode as FreeTextField_10
+      
+
+FROM    dbo.orkrg  ok WITH (nolock) 
+        INNER JOIN orsrg os WITH (nolock) ON ok.ordernr = os.ordernr 
+        INNER JOIN orlaco.dbo.cicmpy ci WITH (nolock) ON ok.debnr = ci.debnr
+
+        WHERE  os.artcode = '0900190'
+         and (ok.afgehandld = 0) 
+        and NOT EXISTS (SELECT FreeTextField_09 FROM [orlaco].dbo.absences A WITH (NOLOCK) WHERE A.Type = 6045 AND A.FreeTextField_09 = ok.ordernr )
+        and (ok.ord_soort &lt;&gt;'Q')
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>syscreator</name><type>Int32</type></datacolumn><datacolumn><name>CustomerID</name><type>Guid</type></datacolumn><datacolumn><name>FreeTextfield_13</name><type>String</type></datacolumn><datacolumn><name>FreeTextfield_14</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_07</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_08</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_12</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_09</name><type>String</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>FreeBoolField_01</name><type>Int32</type></datacolumn><datacolumn><name>SecurityLevel</name><type>Int32</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>EndDate</name><type>DateTime</type></datacolumn><datacolumn><name>FreeTextField_04</name><type>String</type></datacolumn><datacolumn><name>FreeBoolField_02</name><type>Int32</type></datacolumn><datacolumn><name>FreeBoolField_04</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Maak verzoek VIS: training opdracht aan bij nieuwe training order</stepname></step><step><id>3520</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>select  top 100 percent
+    min(cast(ab.HID as varchar(50))) as refer1
+    , ok.ordernr
+    , ok.ordernr as headerid
+from [orlaco].dbo.absences ab with (nolock)
+        inner join dbo.orkrg ok with (nolock) on ab.freetextfield_09 = ok.ordernr
+where ok.refer1 is NULL
+    and ok.afgehandld = 0
+    and ab.type = 6045
+group by ok.ordernr
+order by ok.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Verzoeknummer in order</stepname></step><step><id>3521</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>select  top 100 percent  os.id, t.ordernr as headerid
+from (
+    select top 100 percent 
+        min(cast(ab.HID as varchar(50))) as refer1
+        , ok.ordernr
+        , ok.ordernr as headerid
+    from [orlaco].dbo.absences ab with (nolock)
+    inner join dbo.orkrg ok with (nolock) on ab.freetextfield_09 = ok.ordernr
+    where ok.refer1 is NULL
+        and ok.afgehandld = 0
+        and ab.type = 6045
+    group by ok.ordernr
+    order by ok.ordernr
+    ) t 
+inner join dbo.orsrg os with (nolock) on os.ordernr = t.ordernr
+where os.ar_soort = 'P' 
+order by t.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Verzoeknummer in order line</stepname></step></steps></job></jobs>

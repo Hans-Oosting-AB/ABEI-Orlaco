@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>466</id><jobname>Sync SimpleSimon Planning And Attachments</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=hours;startat=16:12:54;beginat=07:00:00;endat=18:00:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2735</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [ExactData].[dbo].[_ST_SS_WO_Attachments] SET ABEI_status = 1
+from [ExactData].[dbo].[_ST_SS_WO_Attachments] sa
+inner join [orlaco].[dbo].[absences] a on a.hid = sa.hid
+where sa.hid &gt;  1000000 and ABEI_status = 0 AND SynergyId IS NULL
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Attachments Set Status 1</stepname></step><step><id>2726</id><entity>DocumentAttachment</entity><action>create</action><source>0</source><target>1</target><datasource>select
+ a.id as DocumentId
+,(CASE WHEN WOSurveyID IS NULL THEN 'Werkbon_' + CONVERT(varchar,WOID) ELSE 'Eigen_formulier_' + CONVERT(varchar,WOSurveyId) END) + '.pdf' as BinaryFilename
+,MAX(sa.[File]) as BinaryAttachment
+,4 as EntityType
+from [exactdata]..[_ST_SS_WO_Attachments] sa
+inner join [orlaco].[dbo].[Absences] a on a.hid  = sa.hid
+where abei_status = 1 AND NOT EXISTS
+( SELECT ba.ID FROM [orlaco]..attachments ba
+    where ba.EntityType = 4 and ba.AttachmentFileExtension = 'pdf' and 
+        Entity = a.id and 
+        AttachmentFileName = 
+        (CASE WHEN WOSurveyID IS NULL THEN 'Werkbon_' + CONVERT(varchar,WOID) ELSE 'Eigen_formulier_' + CONVERT(varchar,WOSurveyId) END) + '.pdf') 
+GROUP BY a.id, WOId, WOSurveyId
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>DocumentId</name><type>Guid</type></datacolumn><datacolumn><name>AttachmentFilename</name><type>String</type></datacolumn><datacolumn><name>BinaryFilename</name><type>String</type></datacolumn><datacolumn><name>BinaryAttachment</name><type>Byte[]</type></datacolumn><datacolumn><name>EntityType</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Upload attachment Synergy</stepname></step><step><id>2754</id><entity>Document</entity><action>create</action><source>0</source><target>107</target><datasource>select 
+'Werkbon_' + CONVERT(varchar,WOID) AS Subject
+,'Werkbon_' + CONVERT(varchar,WOID) + '.pdf' AS BinaryFilename
+,'Simple Simon Werkbon ' + CONVERT(varchar,WOID) AS Note
+,24 AS Type
+,'I' AS Source
+,MAX(sa.[File]) AS BinaryDocument
+,o.ordernr AS OrderNumber
+,o.ordernr AS ProjectNr
+,a.hid as OurRef
+,c.cmp_wwn AS CMPWWN
+from [exactdata]..[_ST_SS_WO_Attachments] sa
+inner join [orlaco].[dbo].[Absences] a  WITH (NOLOCK) on a.hid  = sa.hid and a.type IN (630,600)
+inner join [400].[dbo].[orkrg] o WITH (NOLOCK) on o.ordernr  = (CASE WHEN a.type = 630 THEN a.FreeTextField_09 ELSE CASE WHEN a.type = 600 THEN a.FreeTextField_11 END END )
+inner join [400].[dbo].[cicmpy] c  WITH (NOLOCK) on o.debnr = c.debnr
+where abei_status = 1 AND WOSurveyID IS NULL AND NOT EXISTS
+( SELECT ba.ID FROM [400]..bacodiscussions ba
+    where ba.OrderNumber = o.ordernr AND
+        Filename = 'Werkbon_' + CONVERT(varchar,WOID) + '.pdf') 
+GROUP BY WOID, o.ordernr, a.hid, c.cmp_wwn</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>12</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Subject</name><type>String</type></datacolumn><datacolumn><name>BinaryFilename</name><type>String</type></datacolumn><datacolumn><name>Note</name><type>String</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>BinaryDocument</name><type>Byte[]</type></datacolumn><datacolumn><name>OrderNumber</name><type>String</type></datacolumn><datacolumn><name>ProjectNr</name><type>String</type></datacolumn><datacolumn><name>OurRef</name><type>Int32</type></datacolumn><datacolumn><name>CMPWWN</name><type>Guid</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Upload attachment Globe</stepname></step><step><id>2736</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [exactdata]..[_ST_SS_WO_Attachments] SET ABEI_status = 2, SynergyID = ba.ID
+from [exactdata]..[_ST_SS_WO_Attachments] sa
+inner join [orlaco].[dbo].[Absences] ad on ad.hid  = sa.hid  
+inner join [orlaco]..attachments ba on  ba.EntityType = 4 and ba.Entity = ad.id 
+AND ba.AttachmentFileExtension = 'pdf' and AttachmentFileName = 
+    (CASE WHEN WOSurveyID IS NULL THEN 'Werkbon_' + CONVERT(varchar,WOID) ELSE 'Eigen_formulier_' + CONVERT(varchar,WOSurveyId) END) + '.pdf'
+WHERE ABEI_status = 1 and SynergyID IS NULL</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Attachments Set Status 2 for finished</stepname></step><step><id>2751</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [exactdata]..[_ST_SS_WO_Attachments] SET ABEI_status = 3 
+from [exactdata]..[_ST_SS_WO_Attachments] sa
+inner join [orlaco].[dbo].[Absences] ad on ad.hid  = sa.hid  
+WHERE NOT EXISTS
+( SELECT ba.ID FROM [orlaco]..attachments ba
+    where ba.EntityType = 4 and ba.AttachmentFileExtension = 'pdf' and 
+    Entity = ad.id and 
+    AttachmentFileName = 
+    (CASE WHEN WOSurveyID IS NULL THEN 'Werkbon_' + CONVERT(varchar,WOID) ELSE 'Eigen_formulier_' + CONVERT(varchar,WOSurveyId) END) + '.pdf'
+) AND ABEI_status = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>14</seqno><settings /><settingsxml /><stepname>Attachments Set Status 3 for failed</stepname></step><step><id>2753</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [exactdata]..[_ST_SS_WO_Attachments] SET ABEI_status = 4
+from [exactdata]..[_ST_SS_WO_Attachments] sa
+WHERE  ABEI_status = 0</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Attachments Set Status 4 for not found</stepname></step><step><id>2737</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>UPDATE [ExactData].[dbo].[_ST_SS_WO_Planning] SET abei_status = 1 
+from [orlaco].[dbo].[absences] a
+inner join (SELECT sa.hid, max(sa.id) as id from [ExactData].[dbo].[_ST_SS_WO_Planning] sa 
+    where sa.hid &gt; 1000000 and sa.abei_status = 0 group by sa.hid) sa1 on a.hid = sa1.hid
+inner join [ExactData].[dbo].[_ST_SS_WO_Planning] sa2 on sa1.id = sa2.id
+WHERE a.type in (600, 630) and a.status in (0,1)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Planning Set Status 1</stepname></step><step><id>2738</id><entity>Request</entity><action>update</action><source>0</source><target>1</target><datasource>select a.id, 
+h.res_id as EmpID, 
+sa2.PlannedStart as StartDate, sa2.PlannedEnd as EndDate
+from [orlaco].[dbo].[absences] a
+inner join (SELECT sa.hid, max(sa.id) as id from [ExactData].[dbo].[_ST_SS_WO_Planning] sa 
+    where sa.hid &gt; 1000000 and sa.abei_status = 1 group by sa.hid) sa1 on a.hid = sa1.hid
+inner join [ExactData].[dbo].[_ST_SS_WO_Planning] sa2 on sa1.id = sa2.id
+LEFT join [orlaco].dbo.humres h on h.res_id = CASE WHEN sa2.EmployeeID in ( 1, 999 ) THEN 400 ELSE sa2.EmployeeID END
+WHERE a.type in (600, 630) and a.status in (0,1) AND 
+(sa2.EmployeeID &lt;&gt; EmpID OR sa2.PlannedStart &lt;&gt; StartDate OR sa2.PlannedEnd &lt;&gt; EndDate) 
+AND ( h.ldatuitdienst IS NULL or h.ldatuitdienst &gt; GETDATE())
+group by a.id, a.HID, a.type, a.Status, h.res_id, a.StartDate, a.EndDate, sa2.EmployeeID, sa2.PlannedStart, sa2.PlannedEnd</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>21</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>id</name><type>Guid</type></datacolumn><datacolumn><name>HID</name><type>Int32</type></datacolumn><datacolumn><name>type</name><type>Int32</type></datacolumn><datacolumn><name>Status</name><type>Int32</type></datacolumn><datacolumn><name>EmpID</name><type>Int32</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>EndDate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Planning</stepname></step><step><id>2739</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>
+UPDATE [ExactData].[dbo].[_ST_SS_WO_Planning] SET ABEI_status = 2
+from [ExactData].[dbo].[_ST_SS_WO_Planning] sa
+inner join [orlaco].[dbo].[absences] a on a.hid = sa.hid
+where ABEI_status = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>31</seqno><settings /><settingsxml /><stepname>Planning Set Status 2</stepname></step><step><id>2752</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>
+UPDATE [ExactData].[dbo].[_ST_SS_WO_Planning] SET ABEI_status = 3 where ABEI_status = 0</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>32</seqno><settings /><settingsxml /><stepname>Planning Set Status 3 for unchanged plans</stepname></step><step><id>2757</id><entity>DocumentAttachment</entity><action>delete</action><source>1</source><target>1</target><datasource>    select a.ID, a.entity, b.hid, a.AttachmentFileName from [orlaco]..attachments  a
+  inner join  [orlaco]..Absences b on a.EntityType = 4 and a.Entity = b.id
+  inner join (SELECT DISTINCT HID FROM [ExactData].[dbo].[_ST_SS_WO_Attachments] ) c on c.hid = b.hid
+  where (AttachmentFileName like 'Eigen_formulier_%.pdf' or AttachmentFileName like 'Werkbon_%.pdf')
+  AND a.id not in (
+
+  select MIN(a.ID)  from [orlaco]..attachments  a
+  inner join  [orlaco]..Absences b on a.EntityType = 4 and a.Entity = b.id
+  inner join (SELECT DISTINCT HID FROM [ExactData].[dbo].[_ST_SS_WO_Attachments] ) c on c.hid = b.hid
+  where AttachmentFileName like 'Eigen_formulier_%.pdf' or AttachmentFileName like 'Werkbon_%.pdf'
+  group by a.entity, b.hid, a.AttachmentFileName  )</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>42</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>entity</name><type>Guid</type></datacolumn><datacolumn><name>hid</name><type>Int32</type></datacolumn><datacolumn><name>AttachmentFileName</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Remove duplicate attachments</stepname></step></steps></job></jobs>

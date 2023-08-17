@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>342</id><jobname>! ESE: Prijsopgave</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=11:49:51;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1606</id><entity>Request</entity><action>update</action><source>107</source><target>1</target><datasource>select top 100 percent getdate() as freedatefield_05
+        , 1 as freeboolfield_03
+        , ab.id
+from 
+    dbo.orkrg ok with(NOLOCK) inner join
+    [orlaco].dbo.absences ab with (NOLOCK) on ok.ordernr = ab.freetextfield_11
+where
+    ok.selcode = 'R5' and
+    ab.type = 640 and
+    ab.freeboolfield_03 = 0 </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Toevoegen datum in verzoek</stepname></step></steps></job></jobs>

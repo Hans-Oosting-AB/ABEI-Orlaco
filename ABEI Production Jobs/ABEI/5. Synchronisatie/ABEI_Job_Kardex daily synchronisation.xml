@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>446</id><jobname>Kardex daily synchronisation</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2464</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO  [PPG_TRANSFER].[dbo].[DELETE_ORDERS_TO_KARDEX]([STATUS] ,[ORDERNR],[DIRECTION], [OH_INFO1],[SYSMODIFIED],[SYSCREATED])
+
+SELECT 10 AS STATUS, 
+    'COUNT_' + FORMAT(DATEADD(DAY, -1, GETDATE()), 'yyMMdd') AS ORDERNR, 
+    3 AS DIRECTION,
+    'Counting' AS OH_INFO1,
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Delete counting cycle yesterday</stepname></step><step><id>2465</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>
+INSERT INTO [PPG_TRANSFER].[dbo].[COUNT_TO_KARDEX]([STATUS] ,[ORDERNR],[LINE],[ARTICLE],[OL_INFO1],[OL_INFO2],[OL_INFO3],[SYSMODIFIED],[SYSCREATED])
+
+SELECT 0 AS STATUS, 
+    'COUNT_' + FORMAT(GETDATE(), 'yyMMdd') AS ORDERNR, 
+    ROW_NUMBER() OVER(ORDER BY i.ItemCode) AS LINE,
+    i.ItemCode AS ARTICLE,
+    LEFT(i.Description, 50) AS OL_INFO1,
+    v.CountingCycle AS OL_INFO2,
+    MAX(g.datum) AS OL_INFO3,
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+FROM [400]..Items i WITH (NOLOCK)
+LEFT OUTER JOIN [400]..gbkmut g WITH (NOLOCK) ON i.itemcode = g.artcode
+    AND g.transsubtype = 'G'
+    AND g.transtype = 'N'
+    AND g.warehouse = '1'
+    AND g.datum &gt; DATEADD(YEAR, -2, GETDATE())
+    AND g.type = 190 
+LEFT OUTER JOIN [400]..voorrd v WITH (NOLOCK) ON v.artcode = i.ItemCode and magcode = '1'
+WHERE 1=1
+AND i.class_10 = '10.00'
+AND v.magcode = '1'
+AND v.CountingCycle &gt; 0
+AND i.UserNumber_11 IN (2,12)
+AND i.condition NOT IN ('B','E')
+GROUP BY i.ItemCode, i.Description, v.CountingCycle
+HAVING (MAX(g.datum) IS NULL OR DATEADD (DAY,v.CountingCycle, MAX(g.datum)) &lt;= GETDATE())
+ORDER BY i.ItemCode</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name /><type /></datacolumn></datacolumns></general><query><query_separator /></query></settings></settingsxml><stepname>Add new counting cycle</stepname></step><step><id>2466</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>131</target><datasource>INSERT INTO  [PPG_TRANSFER].[dbo].[DELETE_ORDERS_TO_KARDEX]([STATUS],[ORDERNR],[DIRECTION],[OH_INFO1],[OH_INFO2],[OH_INFO3],[OH_INFO4],[OH_INFO5],[SYSMODIFIED],[SYSCREATED])
+SELECT DISTINCT 10 AS STATUS,
+    ORDERNR, DIRECTION, OH_INFO1, OH_INFO2, OH_INFO3, OH_INFO4, o.SYSCREATED AS [OH_INFO5], 
+    GETDATE() AS SYSMODIFIED,
+    GETDATE() AS SYSCREATED
+FROM [PPG_TRANSFER].[dbo].[ORDERS_TO_KARDEX] o
+WHERE (DATEDIFF(DAY, o.SYSCREATED, GETDATE()) = 30) OR (( OH_INFO1 = 'Production Order' OR OH_INFO1 = 'Sales Order') AND CONVERT(DATE, o.SYSCREATED) = CONVERT(DATE, DATEADD(DAY, -1, GETDATE())))
+ORDER BY ORDERNR</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Delete all orders &gt; 30 days</stepname></step><step><id>2397</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT 'Counting' AS Element, ID, ORDERNR, OH_INFO1, OH_INFO2, ARTICLE, OL_INFO1, ERROR_DATE, ERROR_MESSAGE, SYSMODIFIED from [PPG_TRANSFER].[dbo].COUNT_TO_KARDEX WHERE STATUS = 3 AND CONVERT(DATE,SYSCREATED) = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+UNION
+SELECT 'Material' AS Element, ID, '' AS ORDERNR, '' AS OH_INFO1, '' AS OH_INFO2, ARTICLE, DESCRIPTION_1, ERROR_DATE, ERROR_MESSAGE, SYSMODIFIED from [PPG_TRANSFER].[dbo].MATERIALS_TO_KARDEX WHERE STATUS = 3 AND CONVERT(DATE,SYSCREATED) = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+UNION
+SELECT 'Orders' AS Element, ID, ORDERNR, OH_INFO1, OH_INFO2, ARTICLE, OL_INFO1, ERROR_DATE, ERROR_MESSAGE, SYSMODIFIED from [PPG_TRANSFER].[dbo].ORDERS_TO_KARDEX WHERE STATUS = 3 AND CONVERT(DATE,SYSCREATED) = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+UNION
+SELECT 'Delete Orders' AS Element, ID, ORDERNR, OH_INFO1, OH_INFO2, '' AS ARTICLE, '' AS OL_INFO1, ERROR_DATE, ERROR_MESSAGE, SYSMODIFIED from [PPG_TRANSFER].[dbo].DELETE_ORDERS_TO_KARDEX WHERE STATUS = 13 AND CONVERT(DATE,SYSCREATED) = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi, &lt;/p&gt;&lt;p&gt;This are the errors in yesterdays&amp;nbsp;Kardex synchronisation runs. &lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Element&lt;/td&gt;&lt;td&gt;ID&lt;/td&gt;&lt;td&gt;ORDERNR&lt;/td&gt;&lt;td&gt;OH_INFO1&lt;/td&gt;&lt;td&gt;OH_INFO2&lt;/td&gt;&lt;td&gt;ARTICLE&lt;/td&gt;&lt;td&gt;OL_INFO1&lt;/td&gt;&lt;td&gt;ERROR_DATE&lt;/td&gt;&lt;td&gt;ERROR_MESSAGE&lt;/td&gt;&lt;td&gt;SYSMODIFIED&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Element%&lt;/td&gt;&lt;td&gt;%ID%&lt;/td&gt;&lt;td&gt;%ORDERNR%&lt;/td&gt;&lt;td&gt;%OH_INFO1%&lt;/td&gt;&lt;td&gt;%OH_INFO2%&lt;/td&gt;&lt;td&gt;%ARTICLE%&lt;/td&gt;&lt;td&gt;%OL_INFO1%&lt;/td&gt;&lt;td&gt;%ERROR_DATE%&lt;/td&gt;&lt;td&gt;%ERROR_MESSAGE%&lt;/td&gt;&lt;td&gt;%SYSMODIFIED%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="10"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>retryunique=0;uniquekey=;emailfrom=lennart.meeuse@stoneridge.com;emailname=Kardex Sync Errors;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Kardex sync errors;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Element,ID,ORDERNR,OH_INFO1,OH_INFO2,ARTICLE,OL_INFO1,ERROR_DATE,ERROR_MESSAGE,SYSMODIFIED;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Element</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>ORDERNR</name><type>String</type></datacolumn><datacolumn><name>OH_INFO1</name><type>String</type></datacolumn><datacolumn><name>OH_INFO2</name><type>String</type></datacolumn><datacolumn><name>ARTICLE</name><type>String</type></datacolumn><datacolumn><name>OL_INFO1</name><type>String</type></datacolumn><datacolumn><name>ERROR_DATE</name><type>String</type></datacolumn><datacolumn><name>ERROR_MESSAGE</name><type>String</type></datacolumn><datacolumn><name>SYSMODIFIED</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Report Errors</stepname></step></steps></job></jobs>

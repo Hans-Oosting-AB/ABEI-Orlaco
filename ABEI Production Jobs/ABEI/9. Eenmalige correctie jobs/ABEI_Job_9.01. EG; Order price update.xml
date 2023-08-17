@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>521</id><jobname>9.01. EG: Order price update</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=08:35:38;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>2000</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3414</id><entity>-none-</entity><action>exec SQL</action><source>126</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_ABEI_OrderPriceUpdate ([db]
+    ,[ord_soort],[ordernr],[ID],[regel],[artcode],[oms45],[esr_aantal]
+    ,[prijslijst],[prijs_n_old],[prijs83_old],[korting_old],[bdr_ev_ed_val]
+    ,[bdr_d_ev_val],[bdr_vat_val],[bdr_inv_d_val],[bdr_val],[prijs83],[prijs_n]
+    ,[fiattering],[ordbv_afdr],[ordbv_afgd],[runid],[rowstatus])
+SELECT 
+    '%abeisourcedb%' as db
+    , k.ord_soort, k.ordernr, r.ID, r.regel, r.artcode, r.oms45, r.esr_aantal, r.prijslijst, r.prijs_n as prijs_n_old, r.prijs83 as prijs83_old, r.korting as korting_old
+    , r.bdr_ev_ed_val, r.bdr_d_ev_val, r.bdr_vat_val, r.bdr_inv_d_val, r.bdr_val
+
+    , CAST(ROUND(r.prijs83 * 1.065,2) as decimal(16,2)) as prijs83
+    , CAST(ROUND(r.prijs_n * 1.065,2) as decimal(16,2)) as prijs_n
+
+    , k.fiattering
+    , k.ordbv_afdr
+    , k.ordbv_afgd
+
+    , '%runid%'
+    , 1
+    
+FROM [%abeisourcedb%].dbo.orkrg k WITH (NOLOCK)
+    INNER JOIN [%abeisourcedb%].dbo.orsrg r WITH (NOLOCK) ON r.ordernr = k.ordernr
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK) ON c.debnr = k.debnr
+WHERE 1=1
+    AND k.afgehandld = 0 -- Open orders
+    AND k.ord_soort = 'V' -- Sales order
+    AND r.ar_soort != 'P' -- Exclude condition lines
+    AND r.artcode NOT LIKE 'TXT%'  -- exclude text items as spot buy, ZCOM and MAN
+    AND r.uitgifte = 0 and r.pakbon_afg = 0 -- Open rows
+    AND r.reeds_fakt = 0 -- include delivered but not invoiced rows
+    and r.prijs_n &gt; 0.1 -- Exclude zero and negative rows
+    AND ISNULL(k.debnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  )         
+    AND ISNULL(k.fakdebnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  )      
+    AND ISNULL(k.verzdebnr,'') not in ( SELECT DISTINCT ce.debnr collate database_default  FROM [ExactData].[dbo].[_ST_PriceUpdate23_ExclAccounts] ce where division = '%abeisourcedb%'  ) 
+    AND ISNULL(r.prijslijst,'') not in ( SELECT DISTINCT pe.Pricelist collate database_default FROM [ExactData].[dbo].[_ST_PriceUpdate23_PricelistList] pe WITH (NOLOCK) )            
+    and k.syscreated &gt; '2022-12-01' -- orders created after 01-12-22
+    and r.afldat &gt;= '2023-01-01' -- delivery date in 2023
+    and (r.korting &lt;= -6.6 or r.korting &gt;= -6.4 ) -- don't update rows that already have the new price
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM DBO._AB_TB_ABEI_ORDERPRICEUPDATE O WITH (NOLOCK)
+        WHERE 1=1
+           AND O.DB = '%ABEISOURCEDB%'
+           AND O.ID = R.ID)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Get orders for DB</stepname></step><step><id>3416</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>SELECT 1 as c</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>Loop start</stepname></step><step><id>3426</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>==== Start</stepname></step><step><id>3417</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>109</seqno><settings></settings><settingsxml /><stepname>==== Process</stepname></step><step><id>3418</id><entity>SalesOrderLine</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT TOP (100) 
+     o.ordernr as HeaderID
+    , o.ordernr
+    , o.ID
+    --, o.prijs83
+    --, o.prijs_n
+    , o.prijs83_old as prijs83
+    , o.prijs_n_old as prijs_n
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1 
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'V'
+    
+    
+    --AND (r.prijs83 &lt;&gt; o.prijs83
+    --OR r.prijs_n &lt;&gt; o.prijs_n)
+    
+    AND o.reverted = 1
+    AND ( abs(r.prijs83 - o.prijs83_old) &gt; 0.01
+    OR abs(r.prijs_n - o.prijs_n_old) &gt; 0.01)
+
+    -- Test
+    --AND o.ordernr = '12017403'--'11640141'--'11913948'--'11907729'--'11640141'
+ORDER BY o.ordernr, o.ID
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order for DB</stepname></step><step><id>3419</id><entity>SalesOrderHeader</entity><action>update</action><source>129</source><target>126</target><datasource>WITH orderlines AS (
+    SELECT TOP (100) 
+         o.ordernr as HeaderID
+        , o.ordernr
+        , o.ID
+        , o.prijs83
+        , o.prijs_n
+    FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+        INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+    WHERE 1=1
+        AND o.rowstatus = 1
+        AND o.db = '%abeitargetdb%'
+        AND o.prijs83 &gt; 0
+        AND o.ord_soort = 'V'
+
+        --AND (r.prijs83 &lt;&gt; o.prijs83
+        --OR r.prijs_n &lt;&gt; o.prijs_n)
+    
+    AND o.reverted = 1
+    AND ( abs(r.prijs83 - o.prijs83_old) &gt; 0.01
+    OR abs(r.prijs_n - o.prijs_n_old) &gt; 0.01)
+
+    ORDER BY o.ordernr, o.ID
+)
+SELECT DISTINCT
+    HeaderID, ordernr
+FROM orderlines</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update order for DB - Header</stepname></step><step><id>3420</id><entity>SalesOrderLine</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT 
+     o.ordernr as HeaderID
+    , o.ordernr
+    , o.ID
+    , o.prijs_n
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'V'
+
+    AND o.prijs_n = 0
+    AND (r.prijs_n &lt;&gt; o.prijs_n)
+
+    AND EXISTS (
+        SELECT 1 
+        FROM [%abeidb%].dbo._AB_Entity_results r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.jobid = %jobid%
+            AND r.runid = '%runid%'
+            AND r.Entity = 'SalesOrderLine'
+            AND r.[action] = 'update'
+            AND r.TargetDB = '%abeitargetdb%'
+            AND r.HeaderID = o.ordernr COLLATE DATABASE_DEFAULT
+    )
+            
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order to 0 for DB</stepname></step><step><id>3421</id><entity>SalesOrderHeader</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT DISTINCT 
+     o.ordernr as HeaderID
+    , o.ordernr
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeitargetdb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'V'
+
+    AND o.prijs_n = 0
+    AND (r.prijs_n &lt;&gt; o.prijs_n)
+
+    AND EXISTS (
+        SELECT 1 
+        FROM [%abeidb%].dbo._AB_Entity_results r WITH (NOLOCK)
+        WHERE 1=1
+            AND r.jobid = %jobid%
+            AND r.runid = '%runid%'
+            AND r.Entity = 'SalesOrderLine'
+            AND r.[action] = 'update'
+            AND r.TargetDB = '%abeitargetdb%'
+            AND r.HeaderID = o.ordernr COLLATE DATABASE_DEFAULT
+    )
+            
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update order to 0 for DB - Header</stepname></step><step><id>3424</id><entity>-none-</entity><action>exec SQL</action><source>126</source><target>129</target><datasource>UPDATE o WITH (ROWLOCK, NOWAIT) SET
+-- SELECT
+    rowstatus = 2
+    , runid = '%runid%'
+    , sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_ABEI_OrderPriceUpdate o 
+    INNER JOIN [%abeisourcedb%].dbo.orsrg r WITH (NOLOCK) ON r.ID = o.ID
+WHERE 1=1
+    AND o.rowstatus = 1
+    AND o.db = '%abeisourcedb%'
+    AND o.prijs83 &gt; 0
+    AND o.ord_soort = 'V'
+
+    --AND r.prijs83 = o.prijs83
+    --AND r.prijs_n = o.prijs_n   
+    
+    AND o.reverted = 1
+    AND ( abs(r.prijs83 - o.prijs83_old) &lt; 0.01
+    OR abs(r.prijs_n - o.prijs_n_old) &lt; 0.01)  
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>130</seqno><settings /><settingsxml /><stepname>Check result for DB</stepname></step><step><id>3425</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>9000</seqno><settings></settings><settingsxml /><stepname>==== Loop</stepname></step><step><id>3422</id><entity>-none-</entity><action>process</action><source>126</source><target>80</target><datasource>SELECT CASE WHEN l.ct &gt; 0 THEN 100 ELSE 9020 END as seqno
+FROM (
+    SELECT COUNT(o.ID) as ct
+    FROM [ABSC_Data].dbo._AB_tb_ABEI_OrderPriceUpdate o WITH (NOLOCK)
+    WHERE 1=1
+        AND o.db = '%abeisourcedb%'
+        AND o.rowstatus = 1
+        AND o.ord_soort = 'V'
+) l</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>9010</seqno><settings>uniquekey=;retryunique=0;sysaction=12;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>seqno</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno>%seqno%</systemtarget_skiptoseqno><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Loop back</stepname></step><step><id>3423</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>SELECT 1 as c</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>9020</seqno><settings /><settingsxml /><stepname>Loop end</stepname></step><step><id>3476</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>9040</seqno><settings></settings><settingsxml /><stepname>====</stepname></step><step><id>3477</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>select o.debnr,  k.ord_debtor_name, 
+CASE WHEN o.ord_contactemail IS NULL THEN o.inv_contactemail ELSE o.ord_contactemail END AS ord_contactemail , 
+CASE WHEN o.ord_contactemail = o.inv_contactemail OR o.ord_contactemail IS NULL  THEN NULL ELSE o.inv_contactemail END AS inv_contactemail, 
+o.ordernr, k.docnumber, o.regel, o.artcode, o.oms45, o.esr_aantal, o.prijs_n_old, r.prijs_n, 
+CONVERT(varchar,r.afldat,101) as afldat, ia.ItemCodeAccount, h.mail
+from [absc_data].[dbo].[_AB_tb_ABEI_OrderPriceUpdate] o
+inner join [400]..orkrg k with (NOLOCK) on o.ordernr = k.ordernr
+inner join [400]..orsrg r with (NOLOCK) on o.ordernr = r.ordernr and o.id = r.id
+inner join [orlaco]..cicmpy c with (NOLOCK) on o.debnr = c.debnr collate database_default
+left join [orlaco]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = o.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where o.db = '400'  and o.reverted = 0 and o.emailsent=0 and o.ord_soort = 'V' and c.ClassificationId != 'OEM' and (o.ord_contactemail IS NOT NULL OR o.inv_contactemail IS NOT NULL)
+UNION
+select o.debnr,  k.ord_debtor_name, 
+CASE WHEN o.ord_contactemail IS NULL THEN o.inv_contactemail ELSE o.ord_contactemail END AS ord_contactemail , 
+CASE WHEN o.ord_contactemail = o.inv_contactemail OR o.ord_contactemail IS NULL  THEN NULL ELSE o.inv_contactemail END AS inv_contactemail, 
+o.ordernr, k.docnumber, o.regel, o.artcode, o.oms45, o.esr_aantal, o.prijs_n_old, r.prijs_n, 
+CONVERT(varchar,r.afldat,101) as afldat, ia.ItemCodeAccount,h.mail
+from [absc_data].[dbo].[_AB_tb_ABEI_OrderPriceUpdate] o
+inner join [483]..orkrg k with (NOLOCK) on o.ordernr = k.ordernr
+inner join [483]..orsrg r with (NOLOCK) on o.ordernr = r.ordernr and o.id = r.id
+inner join [orlaco]..cicmpy c with (NOLOCK) on o.debnr = c.debnr collate database_default
+left join [orlaco]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = o.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where o.db = '483'  and o.reverted = 0 and o.emailsent=0 and o.ord_soort = 'V' and c.ClassificationId != 'OEM'  and (o.ord_contactemail IS NOT NULL OR o.inv_contactemail IS NOT NULL)
+UNION
+select o.debnr,  k.ord_debtor_name, 
+CASE WHEN o.ord_contactemail IS NULL THEN o.inv_contactemail ELSE o.ord_contactemail END AS ord_contactemail , 
+CASE WHEN o.ord_contactemail = o.inv_contactemail OR o.ord_contactemail IS NULL  THEN NULL ELSE o.inv_contactemail END AS inv_contactemail, 
+o.ordernr, k.docnumber, o.regel, o.artcode, o.oms45, o.esr_aantal, o.prijs_n_old, r.prijs_n, 
+CONVERT(varchar,r.afldat,101) as afldat, ia.ItemCodeAccount, h.mail
+from [absc_data].[dbo].[_AB_tb_ABEI_OrderPriceUpdate] o
+inner join [484]..orkrg k with (NOLOCK) on o.ordernr = k.ordernr
+inner join [484]..orsrg r with (NOLOCK) on o.ordernr = r.ordernr and o.id = r.id
+inner join [orlaco]..cicmpy c with (NOLOCK) on o.debnr = c.debnr collate database_default
+left join [orlaco]..ItemAccounts ia with (NOLOCK) on ia.AccountCode = c.cmp_wwn and ia.ItemCode = o.artcode
+left join [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+where o.db = '484'  and o.reverted = 0 and o.emailsent=0 and o.ord_soort = 'V' and c.ClassificationId != 'OEM'  and (o.ord_contactemail IS NOT NULL OR o.inv_contactemail IS NOT NULL)
+ORDER BY debnr,ord_debtor_name, ord_contactemail, ordernr, regel</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font face="Calibri"&gt;&lt;p&gt;To: %ord_debtor_name% -&amp;nbsp;%ord_contactemail%, %inv_contactemail%&lt;/p&gt;
+
+&lt;p&gt;Dear Customer,&lt;/p&gt;
+
+&lt;p&gt;A few weeks ago, we announced a 6% price increase effective January 1, 2022.&lt;br&gt;
+Existing orders placed on or before November 15th, 2021&amp;nbsp;will keep the original price. For all orders entered&amp;nbsp;after November 15th, 2021&amp;nbsp;our&amp;nbsp;prices&amp;nbsp;have been&amp;nbsp;increased by 6%. Please see below the new prices for your open orders that have been placed after November 15th, 2021.&lt;/p&gt;
+&lt;p&gt;We kindly request you to update your system with the new prices. We can send you an updated price list upon request.&lt;/p&gt;
+
+
+
+
+
+&lt;table style="width: 90%;" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;
+&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;Order number&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Your Reference&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Itemcode&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;Your Itemcode&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Quantity&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td&gt;&lt;strong&gt;Old Price&lt;/strong&gt;&lt;/td&gt;
+
+&lt;td&gt;&lt;strong&gt;New Price&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Delivery Date&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%docnumber%&lt;/td&gt;&lt;td&gt;%artcode%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;
+&lt;td&gt;%oms45%&lt;/td&gt;&lt;td&gt;%esr_aantal%&lt;/td&gt;&lt;td&gt;%prijs_n_old%&lt;/td&gt;&lt;td&gt;%prijs_n%&lt;/td&gt;&lt;td&gt;%afldat%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="17"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+
+&lt;p&gt;Best regards,&lt;br&gt;
+&lt;strong&gt;Stoneridge | &lt;span style="color: rgb(192, 0, 0);"&gt;ORLACO – Vision is our mission®&lt;/span&gt;&lt;/strong&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>9050</seqno><settings>retryunique=0;uniquekey=;emailfrom=ISS@orlaco.com;emailname=Order@orlaco.com;emailreplyto=order@orlaco.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%ord_contactemail%%semicolon%%inv_contactemail%;emailcc=%mail%;emailbcc=order@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailsub=Order confirmation with new prices;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ord_contactemail;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>ord_contactemail</name><type>String</type></datacolumn><datacolumn><name>inv_contactemail</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>esr_aantal</name><type>Double</type></datacolumn><datacolumn><name>prijs_n_old</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn><datacolumn><name>afldat</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>mail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to customer</stepname></step></steps></job></jobs>

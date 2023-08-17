@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>487</id><jobname>IConneqt import WEB RMA</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=hours;startat=08:20:10;beginat=05:30:00;endat=23:50:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2919</id><entity>-none-</entity><action>exec SQL</action><source>1</source><target>129</target><datasource>
+UPDATE [ExactData].[dbo].[_ST_IC_RMAs]  
+SET Updated = 1, runid = '%runid%', Datechanged = GETDATE()
+--WHERE ID in (SELECT MIN(ID) FROM [ExactData].[dbo].[_ST_IC_RMAs] 
+WHERE updated = 0 --and runid is null 
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Mark entry for process</stepname></step><step><id>2918</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>/****** Script for SelectTopNRows command from SSMS  ******/
+
+SELECT TOP 10 6034 AS [Type]
+      ,r.[CID] AS [FreeIntField_03]
+      ,R.[Reason]  AS [Description]
+
+      ,r.[Accountno] AS  [FreeIntField_02]
+      ,c.[cmp_wwn] AS [CustomerID] 
+    
+      ,r.[ContactPerson] AS [ReferenceNumber]
+      ,cp.[cnt_id] AS [CustomerContactID]
+    
+      ,LEFT(r.[Company],60) AS [FreeTextField_02]
+      ,LEFT(r.[Email],60) AS [FreeTextField_10]
+      ,r.[CDate] AS [StartDate]
+      
+      ,LEFT(r.[ArticleNo1],60) AS [FreeTextField_12]
+      ,i1.[Itemcode] AS [ItemCode] 
+      ,LEFT(r.[SerialNo1],60) AS [OpportunityStage]
+      ,r.[Quantity1] AS [ItemCount]
+      ,LEFT(r.[State1],60) AS [FreeTextField_05]
+     
+      ,LEFT(r.[ArticleNo2],60) AS [FreeTextField_08]
+      ,i2.[Itemcode] AS [ItemCode_2] 
+      ,LEFT(r.[SerialNo2],60) AS [ProcessNumber]
+      ,r.[Quantity2] AS [ItemCount_2]
+      ,LEFT(r.[State2],60) AS [FreeTextField_04]
+      
+      ,r.[OrderNo] AS [FreeIntField_04]
+      ,r.[InvoiceNo] AS [FreeIntField_01]
+      ,r.[Description] + 
+      CASE WHEN ISNULL(r.SerialNo1,'') != '' THEN '
+
+[ABEI Information ' + CONVERT(Varchar,getdate(),20) + ']
+Serialnumber ' +  ISNULL(r.SerialNo1,'') + 
+CASE WHEN (in1.itemcode IS NULL) THEN ' is not found in db 400.' ELSE ' belongs to ' + ISNULL(in1.ItemCode COLLATE DATABASE_DEFAULT,'') + '.' +
+CASE WHEN (gb1.datum IS NULL) THEN '
+No sales information found.' ELSE '
+Sold on ' + ISNULL(CONVERT(Varchar,gb1.datum,105),'') + ' on order ' + ISNULL(gb1.project,'') + ' with invoice ' + ISNULL(gb1.faktuurnr,'') + ' to ' + ISNULL(gb1.oms25,'') + '.' 
+END END ELSE '' END +
+CASE WHEN ISNULL(r.SerialNo2,'') != '' THEN '
+
+[ABEI Information ' + CONVERT(Varchar,getdate(),20) + ']
+Serialnumber ' +  ISNULL(r.SerialNo2,'') + 
+CASE WHEN (in2.itemcode IS NULL) THEN ' is not found in db 400.' ELSE ' belongs to ' + ISNULL(in2.ItemCode COLLATE DATABASE_DEFAULT,'') + '.' +
+CASE WHEN (gb2.datum IS NULL) THEN '
+No sales information found.' ELSE '
+Sold on ' + ISNULL(CONVERT(Varchar,gb2.datum,105),'') + ' on order ' + ISNULL(gb2.project,'') + ' with invoice ' + ISNULL(gb2.faktuurnr,'') + ' to ' + ISNULL(gb2.oms25,'') + '.' 
+END END ELSE '' END   AS [RequestComments]
+      ,r.[ShipmentDate] AS [FreeDateField_02]
+
+      ,LEFT(r.[Failure],60) AS [FreeTextField_14]
+      ,LEFT(r.[FailureDescription],60) AS [FreeTextField_15]
+      ,LEFT(r.[Reason],60) AS [FreeTextField_09]
+      ,LEFT(r.[OptionalText],60) AS [FreeTextField_13]
+      
+
+  FROM [ExactData].[dbo].[_ST_IC_RMAs] r
+  LEFT OUTER JOIN [orlaco].[dbo].[cicmpy] c with (NOLOCK) on r.[Accountno] != 0 AND c.[cmp_code] = r.[Accountno] and c.cmp_type != 'E'
+  LEFT OUTER JOIN [orlaco].[dbo].[cicntp] cp with (NOLOCK) on cp.[cmp_wwn] = c.[cmp_wwn] AND cp.[FullName] = r.[ContactPerson] COLLATE DATABASE_DEFAULT
+  LEFT OUTER JOIN [orlaco].[dbo].[Items] i1 with (NOLOCK) on i1.Itemcode = r.ArticleNo1  COLLATE DATABASE_DEFAULT
+  LEFT OUTER JOIN [orlaco].[dbo].[Items] i2 with (NOLOCK) on i2.Itemcode = r.ArticleNo2  COLLATE DATABASE_DEFAULT
+  LEFT OUTER JOIN [400].[dbo].[ItemNumbers] in1 with (NOLOCK) on in1.Number = r.SerialNo1 COLLATE DATABASE_DEFAULT
+  LEFT OUTER JOIN [400].[dbo].[ItemNumbers] in2 with (NOLOCK) on in2.Number = r.SerialNo2 COLLATE DATABASE_DEFAULT
+  LEFT OUTER  JOIN (select TOP 1 datum, project, faktuurnr, oms25, bkstnr_sub, docnumber, facode
+                from [400]..gbkmut gb with (NOLOCK) 
+                where reknr = '     8400' and transtype = 'N' and transsubtype = 'K'  
+                ORDER BY datum desc) gb1 on gb1.facode  = r.SerialNo1 COLLATE DATABASE_DEFAULT
+  LEFT OUTER  JOIN (select TOP 1 datum, project, faktuurnr, oms25, bkstnr_sub, docnumber, facode
+                from [400]..gbkmut gb with (NOLOCK) 
+                where reknr = '     8400' and transtype = 'N' and transsubtype = 'K'  
+                ORDER BY datum desc) gb2 on gb2.facode  = r.SerialNo2 COLLATE DATABASE_DEFAULT
+  WHERE Updated = 1 and RunId = '%runid%' 
+ 
+
+ORDER BY r.CID</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>FreeIntField_03</name><type>Int32</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>FreeIntField_02</name><type>Int32</type></datacolumn><datacolumn><name>CustomerID</name><type>Guid</type></datacolumn><datacolumn><name>ReferenceNumber</name><type>String</type></datacolumn><datacolumn><name>ContactID</name><type>Guid</type></datacolumn><datacolumn><name>FreeTextField_02</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_10</name><type>String</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>FreeTextField_12</name><type>String</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ProcessNumber</name><type>String</type></datacolumn><datacolumn><name>ItemCount</name><type>Int32</type></datacolumn><datacolumn><name>FreeTextField_05</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_08</name><type>String</type></datacolumn><datacolumn><name>ItemCode_2</name><type>String</type></datacolumn><datacolumn><name>OpportunityStage</name><type>String</type></datacolumn><datacolumn><name>ItemCount_2</name><type>Int32</type></datacolumn><datacolumn><name>FreeTextField_04</name><type>String</type></datacolumn><datacolumn><name>FreeIntField_04</name><type>Int32</type></datacolumn><datacolumn><name>FreeIntField_01</name><type>Int32</type></datacolumn><datacolumn><name>RequestComments</name><type>String</type></datacolumn><datacolumn><name>FreeDateField_02</name><type>DateTime</type></datacolumn><datacolumn><name>FreeTextField_14</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_15</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_09</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_13</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import - Process 1 - WEB RMA</stepname></step><step><id>2920</id><entity>-none-</entity><action>exec SQL</action><source>1</source><target>129</target><datasource>
+
+UPDATE [ExactData].[dbo].[_ST_IC_RMAs]  
+SET Updated = 2, Datechanged = GETDATE(), HID = r.HID
+FROM [orlaco].dbo.absences r with (NOLOCK) where r.type = 6034 and r.freeIntField_03 = CID
+AND updated = 1 --and runid = '%runid%' 
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Finish entry</stepname></step><step><id>3008</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>select TOP 10 6035 AS [Type]
+,w.[ID] AS [RelatedRequestID]
+,w.[CustomerID] AS [CustomerID]
+,w.[CustomerContactID] AS [CustomerContactID]
+,w.[ProjectNumber] AS [ProjectNumber]
+,w.[Description] AS [Description]
+,w.[Startdate] AS [Startdate]
+,DATEADD(m, 2, w.[Startdate]) AS [FreeDateField_02] -- Return no later than
+
+,w.[Itemcode] AS [Itemcode]
+,w.[OpportunityStage] AS [FreeTextField_04] -- serial number 1
+,w.[ItemCount] AS [ItemCount]
+,w.[FreeTextField_05] AS [FreeTextField_07] -- state of part 1
+ 
+,w.[Itemcode_2] AS [Itemcode_2]
+,w.[ProcessNumber] AS [FreeTextField_08] -- serial number 2
+,w.[ItemCount_2] AS [ItemCount_2]
+,w.[FreeTextField_04] AS [FreeTextField_03] -- state of part 2
+ 
+,w.[FreeTextField_09] AS [FreeTextField_06] -- Reason for returning
+,w.[FreeIntField_04]  AS [ReferenceNumber] -- Customer PO
+,w.[FreeIntField_01] AS [FreeIntField_03] -- Invoice number
+,w.RequestComments -- Report description
+
+from [orlaco].[dbo].[absences] w with (NOLOCK) 
+where [Type] = 6034
+AND [Status] = 3 
+AND [ID] NOT IN (SELECT RelatedRequestID from [orlaco].[dbo].[absences] w with (NOLOCK) where [Type] = 6035  AND RelatedRequestID IS NOT NULL)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>50</seqno><settings /><settingsxml /><stepname>Create - Process 2 - RMA request</stepname></step><step><id>3278</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>SELECT TOP 10 ID, HID, 1 as [Status] 
+FROM absences with (NOLOCK) 
+where type = 6035 
+and status = 0 
+and relatedrequestid is not null</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>51</seqno><settings /><settingsxml /><stepname>--disabled -- Update Status for RMA with WebRMA</stepname></step><step><id>3279</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>SELECT TOP 10 wa.ID, wa.HID, ra.ID as relatedrequestid
+FROM absences wa with (NOLOCK)
+INNER JOIN absences ra with (NOLOCK) on ra.relatedrequestid = wa.id
+where wa.type = 6034 and ra.type = 6035 
+and wa.relatedrequestid is null</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>52</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Write RMA request ID to WEB RMA</stepname></step><step><id>3106</id><entity>-none-</entity><action>create</action><source>1</source><target>6</target><datasource>select a.HID, a.StartDate, 
+ra.fullname AS ApprovedBy, a.Approved,
+ISNULL(ra.mail, 'm.velthoven@orlaco.com') as Email,
+rh.fullname AS RejectedBy, a.Rejected
+from [orlaco]..Absences a with (NOLOCK) 
+LEFT join [orlaco]..humres ra with (NOLOCK) on ra.res_id = a.Approver
+LEFT join [orlaco]..humres rh with (NOLOCK) on rh.res_id = a.RejectedBy
+where (a.Type = 6034 OR a.type = 6035) and a.Status = 2  and a.Approver != 0 AND a.Rejected &gt; DATEADD(HOUR, -1, GETDATE())</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear %ApprovedBy%,&lt;/p&gt;&lt;p&gt;The RMA %HID% with startdate %StartDate% is rejected on %Rejected% by %RejectedBy%.&lt;/p&gt;&lt;p&gt;Please take care of this RMA.&lt;/p&gt;&lt;p&gt;Kind regards,&lt;/p&gt;&lt;p&gt;Your automated ABEI bot&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=RMA ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%Email%;emailcc=;emailbcc=;emailsub=RMA %HID% rejected;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=HID;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HID</name><type>Int32</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>ApprovedBy</name><type>String</type></datacolumn><datacolumn><name>Approved</name><type>DateTime</type></datacolumn><datacolumn><name>Email</name><type>String</type></datacolumn><datacolumn><name>RejectedBy</name><type>String</type></datacolumn><datacolumn><name>Rejected</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send email for rejected WebRMAs</stepname></step><step><id>3107</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>select a.ID, a.HID, 0 As Status, 0 as FreeBoolField_02
+from [orlaco]..Absences a with (NOLOCK) 
+where a.Type = 6034 and a.Status = 2  and a.FreeBoolField_02 = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>Reopen rejected WebRMA</stepname></step></steps></job></jobs>

@@ -1,0 +1,829 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>430</id><jobname>AB_Staffl_Log Live</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>freq=1;timescale=once;startat=08:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2226</id><entity>-none-</entity><action>process</action><source>107</source><target>80</target><datasource>SELECT TOP 1 ISNULL(s.ID, 2)
+FROM [400].dbo.staffl AS s WITH (NOLOCK) 
+FULL OUTER JOIN [400].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.ID=a.ID
+WHERE 1=1
+and (s.id is NULL OR a.id is NULL)
+
+UNION ALL
+
+SELECT  TOP 1 ISNULL(a.ID, 2)
+FROM [400].dbo.staffl AS s WITH (NOLOCK) 
+FULL OUTER JOIN [400].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.ID=a.ID
+WHERE 1=1
+and (s.id is NULL OR a.id is NULL)
+
+UNION ALL
+
+SELECT  TOP 1 ISNULL(s.ID, 2)
+FROM [400].dbo.staffl AS s WITH (NOLOCK)
+INNER JOIN [400].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.id=a.id
+WHERE a.sysmodified &lt;&gt; s.sysmodified
+
+UNION ALL
+
+SELECT  TOP 1 ISNULL(s.ID, 2)
+FROM [484].dbo.staffl AS s WITH (NOLOCK) 
+FULL OUTER JOIN [484].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.ID=a.ID
+WHERE 1=1
+and (s.id is NULL OR a.id is NULL)
+
+UNION ALL
+
+SELECT  TOP 1 ISNULL(a.ID, 2)
+FROM [484].dbo.staffl AS s WITH (NOLOCK) 
+FULL OUTER JOIN [484].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.ID=a.ID
+WHERE 1=1
+and (s.id is NULL OR a.id is NULL)
+
+UNION ALL
+
+SELECT  TOP 1 ISNULL(s.ID, 2)
+FROM [484].dbo.staffl AS s WITH (NOLOCK)
+INNER JOIN [484].dbo._AB_tb_staffl AS a WITH (NOLOCK) ON s.id=a.id
+WHERE a.sysmodified &lt;&gt; s.sysmodified
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><systemtarget><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Do quit?</stepname></step><step><id>2231</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , SUBSTRING(NewValues, 2, LEN(NewValues)-1) AS PropName
+    , aID AS DataKey
+    , OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT s.Id AS seID, a.ID AS aID, s.artcode AS seArt,  s.prijslijst AS sePrijslijst
+    , s.AccountID AS seAccountID, a.AccountID AS aAccountID, s.validfrom AS seValidFrom, s.validto AS seValidTo
+    , CONVERT(varchar(255), s.unitcode) as sUnitcode
+    , CONVERT(varchar(255), s.prijs83) AS sPrijs83
+    , CONVERT(varchar(255), s.aantal1) AS sAantal1
+    , CONVERT(varchar(255), s.bedr1) AS sBedr1
+    , CONVERT(varchar(255), s.aantal2) AS sAantal2
+    , CONVERT(varchar(255), s.bedr2) AS sBedr2
+    , CONVERT(varchar(255), s.aantal3) AS sAantal3
+    , CONVERT(varchar(255), s.bedr3) AS sBedr3
+    , CONVERT(varchar(255), s.aantal4) AS sAantal4
+    , CONVERT(varchar(255), s.bedr4) AS sBedr4
+    , CONVERT(varchar(255), s.aantal5) AS sAantal5
+    , CONVERT(varchar(255), s.bedrag5) AS sBedrag6
+    , CONVERT(varchar(255), s.quantity6) AS sQuantity6
+    , CONVERT(varchar(255), s.price6) AS sPrice6
+    , CONVERT(varchar(255), s.quantity7) AS sQuantity7
+    , CONVERT(varchar(255), s.price7) AS sPrice7
+    , CONVERT(varchar(255), s.quantity8) AS sQuantity8
+    , CONVERT(varchar(255), s.price8) AS sPrice8
+    , CONVERT(varchar(255), s.quantity9) AS sQuantity9
+    , CONVERT(varchar(255), s.price9) AS sPrice9
+    , CONVERT(varchar(255), s.quantity10) AS sQuantity10
+    , CONVERT(varchar(255), s.price10) AS sPrice10
+    , CONVERT(varchar(255), a.unitcode) as aUnitcode
+    , CONVERT(varchar(255), a.prijs83) AS aPrijs83
+    , CONVERT(varchar(255), a.aantal1) AS aAantal1
+    , CONVERT(varchar(255), a.bedr1) AS aBedr1
+    , CONVERT(varchar(255), a.aantal2) AS aAantal2
+    , CONVERT(varchar(255), a.bedr2) AS aBedr2
+    , CONVERT(varchar(255), a.aantal3) AS aAantal3
+    , CONVERT(varchar(255), a.bedr3) AS aBedr3
+    , CONVERT(varchar(255), a.aantal4) AS aAantal4
+    , CONVERT(varchar(255), a.bedr4) AS aBedr4
+    , CONVERT(varchar(255), a.aantal5) AS aAantal5
+    , CONVERT(varchar(255), a.bedrag5) AS aBedrag6
+    , CONVERT(varchar(255), a.quantity6) AS aQuantity6
+    , CONVERT(varchar(255), a.price6) AS aPrice6
+    , CONVERT(varchar(255), a.quantity7) AS aQuantity7
+    , CONVERT(varchar(255), a.price7) AS aPrice7
+    , CONVERT(varchar(255), a.quantity8) AS aQuantity8
+    , CONVERT(varchar(255), a.price8) AS aPrice8
+    , CONVERT(varchar(255), a.quantity9) AS aQuantity9
+    , CONVERT(varchar(255), a.price9) AS aPrice9
+    , CONVERT(varchar(255), a.quantity10) AS aQuantity10
+    , CONVERT(varchar(255), a.price10) AS aPrice10
+    FROM dbo._AB_tb_staffl AS a WITH (NOLOCK)
+INNER JOIN dbo.staffl AS s WITH (NOLOCK) ON
+        s.ID=a.ID
+            WHERE 1=0
+                OR s.prijs83 &lt;&gt; a.prijs83
+                OR s.aantal1 &lt;&gt; a.aantal1
+                OR s.bedr1 &lt;&gt; a.bedr1
+                OR s.aantal2 &lt;&gt; a.aantal2
+                OR s.bedr2 &lt;&gt; a.bedr2
+                OR s.aantal3 &lt;&gt; a.aantal3
+                OR s.bedr3 &lt;&gt; a.bedr3
+                OR s.aantal4 &lt;&gt; a.aantal4
+                OR s.bedr4 &lt;&gt; a.bedr4
+                OR s.aantal5 &lt;&gt; a.aantal5
+                OR s.bedrag5 &lt;&gt; a.bedrag5
+                OR s.quantity6 &lt;&gt; a.quantity6
+                OR s.price6 &lt;&gt; a.price6
+                OR s.quantity7 &lt;&gt; a.quantity7
+                OR s.price7 &lt;&gt; a.price7
+                OR s.quantity8 &lt;&gt; a.quantity8
+                OR s.price8 &lt;&gt; a.price8
+                OR s.quantity9 &lt;&gt; a.quantity9
+                OR s.price9 &lt;&gt; a.price9
+                OR s.quantity10 &lt;&gt; a.quantity10
+                OR s.price10 &lt;&gt; a.price10
+                OR s.unitcode &lt;&gt; a.unitcode
+) Main
+
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (sPrijs83, sAantal1, sBedr1, sAantal2, sBedr2, sAantal3, sBedr3, sAantal4, sBedr4, sAantal5, sBedrag6, sQuantity6, sPrice6, sQuantity7, sPrice7, sQuantity8, sPrice8, sQuantity9, sPrice9, sQuantity10, sPrice10, sUnitcode) 
+) Aan
+
+UNPIVOT 
+( 
+OldValue For OldValues IN (aPrijs83, aAantal1, aBedr1, aAantal2, aBedr2, aAantal3, aBedr3, aAantal4, aBedr4, aAantal5, aBedrag6, aQuantity6, aPrice6, aQuantity7, aPrice7, aQuantity8, aPrice8, aQuantity9, aPrice9, aQuantity10, aPrice10, aUnitcode) 
+) Bed
+
+WHERE 1=1
+AND RIGHT(NewValues,3) = RIGHT(OldValues,3)
+AND NewValue &lt;&gt; OldValue </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>5</seqno><settings /><settingsxml /><stepname>Check difference on ID match</stepname></step><step><id>3827</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>5</seqno><settings></settings><settingsxml /><stepname>==== 400 LOG Pricelist differences ====</stepname></step><step><id>2232</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT 
+     ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000') as validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+     , '%runid%' AS runid
+    , 'idmatch'
+FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>6</seqno><settings /><settingsxml /><stepname>Save difference in history log</stepname></step><step><id>2233</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>delete from dbo._AB_tb_staffl
+where ID in (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+)
+
+
+INSERT INTO dbo._AB_tb_staffl
+(ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT 
+     ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000') as validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+FROM dbo.staffl AS s WITH (NOLOCK)
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>7</seqno><settings /><settingsxml /><stepname>Update shadow table</stepname></step><step><id>2234</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , SUBSTRING(NewValues, 2, LEN(NewValues)-1) AS PropName
+    , aID AS DataKey
+    , OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT s.Id AS seID, a.ID AS aID, s.artcode AS seArt,  s.prijslijst AS sePrijslijst
+    , s.AccountID AS seAccountID, a.AccountID AS aAccountID, s.unitfactor AS seUnitfactor, s.validfrom AS seValidFrom, s.validto AS seValidTo
+    , s.prijs83 AS sPrijs83
+    , s.aantal1 AS sAantal1
+    , s.bedr1 AS sBedr1
+    , s.aantal2 AS sAantal2
+    , s.bedr2 AS sBedr2
+    , s.aantal3 AS sAantal3
+    , s.bedr3 AS sBedr3
+    , s.aantal4 AS sAantal4
+    , s.bedr4 AS sBedr4
+    , s.aantal5 AS sAantal5
+    , s.bedrag5 AS sBedrag6
+    , s.quantity6 AS sQuantity6
+    , s.price6 AS sPrice6
+    , s.quantity7 AS sQuantity7
+    , s.price7 AS sPrice7
+    , s.quantity8 AS sQuantity8
+    , s.price8 AS sPrice8
+    , s.quantity9 AS sQuantity9
+    , s.price9 AS sPrice9
+    , s.quantity10 AS sQuantity10
+    , s.price10 AS sPrice10
+    , a.prijs83 AS aPrijs83
+    , a.aantal1 AS aAantal1
+    , a.bedr1 AS aBedr1
+    , a.aantal2 AS aAantal2
+    , a.bedr2 AS aBedr2
+    , a.aantal3 AS aAantal3
+    , a.bedr3 AS aBedr3
+    , a.aantal4 AS aAantal4
+    , a.bedr4 AS aBedr4
+    , a.aantal5 AS aAantal5
+    , a.bedrag5 AS aBedrag6
+    , a.quantity6 AS aQuantity6
+    , a.price6 AS aPrice6
+    , a.quantity7 AS aQuantity7
+    , a.price7 AS aPrice7
+    , a.quantity8 AS aQuantity8
+    , a.price8 AS aPrice8
+    , a.quantity9 AS aQuantity9
+    , a.price9 AS aPrice9
+    , a.quantity10 AS aQuantity10
+    , a.price10 AS aPrice10
+    FROM dbo._AB_tb_staffl AS a WITH (NOLOCK)
+INNER JOIN dbo.staffl AS s WITH (NOLOCK) ON
+            s.artcode = a.artcode
+        AND s.prijslijst = a.prijslijst
+        AND (s.AccountID = a.AccountID OR (s.AccountID IS NULL AND a.AccountID IS NULL))
+        AND s.unitfactor = a.unitfactor
+        AND s.unitcode = a.unitcode
+        AND s.validfrom = a.validfrom
+        and (a.validto = s.validto 
+                or (a.validto is null and s.validto is null)
+                or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+            )
+            WHERE 1=0
+                --OR a.ID IS NULL
+                OR s.prijs83 &lt;&gt; a.prijs83
+                OR s.aantal1 &lt;&gt; a.aantal1
+                OR s.bedr1 &lt;&gt; a.bedr1
+                OR s.aantal2 &lt;&gt; a.aantal2
+                OR s.bedr2 &lt;&gt; a.bedr2
+                OR s.aantal3 &lt;&gt; a.aantal3
+                OR s.bedr3 &lt;&gt; a.bedr3
+                OR s.aantal4 &lt;&gt; a.aantal4
+                OR s.bedr4 &lt;&gt; a.bedr4
+                OR s.aantal5 &lt;&gt; a.aantal5
+                OR s.bedrag5 &lt;&gt; a.bedrag5
+                OR s.quantity6 &lt;&gt; a.quantity6
+                OR s.price6 &lt;&gt; a.price6
+                OR s.quantity7 &lt;&gt; a.quantity7
+                OR s.price7 &lt;&gt; a.price7
+                OR s.quantity8 &lt;&gt; a.quantity8
+                OR s.price8 &lt;&gt; a.price8
+                OR s.quantity9 &lt;&gt; a.quantity9
+                OR s.price9 &lt;&gt; a.price9
+                OR s.quantity10 &lt;&gt; a.quantity10
+                OR s.price10 &lt;&gt; a.price10
+) Main
+
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (sPrijs83, sAantal1, sBedr1, sAantal2, sBedr2, sAantal3, sBedr3, sAantal4, sBedr4, sAantal5, sBedrag6, sQuantity6, sPrice6, sQuantity7, sPrice7, sQuantity8, sPrice8, sQuantity9, sPrice9, sQuantity10, sPrice10) 
+) Aan
+
+UNPIVOT 
+( 
+OldValue For OldValues IN (aPrijs83, aAantal1, aBedr1, aAantal2, aBedr2, aAantal3, aBedr3, aAantal4, aBedr4, aAantal5, aBedrag6, aQuantity6, aPrice6, aQuantity7, aPrice7, aQuantity8, aPrice8, aQuantity9, aPrice9, aQuantity10, aPrice10) 
+) Bed
+
+WHERE 1=1
+AND RIGHT(NewValues,3) = RIGHT(OldValues,3)
+AND NewValue &lt;&gt; OldValue </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>Check differences</stepname></step><step><id>2227</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>SELECT 
+     s.ID, s.prijslijst, s.artcode, s.kort_pbn, s.prijs83, s.aantal1, s.bedr1, s.aantal2, s.bedr2, s.aantal3, s.bedr3, s.aantal4, s.bedr4, s.aantal5, s.bedrag5, s.quantity6, s.price6, s.quantity7, s.price7, s.quantity8, s.price8, s.quantity9, s.price9, s.quantity10, s.price10, s.AccountID, s.unitcode, s.unitfactor, s.validfrom, isnull(s.validto, '2299-12-31 00:00:00.000') as validto, s.Project, s.LineType, s.Division, s.syscreated, s.syscreator, s.sysmodified, s.sysmodifier, s.sysguid
+    , '%runid%' AS runid
+    , 'difference'
+    , sl.LogID
+FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+left outer join dbo._AB_tb_staffl_Log as sl with (nolock) on sl.stafflID = s.ID and sl.runid = '%runid%'
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v
+where 1=1
+and sl.LogID is null
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Save difference in history log </stepname></step><step><id>2224</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , NewValues AS PropName
+    , stafflID AS DataKey
+    , NULL AS OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT 
+    ID AS stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+FROM dbo.staffl AS s WITH (NOLOCK)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo._AB_tb_staffl as a with (nolock)
+    where   1=1
+        and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+        and a.artcode = s.artcode
+        and a.prijslijst = s.prijslijst
+        and a.validfrom = s.validfrom
+        and a.unitcode = s.unitcode
+        and a.unitfactor = s.unitfactor
+        and (a.validto = s.validto 
+                or (a.validto is null and s.validto is null)
+                or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+            )
+            )
+) Main
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10) 
+) Aan</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings></settings><settingsxml /><stepname>Check New Rows</stepname></step><step><id>2229</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    , 'newrows'
+    FROM dbo.staffl AS s with (nolock)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo._AB_tb_staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )
+            
+            </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>25</seqno><settings /><settingsxml /><stepname>Save new rows in history log</stepname></step><step><id>2225</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , OldValues AS PropName
+    , stafflID AS DataKey
+    , OldValue AS OldValue
+    , NULL AS NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT 
+    ID AS stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo.staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )
+) Main
+
+UNPIVOT 
+( 
+OldValue FOR OldValues IN (prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10) 
+) Aan
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings></settings><settingsxml /><stepname>Check Deleted Rows</stepname></step><step><id>2230</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, isnull(validto, '2299-12-31 00:00:00.000'), Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    , 'deletedrows'
+    FROM dbo._AB_tb_staffl AS s with (nolock)
+WHERE 1=1
+and not exists 
+ (select id 
+    from    dbo.staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>35</seqno><settings /><settingsxml /><stepname>Save deleted rows in history log</stepname></step><step><id>2228</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>TRUNCATE TABLE dbo._AB_tb_staffl
+
+INSERT INTO dbo._AB_tb_staffl
+(ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT 
+ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000'), Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+FROM dbo.staffl WITH (NOLOCK) </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings></settings><settingsxml /><stepname>Truncate and Mirror</stepname></step><step><id>3828</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings></settings><settingsxml /><stepname>==== 484 LOG Pricelist differences ====</stepname></step><step><id>3835</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , SUBSTRING(NewValues, 2, LEN(NewValues)-1) AS PropName
+    , aID AS DataKey
+    , OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT s.Id AS seID, a.ID AS aID, s.artcode AS seArt,  s.prijslijst AS sePrijslijst
+    , s.AccountID AS seAccountID, a.AccountID AS aAccountID, s.validfrom AS seValidFrom, s.validto AS seValidTo
+    , CONVERT(varchar(255), s.unitcode) as sUnitcode
+    , CONVERT(varchar(255), s.prijs83) AS sPrijs83
+    , CONVERT(varchar(255), s.aantal1) AS sAantal1
+    , CONVERT(varchar(255), s.bedr1) AS sBedr1
+    , CONVERT(varchar(255), s.aantal2) AS sAantal2
+    , CONVERT(varchar(255), s.bedr2) AS sBedr2
+    , CONVERT(varchar(255), s.aantal3) AS sAantal3
+    , CONVERT(varchar(255), s.bedr3) AS sBedr3
+    , CONVERT(varchar(255), s.aantal4) AS sAantal4
+    , CONVERT(varchar(255), s.bedr4) AS sBedr4
+    , CONVERT(varchar(255), s.aantal5) AS sAantal5
+    , CONVERT(varchar(255), s.bedrag5) AS sBedrag6
+    , CONVERT(varchar(255), s.quantity6) AS sQuantity6
+    , CONVERT(varchar(255), s.price6) AS sPrice6
+    , CONVERT(varchar(255), s.quantity7) AS sQuantity7
+    , CONVERT(varchar(255), s.price7) AS sPrice7
+    , CONVERT(varchar(255), s.quantity8) AS sQuantity8
+    , CONVERT(varchar(255), s.price8) AS sPrice8
+    , CONVERT(varchar(255), s.quantity9) AS sQuantity9
+    , CONVERT(varchar(255), s.price9) AS sPrice9
+    , CONVERT(varchar(255), s.quantity10) AS sQuantity10
+    , CONVERT(varchar(255), s.price10) AS sPrice10
+    , CONVERT(varchar(255), a.unitcode) as aUnitcode
+    , CONVERT(varchar(255), a.prijs83) AS aPrijs83
+    , CONVERT(varchar(255), a.aantal1) AS aAantal1
+    , CONVERT(varchar(255), a.bedr1) AS aBedr1
+    , CONVERT(varchar(255), a.aantal2) AS aAantal2
+    , CONVERT(varchar(255), a.bedr2) AS aBedr2
+    , CONVERT(varchar(255), a.aantal3) AS aAantal3
+    , CONVERT(varchar(255), a.bedr3) AS aBedr3
+    , CONVERT(varchar(255), a.aantal4) AS aAantal4
+    , CONVERT(varchar(255), a.bedr4) AS aBedr4
+    , CONVERT(varchar(255), a.aantal5) AS aAantal5
+    , CONVERT(varchar(255), a.bedrag5) AS aBedrag6
+    , CONVERT(varchar(255), a.quantity6) AS aQuantity6
+    , CONVERT(varchar(255), a.price6) AS aPrice6
+    , CONVERT(varchar(255), a.quantity7) AS aQuantity7
+    , CONVERT(varchar(255), a.price7) AS aPrice7
+    , CONVERT(varchar(255), a.quantity8) AS aQuantity8
+    , CONVERT(varchar(255), a.price8) AS aPrice8
+    , CONVERT(varchar(255), a.quantity9) AS aQuantity9
+    , CONVERT(varchar(255), a.price9) AS aPrice9
+    , CONVERT(varchar(255), a.quantity10) AS aQuantity10
+    , CONVERT(varchar(255), a.price10) AS aPrice10
+    FROM dbo._AB_tb_staffl AS a WITH (NOLOCK)
+INNER JOIN dbo.staffl AS s WITH (NOLOCK) ON
+        s.ID=a.ID
+            WHERE 1=0
+                OR s.prijs83 &lt;&gt; a.prijs83
+                OR s.aantal1 &lt;&gt; a.aantal1
+                OR s.bedr1 &lt;&gt; a.bedr1
+                OR s.aantal2 &lt;&gt; a.aantal2
+                OR s.bedr2 &lt;&gt; a.bedr2
+                OR s.aantal3 &lt;&gt; a.aantal3
+                OR s.bedr3 &lt;&gt; a.bedr3
+                OR s.aantal4 &lt;&gt; a.aantal4
+                OR s.bedr4 &lt;&gt; a.bedr4
+                OR s.aantal5 &lt;&gt; a.aantal5
+                OR s.bedrag5 &lt;&gt; a.bedrag5
+                OR s.quantity6 &lt;&gt; a.quantity6
+                OR s.price6 &lt;&gt; a.price6
+                OR s.quantity7 &lt;&gt; a.quantity7
+                OR s.price7 &lt;&gt; a.price7
+                OR s.quantity8 &lt;&gt; a.quantity8
+                OR s.price8 &lt;&gt; a.price8
+                OR s.quantity9 &lt;&gt; a.quantity9
+                OR s.price9 &lt;&gt; a.price9
+                OR s.quantity10 &lt;&gt; a.quantity10
+                OR s.price10 &lt;&gt; a.price10
+                OR s.unitcode &lt;&gt; a.unitcode
+) Main
+
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (sPrijs83, sAantal1, sBedr1, sAantal2, sBedr2, sAantal3, sBedr3, sAantal4, sBedr4, sAantal5, sBedrag6, sQuantity6, sPrice6, sQuantity7, sPrice7, sQuantity8, sPrice8, sQuantity9, sPrice9, sQuantity10, sPrice10, sUnitcode) 
+) Aan
+
+UNPIVOT 
+( 
+OldValue For OldValues IN (aPrijs83, aAantal1, aBedr1, aAantal2, aBedr2, aAantal3, aBedr3, aAantal4, aBedr4, aAantal5, aBedrag6, aQuantity6, aPrice6, aQuantity7, aPrice7, aQuantity8, aPrice8, aQuantity9, aPrice9, aQuantity10, aPrice10, aUnitcode) 
+) Bed
+
+WHERE 1=1
+AND RIGHT(NewValues,3) = RIGHT(OldValues,3)
+AND NewValue &lt;&gt; OldValue </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>105</seqno><settings /><settingsxml /><stepname>Check difference on ID match</stepname></step><step><id>3836</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT 
+     ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000') as validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+     , '%runid%' AS runid
+    , 'idmatch'
+FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>106</seqno><settings /><settingsxml /><stepname>Save difference in history log</stepname></step><step><id>3837</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>delete from dbo._AB_tb_staffl
+where ID in (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+)
+
+
+INSERT INTO dbo._AB_tb_staffl
+(ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT 
+     ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000') as validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+FROM dbo.staffl AS s WITH (NOLOCK)
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>107</seqno><settings /><settingsxml /><stepname>Update shadow table</stepname></step><step><id>3838</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , SUBSTRING(NewValues, 2, LEN(NewValues)-1) AS PropName
+    , aID AS DataKey
+    , OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT s.Id AS seID, a.ID AS aID, s.artcode AS seArt,  s.prijslijst AS sePrijslijst
+    , s.AccountID AS seAccountID, a.AccountID AS aAccountID, s.unitfactor AS seUnitfactor, s.validfrom AS seValidFrom, s.validto AS seValidTo
+    , s.prijs83 AS sPrijs83
+    , s.aantal1 AS sAantal1
+    , s.bedr1 AS sBedr1
+    , s.aantal2 AS sAantal2
+    , s.bedr2 AS sBedr2
+    , s.aantal3 AS sAantal3
+    , s.bedr3 AS sBedr3
+    , s.aantal4 AS sAantal4
+    , s.bedr4 AS sBedr4
+    , s.aantal5 AS sAantal5
+    , s.bedrag5 AS sBedrag6
+    , s.quantity6 AS sQuantity6
+    , s.price6 AS sPrice6
+    , s.quantity7 AS sQuantity7
+    , s.price7 AS sPrice7
+    , s.quantity8 AS sQuantity8
+    , s.price8 AS sPrice8
+    , s.quantity9 AS sQuantity9
+    , s.price9 AS sPrice9
+    , s.quantity10 AS sQuantity10
+    , s.price10 AS sPrice10
+    , a.prijs83 AS aPrijs83
+    , a.aantal1 AS aAantal1
+    , a.bedr1 AS aBedr1
+    , a.aantal2 AS aAantal2
+    , a.bedr2 AS aBedr2
+    , a.aantal3 AS aAantal3
+    , a.bedr3 AS aBedr3
+    , a.aantal4 AS aAantal4
+    , a.bedr4 AS aBedr4
+    , a.aantal5 AS aAantal5
+    , a.bedrag5 AS aBedrag6
+    , a.quantity6 AS aQuantity6
+    , a.price6 AS aPrice6
+    , a.quantity7 AS aQuantity7
+    , a.price7 AS aPrice7
+    , a.quantity8 AS aQuantity8
+    , a.price8 AS aPrice8
+    , a.quantity9 AS aQuantity9
+    , a.price9 AS aPrice9
+    , a.quantity10 AS aQuantity10
+    , a.price10 AS aPrice10
+    FROM dbo._AB_tb_staffl AS a WITH (NOLOCK)
+INNER JOIN dbo.staffl AS s WITH (NOLOCK) ON
+            s.artcode = a.artcode
+        AND s.prijslijst = a.prijslijst
+        AND (s.AccountID = a.AccountID OR (s.AccountID IS NULL AND a.AccountID IS NULL))
+        AND s.unitfactor = a.unitfactor
+        AND s.unitcode = a.unitcode
+        AND s.validfrom = a.validfrom
+        and (a.validto = s.validto 
+                or (a.validto is null and s.validto is null)
+                or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+            )
+            WHERE 1=0
+                --OR a.ID IS NULL
+                OR s.prijs83 &lt;&gt; a.prijs83
+                OR s.aantal1 &lt;&gt; a.aantal1
+                OR s.bedr1 &lt;&gt; a.bedr1
+                OR s.aantal2 &lt;&gt; a.aantal2
+                OR s.bedr2 &lt;&gt; a.bedr2
+                OR s.aantal3 &lt;&gt; a.aantal3
+                OR s.bedr3 &lt;&gt; a.bedr3
+                OR s.aantal4 &lt;&gt; a.aantal4
+                OR s.bedr4 &lt;&gt; a.bedr4
+                OR s.aantal5 &lt;&gt; a.aantal5
+                OR s.bedrag5 &lt;&gt; a.bedrag5
+                OR s.quantity6 &lt;&gt; a.quantity6
+                OR s.price6 &lt;&gt; a.price6
+                OR s.quantity7 &lt;&gt; a.quantity7
+                OR s.price7 &lt;&gt; a.price7
+                OR s.quantity8 &lt;&gt; a.quantity8
+                OR s.price8 &lt;&gt; a.price8
+                OR s.quantity9 &lt;&gt; a.quantity9
+                OR s.price9 &lt;&gt; a.price9
+                OR s.quantity10 &lt;&gt; a.quantity10
+                OR s.price10 &lt;&gt; a.price10
+) Main
+
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (sPrijs83, sAantal1, sBedr1, sAantal2, sBedr2, sAantal3, sBedr3, sAantal4, sBedr4, sAantal5, sBedrag6, sQuantity6, sPrice6, sQuantity7, sPrice7, sQuantity8, sPrice8, sQuantity9, sPrice9, sQuantity10, sPrice10) 
+) Aan
+
+UNPIVOT 
+( 
+OldValue For OldValues IN (aPrijs83, aAantal1, aBedr1, aAantal2, aBedr2, aAantal3, aBedr3, aAantal4, aBedr4, aAantal5, aBedrag6, aQuantity6, aPrice6, aQuantity7, aPrice7, aQuantity8, aPrice8, aQuantity9, aPrice9, aQuantity10, aPrice10) 
+) Bed
+
+WHERE 1=1
+AND RIGHT(NewValues,3) = RIGHT(OldValues,3)
+AND NewValue &lt;&gt; OldValue </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings></settings><settingsxml /><stepname>Check differences</stepname></step><step><id>3831</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>SELECT 
+     s.ID, s.prijslijst, s.artcode, s.kort_pbn, s.prijs83, s.aantal1, s.bedr1, s.aantal2, s.bedr2, s.aantal3, s.bedr3, s.aantal4, s.bedr4, s.aantal5, s.bedrag5, s.quantity6, s.price6, s.quantity7, s.price7, s.quantity8, s.price8, s.quantity9, s.price9, s.quantity10, s.price10, s.AccountID, s.unitcode, s.unitfactor, s.validfrom, isnull(s.validto, '2299-12-31 00:00:00.000') as validto, s.Project, s.LineType, s.Division, s.syscreated, s.syscreator, s.sysmodified, s.sysmodifier, s.sysguid
+    , '%runid%' AS runid
+    , 'difference'
+    , sl.LogID
+FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+left outer join dbo._AB_tb_staffl_Log as sl with (nolock) on sl.stafflID = s.ID and sl.runid = '%runid%'
+CROSS APPLY (
+    SELECT DISTINCT DataKey
+    FROM dbo._AB_tb_SOx_Log AS l WITH (NOLOCK)
+    WHERE runid = '%runid%'
+    AND ComponentName = 'staffl'
+    AND l.DataKey = s.ID
+) v
+where 1=1
+and sl.LogID is null
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>115</seqno><settings /><settingsxml /><stepname>Save difference in history log </stepname></step><step><id>3829</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , NewValues AS PropName
+    , stafflID AS DataKey
+    , NULL AS OldValue
+    , NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT 
+    ID AS stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+FROM dbo.staffl AS s WITH (NOLOCK)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo._AB_tb_staffl as a with (nolock)
+    where   1=1
+        and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+        and a.artcode = s.artcode
+        and a.prijslijst = s.prijslijst
+        and a.validfrom = s.validfrom
+        and a.unitcode = s.unitcode
+        and a.unitfactor = s.unitfactor
+        and (a.validto = s.validto 
+                or (a.validto is null and s.validto is null)
+                or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+            )
+            )
+) Main
+
+UNPIVOT 
+( 
+NewValue FOR NewValues IN (prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10) 
+) Aan</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings></settings><settingsxml /><stepname>Check New Rows</stepname></step><step><id>3833</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    , 'newrows'
+    FROM dbo.staffl AS s with (nolock)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo._AB_tb_staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )
+            
+            </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>125</seqno><settings /><settingsxml /><stepname>Save new rows in history log</stepname></step><step><id>3830</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, Created, runid)
+SELECT 
+    'staffl' AS ComponentName
+    , OldValues AS PropName
+    , stafflID AS DataKey
+    , OldValue AS OldValue
+    , NULL AS NewValue
+    , '999' AS Creator
+    , getdate() AS Created
+    , '%runid%' AS runid
+FROM 
+( 
+SELECT 
+    ID AS stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    FROM dbo._AB_tb_staffl AS s WITH (NOLOCK)
+WHERE 1=1
+and not exists 
+    (select id 
+    from    dbo.staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )
+) Main
+
+UNPIVOT 
+( 
+OldValue FOR OldValues IN (prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10) 
+) Aan
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings></settings><settingsxml /><stepname>Check Deleted Rows</stepname></step><step><id>3834</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO dbo._AB_tb_staffl_Log
+(stafflID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid, origin)
+SELECT ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, isnull(validto, '2299-12-31 00:00:00.000'), Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+    , '%runid%' AS runid
+    , 'deletedrows'
+    FROM dbo._AB_tb_staffl AS s with (nolock)
+WHERE 1=1
+and not exists 
+ (select id 
+    from    dbo.staffl as a with (nolock)
+    where   1=1
+            and (a.ID = s.ID)
+            or ( 1=1
+                and (a.AccountID = s.AccountID or (a.AccountID is null and s.AccountID is null))
+                and a.artcode = s.artcode
+                and a.prijslijst = s.prijslijst
+                and a.validfrom = s.validfrom
+                and a.unitcode = s.unitcode
+                and a.unitfactor = s.unitfactor
+                and (a.validto = s.validto 
+                        or (a.validto is null and s.validto is null)
+                        or (isnull(a.validto, '2299-12-31 00:00:00.000') = isnull(s.validto, '2299-12-31 00:00:00.000'))
+                    )
+                )
+            )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>135</seqno><settings /><settingsxml /><stepname>Save deleted rows in history log</stepname></step><step><id>3832</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>TRUNCATE TABLE dbo._AB_tb_staffl
+
+INSERT INTO dbo._AB_tb_staffl
+(ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, validto, Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT 
+ID, prijslijst, artcode, kort_pbn, prijs83, aantal1, bedr1, aantal2, bedr2, aantal3, bedr3, aantal4, bedr4, aantal5, bedrag5, quantity6, price6, quantity7, price7, quantity8, price8, quantity9, price9, quantity10, price10, AccountID, unitcode, unitfactor, validfrom, ISNULL(validto, '2299-12-31 00:00:00.000'), Project, LineType, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid
+FROM dbo.staffl WITH (NOLOCK) </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings></settings><settingsxml /><stepname>Truncate and Mirror</stepname></step></steps></job></jobs>

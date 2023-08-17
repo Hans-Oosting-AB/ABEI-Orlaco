@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>401</id><jobname>EG : Update Salesprices (484)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=16:16:26;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>2077</id><entity>Item</entity><action>update</action><source>107</source><target>1</target><datasource>SELECT SI.Itemcode, SI.SalesPackagePrice AS Synergy_Price, ROUND(NI.SalesPackagePrice,3) AS SalesPackagePrice, ROUND(NI.SalesPackagePrice,3) AS SalesPrice
+FROM [%abeitargetdb%]..items AS SI
+INNER join [%abeisourcedb%]..items AS NI ON SI.ItemCode = NI.itemcode
+WHERE SI.SalesPackagePrice &lt;&gt; ROUND(NI.SalesPackagePrice,3) AND NI.SalesPackagePrice &gt; 0</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update Synergy SalesPackagePrices</stepname></step><step><id>2078</id><entity>Item</entity><action>update</action><source>1</source><target>112</target><datasource>select SI.Itemcode, SI.SalesPackagePrice AS Synergy_Price, UI.SalesPackagePrice AS USA_Price
+
+, ROUND( CASE WHEN SI.SalesPackagePrice = 0 THEN 0 
+            ELSE CASE WHEN apr.rate is null THEN (SELECT (SI.SalesPackagePrice + apr2.additionalcosts) * apr2.rate FROM [%abeitargetdb%].dbo._AB_ArticlePriceRates apr2 with (nolock) where apr2.code = '00') 
+        ELSE (SI.salespackageprice + apr.additionalcosts) * apr.rate end END,3 ) as SalesPrice
+        
+, ROUND( CASE WHEN SI.SalesPackagePrice = 0 THEN 0 
+            ELSE CASE WHEN apr.rate is null THEN (SELECT (SI.SalesPackagePrice + apr2.additionalcosts) * apr2.rate FROM [%abeitargetdb%].dbo._AB_ArticlePriceRates apr2 with (nolock) where apr2.code = '00') 
+        ELSE (SI.salespackageprice + apr.additionalcosts) * apr.rate end END,3 ) as SalesPackagePrice
+        
+FROM [%abeisourcedb%]..items as SI
+INNER join [%abeitargetdb%]..items as UI ON SI.ItemCode = UI.itemcode 
+LEFT OUTER JOIN [%abeitargetdb%].dbo._AB_ArticlePriceRates apr WITH (NOLOCK) ON SI.ItemCode like apr.Code + '%'
+WHERE ABS(UI.SalesPackagePrice -
+ROUND( CASE WHEN SI.SalesPackagePrice = 0 THEN 0 
+            ELSE CASE WHEN apr.rate is null THEN (SELECT (SI.SalesPackagePrice + apr2.additionalcosts) * apr2.rate FROM [%abeitargetdb%].dbo._AB_ArticlePriceRates apr2 with (nolock) where apr2.code = '00') 
+        ELSE (SI.salespackageprice + apr.additionalcosts) * apr.rate end END,3 ) ) &gt; 0,001</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update 484 SalesPrices with rate</stepname></step><step><id>2245</id><entity>Account</entity><action>update</action><source>112</source><target>112</target><datasource>SELECT top 100 percent c.cmp_code, c.cmp_wwn, c.id, 'B' AS cmp_status
+ from cicmpy c
+ WHERE c.cmp_status = 'A' and cmp_type = 'C'
+ AND NOT c.cmp_code in ( Select cmp_code 
+ from cicmpy 
+ left join [orlaco]..DivisionDebtors d on d.division = 484 and c.debnr = d.debtor 
+ where NOT d.debtor IS NULL OR (
+c.cmp_fctry IN ('US', 'CA')
+OR c.debnr in ( select distinct verzdebnr from orkrg) 
+OR c.debnr in ( select distinct debnr from orkrg) 
+OR c.debnr in ( select distinct einddebnr from orkrg) 
+OR c.debnr in ( select distinct fakdebnr from orkrg) 
+))
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update 484 accounts</stepname></step><step><id>2246</id><entity>Account</entity><action>update</action><source>112</source><target>112</target><datasource>select cmp_wwn, 
+CASE Currency WHEN 'EUR' THEN 'SALESPRICE_EURO' ELSE  'SALESPRICE' END AS PriceList
+ from [484]..cicmpy where 
+( Pricelist is null and cmp_status = 'A' and cmp_type = 'C' )OR
+ (pricelist in (
+'NA US 2018', 
+'NA_EUR', 
+'NA_USD', 
+'NA-USD DDP', 
+'SALESPRICE') AND pricelist != CASE Currency WHEN 'EUR' THEN 'SALESPRICE_EURO' ELSE  'SALESPRICE' END )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>Update 484 pricelists accounts</stepname></step></steps></job></jobs>

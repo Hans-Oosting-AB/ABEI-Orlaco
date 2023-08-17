@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>226</id><jobname>! EG: HPP PROD opschonen (400)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=21:30:00;day1=0;day2=0;day3=0;day4=0;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings /><settingsxml /><steps><step><id>1078</id><entity>-none-</entity><action>process</action><source>107</source><target>80</target><datasource>select case when (convert(date, current_timestamp) = convert(date,(SELECT DATEADD(DAY,DATEDIFF(DAY,'1900-01-05',DATEADD(MONTH,DATEDIFF(MONTH,'1900-01-01',GETDATE()),'1900-01-31'))/7*7,'1900-01-05')))) then ('0') else ('1') end -- only if current date is las friday of the month
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml /><stepname>Controleer of laatste vrijdag van de maand</stepname></step><step><id>1067</id><entity>Budget</entity><action>delete</action><source>107</source><target>107</target><datasource>select ID 
+
+from gbkmut with(nolock) 
+
+where  bud_vers = 'PROD' </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml /><stepname>Verwijder oude 'PROD' budget</stepname></step><step><id>1349</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>truncate table [dbo].[_AB_prognose]
+;
+INSERT INTO [400].dbo._AB_Prognose
+		([Artcode]
+		,[oms25]
+		,[Warehouse]
+		,[aantal]
+		,[bud_vers]
+		,[Datum]
+		,[reknr]
+		,[bkjrcode]
+		,[periode]
+		,[CompanyCode]
+		,[TransactionType]
+		,[FreeField1]
+		,[Transsubtype]
+		,[bdr_val]
+		,[kstplcode]
+		,[Koop_maak]
+		,[voorraadkenmerk]
+		,[artikeltype]
+		,[voorraadpolicy]
+		,[leverancier]
+		,[Status]
+		,[syscreated])
+
+ SELECT 
+ 
+		[Artcode]
+      ,	[oms25]
+      ,	[Warehouse]
+      ,	[aantal]
+      ,	[bud_vers]
+      ,	[Datum]
+      ,	[reknr]
+      ,	[bkjrcode]
+      ,	[periode]
+      ,	[CompanyCode]
+      ,	[TransactionType]
+      ,	[FreeField1]
+      ,	[Transsubtype]
+      ,	[bdr_val]
+      ,	[kstplcode]
+      ,	[Koop_maak]
+      ,	[voorraadkenmerk]
+      ,	[artikeltype]
+      ,	[voorraadpolicy]
+      ,	[leverancier]
+      ,	 '1' as Status
+      ,	current_timestamp as syscreated
+
+ FROM [400].[dbo].[_AB_productieprognose]
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Dump view met budgetregels in tussentabel</stepname></step></steps></job></jobs>

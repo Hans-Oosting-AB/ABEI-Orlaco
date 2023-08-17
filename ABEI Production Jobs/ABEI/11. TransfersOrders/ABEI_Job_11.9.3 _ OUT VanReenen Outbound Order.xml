@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>519</id><jobname>11.9.3 - OUT VanReenen Outbound Order</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Run on Tuesday on 11.30 to send orders for the coming 4 days </remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>1</freq><timescale>once</timescale><frequency>weekly</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>11:30:00</startat><beginat>00:00:00</beginat><endat>23:59:59</endat><day1>0</day1><day2>-1</day2><day3>0</day3><day4>0</day4><day5>0</day5><day6>0</day6><day7>0</day7><duration_start>2022-02-16</duration_start><duration_end>2073-02-20</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3514</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+FROM (VALUES (0)) l(v)
+    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+        ON r.jobid = '%jobid%'
+        AND r.runid &lt;&gt; '%runid%'
+        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+        
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if running already</stepname></step><step><id>3412</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>--DELETE FROM [ABSC_data].dbo._AB_tb_VRSalesOrders
+INSERT INTO [ABSC_data].dbo._AB_tb_VRSalesOrders
+(RowId, ordernr, refer, docnumber, selcode, debnr, ord_debtor_name,
+del_debnr,del_debtor_name, del_AddressLine1, del_PostCode, del_City, del_landcode, del_contactperson, del_phone, 
+Rownr,Itemcode, Description,CustomerItemcode,isSerialNumberItem, DeliveryDate, Quantity,  PcsWeight, NetWeight,
+runid )
+
+select r.id as RowId, k.ordernr, k.refer, k.docnumber, k.selcode
+,k.debnr, k.ord_debtor_name
+,k.verzdebnr as del_debnr,del_debtor_name, del_AddressLine1, del_PostCode, del_City, del_landcode, del_contactperson, del_phone
+,r.regel as Rownr
+,i.Itemcode
+,i.Description
+,ia.ItemCodeAccount
+,i.isSerialNumberItem
+,r.afldat as DeliveryDate
+,r.esr_aantal as Qty
+,r.gewicht_bi as PcsWeight
+,r.gewicht_bi * r.esr_aantal as NetWeight
+,'%runid%' as runid
+ 
+from [%abeisourcedb%]..orkrg k with (NOLOCK) 
+inner join [%abeisourcedb%]..orsrg r with (NOLOCK) ON k.ordernr = r.ordernr
+inner join [%abeisourcedb%]..items i with (NOLOCK) ON i.itemcode = r.artcode
+inner join [%abeisourcedb%]..itemaccounts ia with (NOLOCK) on ia.itemcode = i.itemcode and ia.accountcode = 'D026F37D-3D37-4031-A626-117DB7D67EE5' -- 974605
+WHERE k.ord_soort = 'V' and k.afgehandld = 0 -- Select Open orders
+and r.pakbon_afg = 0 and r.ar_soort != 'T' AND r.ar_soort != 'P' -- With Item rows
+AND k.debnr = '974605' -- DAF ME2 
+AND r.magcode = '30'
+AND k.selcode = '1' 
+AND r.afldat &lt;= DATEADD(DAY, 4, GETDATE()) -- Released orders within 4 days
+AND r.id not IN (SELECT rowid from [ABSC_data].dbo._AB_tb_VRSalesOrders)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Select orders to be send</stepname></step><step><id>3515</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT TOP (1) 0 as doQuit FROM dbo._AB_tb_VRSalesOrders r with (nolock) WHERE r.runid = '%runid%'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if nothing to do</stepname></step><step><id>3528</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO _AB_tb_VRExportDocuments (FileContent, FileName, FileType, Syscreated, runid)
+
+SELECT
+CONVERT( VARCHAR(MAX), (
+    select
+        1 as company, -- 1=VanReenen 2=Tranex
+        13 as ediprovider, -- 13=Warehouse
+        CONCAT('WAREHOUSEOUTBOUND_', CONVERT(VARCHAR,GETDATE(),112), '.xml') AS sourcefilename,
+        (SELECT -- orders
+            (SELECT  -- order
+                2 as mutationtype, -- 1=inbound 2=outbound
+                (SELECT 1 AS [@matchmode], '73444' FOR XML PATH ('customer_id'), type) , -- customer id Orlaco
+                (SELECT 1 AS [@matchmode], '01' FOR XML PATH ('branch_id'), type) , -- 01=warehouse
+                (SELECT 0 AS [@matchmode], 26 FOR XML PATH ('warehouse_id'), type) , -- 26=VanReenen
+                LEFT(CONVERT(varchar,GETDATE(),120),10) AS orderdate,
+                o.ordernr AS reference,
+                LEFT(CONVERT(varchar,o.DeliveryDate,120),10) as deliverydate,
+                '8:00' AS deliverytime,
+                '12:00' AS deliverytimetill,
+                (SELECT 11 AS [@matchmode], '' +  o.del_debnr FOR XML PATH ('address_id'), type) ,
+                o.del_debtor_name AS addressname,
+                o.del_AddressLine1 AS addressstreet,
+                o.del_PostCode AS addresszipcode,
+                (SELECT 4 AS [@matchmode], '' + o.del_City FOR XML PATH ('addresscity_id'), type) ,
+                (SELECT 2 AS [@matchmode], '' + o.del_landcode FOR XML PATH ('addresscountry_id'), type) ,
+                o.refer AS deliveryreference,
+                o.del_phone as deliveryphone,
+                o.del_contactperson AS deliverycontact,
+                (SELECT 9 AS [@matchmode], '356' FOR XML PATH ('sender_id'), type) , -- sender id ??   
+                (SELECT 9 AS [@matchmode], '' + o.del_debnr FOR XML PATH ('receiver_id'), type) ,
+                1 as transportsubcontracted,
+                1 as scanning,
+                o.refer AS edireference,
+                (SELECT -- orderlines
+                    ( SELECT -- orderline
+                        (SELECT 3 AS [@matchmode], '' + [Itemcode] FOR XML PATH ('article_id'), type) ,
+                        CONVERT(decimal(10,2),[Quantity]) AS unitamount,
+                        (SELECT 1 AS [@matchmode], 'STK' FOR XML PATH ('unit_id'), type) ,
+                        LEFT(CONVERT(varchar,GETDATE(),120),10) AS pickdate,
+                        (SELECT 0 AS [@matchmode], 26 FOR XML PATH ('warehouse_id'), type) ,
+                        CONVERT(decimal(10,2),[Quantity]) AS stockunits,
+                        CONVERT(decimal(10,2),[NetWeight]) AS weigth, 
+                        r.ordernr AS reference,
+                        r.refer AS edireference,
+                        0 as autogeneratemutations
+                        FROM dbo._AB_tb_VRSalesOrders r where r.ordernr = o.ordernr and r.runid = '%runid%'
+                    FOR XML PATH ('orderline'), type)
+                FOR XML PATH ('orderlines'), type)
+            
+                FROM dbo._AB_tb_VRSalesOrders o
+                where o.runid = '%runid%'
+                group by o.ordernr, o.deliverydate, o.del_debnr, o.del_debtor_name, 
+                 o.del_AddressLine1, o.del_PostCode,  o.del_City, o.del_landcode ,o.refer,o.del_phone, o.del_contactperson 
+            FOR XML PATH ('order'), type)
+        FOR XML PATH ('orders'), type)
+        FOR XML PATH ('import') ,type ) ) AS content, 
+        CONCAT('WAREHOUSEOUTBOUND_', CONVERT(VARCHAR,GETDATE(),112), '.xml') AS sourcefilename,
+'WAREHOUSEOUTBOUND' AS FileType,
+GETDATE() AS Syscreated, 
+'%runid%' as runid
+   
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=C:\APPS\VanReenen\EXPORT\WAREHOUSEOUTBOUND\%sourcefilename%.xml;fileoverwrite=False;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>content</name><type>String</type></datacolumn><datacolumn><name>sourcefilename</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="2" parent="-1"><name>content</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%content%</value><fullname /><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Create WAREHOUSEOUTBOUND file</stepname></step><step><id>3529</id><entity>-none-</entity><action>create</action><source>129</source><target>5</target><datasource>SELECT FileContent, FileName FROM [%abeisourcedb%].dbo._AB_tb_VRExportDocuments WHERE  runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>21</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=C:\APPS\VanReenen\EXPORT\WAREHOUSEOUTBOUND\%filename%;fileoverwrite=False;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>FileContent</name><type>String</type></datacolumn><datacolumn><name>FileName</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="3" parent="-1"><name>FileContent</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%FileContent%</value><fullname /><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Create WAREHOUSEOUTBOUND file</stepname></step><step><id>3512</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;sysaction=1;sysfilefolder=C:\APPS\VanReenen\_CMDFILES\upload_outbound.bat;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name /><type /></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget><query><query_separator /></query></settings></settingsxml><stepname>Upload XML to van Reenen</stepname></step><step><id>3513</id><entity>Document</entity><action>create</action><source>129</source><target>107</target><datasource>Select 
+ s.ordernr as OrderNumber, 
+ s.ordernr as projectNr,
+ 24 as type, 
+ 'D026F37D-3D37-4031-A626-117DB7D67EE5' as CmpWwn,
+ d.FileContent as Body, 
+ d.Filename AS BinaryFilename,
+ d.Filename as Subject
+from [ABSC_data].dbo._AB_tb_VRSalesOrders s
+inner join [ABSC_data].dbo._AB_tb_VRExportDocuments d on s.runid = d.runid
+where s.runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>OrderNumber</name><type>String</type></datacolumn><datacolumn><name>projectNr</name><type>String</type></datacolumn><datacolumn><name>type</name><type>Int32</type></datacolumn><datacolumn><name>Body</name><type>String</type></datacolumn><datacolumn><name>BinaryFilename</name><type>String</type></datacolumn><datacolumn><name>Subject</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Add XML to order attachment</stepname></step><step><id>3518</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource> select top 100 PERCENT ordernr, refer, docnumber, debnr, ord_debtor_name, rownr, itemcode, description, CustomerItemcode, Quantity, DeliveryDate
+ FROM [ABSC_Data].dbo._AB_tb_VRSalesOrders
+ where runid = '%runid%'
+ ORDER BY ordernr, rownr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear order entry,&lt;/p&gt;&lt;p&gt;the following orders are send for delivery to external warehouse Van Reenen . &lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Ordernr&lt;/td&gt;&lt;td&gt;Reference &lt;/td&gt;&lt;td&gt;Order description&lt;/td&gt;&lt;td&gt;Debtor&lt;/td&gt;&lt;td&gt;Debtor name&lt;/td&gt;&lt;td&gt;Row&lt;/td&gt;&lt;td&gt;Itemcode&lt;/td&gt;&lt;td&gt;Description&lt;/td&gt;&lt;td&gt;Customer Itemcode&lt;/td&gt;&lt;td&gt;Quantity&lt;/td&gt;&lt;td&gt;Delivery Date&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%ordernr%&lt;/td&gt;&lt;td&gt;%refer%&lt;/td&gt;&lt;td&gt;%docnumber%&lt;/td&gt;&lt;td&gt;%debnr%&lt;/td&gt;&lt;td&gt;%ord_debtor_name%&lt;/td&gt;&lt;td&gt;%rownr%&lt;/td&gt;&lt;td&gt;%itemcode%&lt;/td&gt;&lt;td&gt;%description%&lt;/td&gt;&lt;td&gt;%CustomerItemcode%&lt;/td&gt;&lt;td&gt;%Quantity%&lt;/td&gt;&lt;td&gt;%DeliveryDate%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="11"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=order@orlaco.com%semicolon%jelle.ruiter@stoneridge.com;emailcc=;emailbcc=;emailsub=DAF ME-2 orders send to VanReenen;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ordernr,refer,docnumber,debnr,ord_debtor_name,rownr,itemcode,description,CustomerItemcode,Quantity,DeliveryDate;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>refer</name><type>String</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>rownr</name><type>String</type></datacolumn><datacolumn><name>itemcode</name><type>String</type></datacolumn><datacolumn><name>description</name><type>String</type></datacolumn><datacolumn><name>CustomerItemcode</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>DeliveryDate</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Mail OrderEntry for all send order rows</stepname></step><step><id>3562</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>SELECT filename from _AB_tb_VRExportDocuments where runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>60</seqno><settings>uniquekey=;retryunique=0;sysaction=8;sysfilefolder=C:\APPS\VanReenen\EXPORT\WAREHOUSEOUTBOUND\%filename%;sysparams=C:\APPS\VanReenen\EXPORT\WAREHOUSEOUTBOUND\Archive\%filename%;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>filename</name><type>String</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Move processed files</stepname></step><step><id>3561</id><entity>-none-</entity><action>create</action><source>129</source><target>129</target><datasource>DELETE FROM _AB_tb_VRSalesOrders
+DELETE FROM _AB_tb_VRExportDocuments
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>Remove testrecords</stepname></step></steps></job></jobs>

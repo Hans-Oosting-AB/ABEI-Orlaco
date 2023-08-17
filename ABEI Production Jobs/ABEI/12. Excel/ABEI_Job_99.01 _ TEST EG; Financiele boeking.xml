@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>515</id><jobname>99.01 - TEST EG: Financiele boeking</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Taak wordt getriggerd door de inleenuren Excel import</remarks><schedulename></schedulename><schedulesettings>startat=14:21:05;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3369</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>132</target><datasource>EXEC dbo._AB_sp_Fin_set_data_mobile '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>1</seqno><settings></settings><settingsxml /><stepname>Call SP to get data for mobile</stepname></step><step><id>3370</id><entity>-none-</entity><action>process</action><source>132</source><target>80</target><datasource>SELECT TOP (1)
+    0 as doQuit
+FROM dbo._AB_tb_Fin_Data f WITH (NOLOCK)
+WHERE 1=1
+    AND f.rowstatus = 0</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit job if no data</stepname></step><step><id>3371</id><entity>-none-</entity><action>process</action><source>132</source><target>80</target><datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+FROM (VALUES (0)) l(v)
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_log r WITH (NOLOCK)
+        ON r.jobid = '%jobid%'
+        AND r.runid &lt;&gt; '%runid%'
+        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+        AND NOT EXISTS (SELECT 1 FROM [%abeidb%].dbo._AB_Entity_log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit job if running</stepname></step><step><id>3372</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>132</target><datasource>UPDATE f WITH (ROWLOCK, NOWAIT) SET
+    runid = '%runid%'
+    , rowstatus = 1
+    , seqno = ISNULL(f.seqno, 100)
+    , sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_Fin_Data f 
+WHERE 1=1
+    AND f.rowstatus = 0</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>Assign runid</stepname></step><step><id>3373</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>132</target><datasource>UPDATE f WITH (ROWLOCK, NOWAIT) SET
+    targetoverride = c.ID
+    , rowstatus = CASE WHEN c.ID IS NULL THEN -1 ELSE f.rowstatus END
+    , seqno = CASE WHEN c.ID IS NULL THEN 101 ELSE 100 END -- Only overwrite when invalid target, back to 100 when valid
+    , sysmessage = CASE WHEN c.ID IS NULL THEN 'Invalid targetDB' END
+    , sysmodified = CURRENT_TIMESTAMP
+FROM dbo._AB_tb_Fin_Data f 
+    LEFT JOIN dbo._AB_sy_ABEI_Entity_connections c WITH (NOLOCK) ON c.db = CONVERT(varchar(50), f.targetDB)
+WHERE 1=1
+    AND f.runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks>Set targetoverride option in all Entity steps when you use this. Also, check step 121</remarks><replace></replace><seqno>101</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Target override (optional, read note)</stepname></step><step><id>3374</id><entity>FinancialLine</entity><action>create</action><source>132</source><target>105</target><datasource>SELECT --TOP (1000) 
+     f.HeaderID
+    , f.referencekey
+    , f.dagbknr
+    , f.bkstnr
+    , f.docnumber
+    , f.faktuurnr -- our ref
+    , f.datum
+    , f.docdate
+    , f.debnr
+    , f.crdnr
+    , f.oms25 -- description
+
+    , f.reknr
+    , f.bedrag -- amount
+    , f.vatamount
+    , f.btw_code
+    , f.kstplcode
+    , f.kstdrcode
+    , f.artcode
+    , f.facode
+    , f.aantal
+    , f.warehouse
+    , f.warehouse_location  
+    , f.unitcode
+    , f.project
+    , f.transsubtype
+
+    , f.freefield1
+    , f.freefield2
+    , f.freefield3
+    , f.numberfield1
+    , f.numberfield2
+
+    , f.targetDB
+FROM dbo._AB_tb_Fin_Data f WITH (NOLOCK)
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus = 1
+    AND f.seqno = 100
+    
+    --ORDER BY f.referencekey, reknr DESC</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings></settings><settingsxml /><stepname>Financial line (set target to Globe)</stepname></step><step><id>3375</id><entity>FinancialHeader</entity><action>create</action><source>132</source><target>105</target><datasource>SELECT DISTINCT
+      f.HeaderID
+    , f.HeaderID as referencekey
+    , f.dagbknr
+    , f.datum
+    , f.datum as docdate
+    , f.crdnr
+    , f.HeaderDescription as oms25
+    , f.docnumber
+    , f.targetDB
+FROM dbo._AB_tb_Fin_Data f WITH (NOLOCK)
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus = 1
+    AND f.seqno = 100</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>referencekey</name><type>String</type></datacolumn><datacolumn><name>dagbknr</name><type>String</type></datacolumn><datacolumn><name>datum</name><type>DateTime</type></datacolumn><datacolumn><name>docdate</name><type>DateTime</type></datacolumn><datacolumn><name>crdnr</name><type>String</type></datacolumn><datacolumn><name>oms25</name><type>String</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>targetDB</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Financial header (set target to Globe)</stepname></step><step><id>3376</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>132</target><datasource>UPDATE f WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = ISNULL(r.rowstatus, -1)
+    , seqno = 120
+    , sysmessage = REPLACE(REPLACE(ISNULL(r.errormessage, 'No result found')
+                                , 'Entiteit: ', '')
+                                , ' Property:,Message: ', '')
+    , sysmodified = CURRENT_TIMESTAMP   
+FROM dbo._AB_tb_Fin_Data f 
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_results r WITH (NOLOCK)
+        ON r.runid = f.runid
+        AND r.Entity = 'FinancialHeader'
+        AND r.ReferenceValue = f.HeaderID
+        AND r.jobid = %jobid%
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus = 1
+    AND f.seqno = 100</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings></settings><settingsxml /><stepname>Update status based on ABEI results</stepname></step><step><id>3377</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>105</target><datasource>UPDATE f WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = 2 -- Found in Exact, so did not fail    
+    , sysmessage = 'Found in Exact'
+    , sysmodified = CURRENT_TIMESTAMP   
+FROM [%abeisourcedb%].dbo._AB_tb_Fin_Data f 
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus = -1
+    AND f.seqno = 120
+    -- Exists in..
+    AND EXISTS (
+        SELECT 1 --ts.dagbknr, ts.faktuurnr, ts.freefield1, ts.freefield2
+        FROM [%abeitargetdb%].dbo.amutas ts WITH (NOLOCK) 
+        WHERE 1=1
+             AND CAST(ts.syscreated as date) = CAST(CURRENT_TIMESTAMP as date) -- Only check results for today
+             AND ts.dagbknr = f.dagbknr COLLATE DATABASE_DEFAULT
+             AND ts.freefield1 = f.freefield1 COLLATE DATABASE_DEFAULT
+             --AND ts.freefield2 = f.freefield2 COLLATE DATABASE_DEFAULT
+        )</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks>tas: financial lines, you can use tak (header) as well if it contains the data you need to join
+Please note that using synonymns with dynamic target override in ABEI doesn't guarantee you join the correct DB.
+When using multiple targets, create one of this step for every DB you have</remarks><replace></replace><seqno>121</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Cust - Update status based on data in Exact (read note)</stepname></step><step><id>3378</id><entity>-none-</entity><action>create</action><source>132</source><target>6</target><datasource>SELECT DISTINCT 
+    'Van de volgende regels kon geen inleenuren registratie aangemaakt worden.' as mailTxt_ln1
+    , 'Controleer de foutmelding en corrigeer waar nodig.' as mailTxt_ln2
+    , f.oms25 as Omschrijving
+    , f.bedrag as Bedrag
+    , f.reknr as Rekening
+    , f.kstplcode as Kostenplaats
+    , f.mailto
+FROM dbo._AB_tb_Fin_Data f 
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus &lt;&gt; 2
+    --AND f.retryCounter = CASE WHEN %mail_at_retrynr% = 0 THEN f.retryCounter ELSE %mail_at_retrynr% END
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;%mailTxt_ln1%&lt;/p&gt;&lt;p&gt;%mailTxt_ln2%&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;Omschrijving&lt;/td&gt;&lt;td&gt;Bedrag&lt;/td&gt;&lt;td&gt;Rekening&lt;/td&gt;&lt;td&gt;Kostenplaats&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Omschrijving%&lt;/td&gt;&lt;td&gt;%Bedrag%&lt;/td&gt;&lt;td&gt;%Rekening%&lt;/td&gt;&lt;td&gt;%Kostenplaats%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;/p&gt;&lt;p&gt;run: %runid%&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=ap@orlaco.com;emailcc=d.foster@orlaco.com,lennart.meeuse@stoneridge.com;emailbcc=;emailsub=Meldingen bij importeren inleen uren;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Omschrijving,Bedrag,Rekening,Kostenplaats;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>mailTxt_ln1</name><type>String</type></datacolumn><datacolumn><name>mailTxt_ln2</name><type>String</type></datacolumn><datacolumn><name>Omschrijving</name><type>String</type></datacolumn><datacolumn><name>Bedrag</name><type>Double</type></datacolumn><datacolumn><name>Rekening</name><type>String</type></datacolumn><datacolumn><name>Kostenplaats</name><type>String</type></datacolumn><datacolumn><name>mailto</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Cust - Send mail</stepname></step><step><id>3379</id><entity>-none-</entity><action>exec SQL</action><source>132</source><target>132</target><datasource>UPDATE f WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = 0
+    , retryCounter += 1
+    , sysmodified = CURRENT_TIMESTAMP   
+FROM dbo._AB_tb_Fin_Data f 
+WHERE 1=1
+    AND f.runid = '%runid%'
+    AND f.rowstatus &lt;&gt; 2
+    AND f.retryCounter &lt; %max_retry%</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings></settings><settingsxml /><stepname>Retry (optional, read note)</stepname></step></steps></job></jobs>

@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>305</id><jobname>EG: Test Aanmaken 640 reparatieorders met contactpersonen</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings /><settingsxml /><steps><step><id>1428</id><entity>SalesOrderHeader</entity><action>create</action><source>1</source><target>105</target><datasource>SELECT    
+
+  a.HID as HeaderID
+, 'V' as ord_soort
+, '1' as betaald
+, '0' as ordbv_afdr
+, a.HID AS refer
+, isnull(cast(ltrim(rtrim(a.FreeTextField_02)) as varchar(max)), '') + '/' + isnull(cast(ltrim(rtrim(a.FreeTextField_03))as varchar(max)), '')  AS refer1
+, convert(varchar(10),a.EndDate, 105) as refer3
+, a.FreeTextField_04 as docnumber
+, 'EUR' as Valcode
+, LTRIM(c.cmp_code) as debnr
+, LTRIM(c.cmp_code) as verzdebnr
+--, CASE ISNULL(a.freetextfield_13, 'leeg') WHEN 'leeg' THEN (CASE ISNULL(a.freetextfield_07, 'leeg') WHEN 'leeg' THEN (c.cmp_name) ELSE (a.freetextfield_13) END) ELSE (a.freetextfield_13) END collate database_default AS del_debtor_name
+, '31917'  as ord_ContactPerson
+--, cast(ci.id as varchar) AS del_ContactPerson
+--, cast(cit.id as varchar) as hoofdcontactpersoon
+--, '--' as del_cnt_job_desc
+--, ad.AddressLine1 AS del_AddressLine1
+--, ad.PostCode collate database_default AS del_PostCode
+--, ad.City collate database_default AS del_City
+--, ad.Country as del_landcode
+, LTRIM(c.cmp_code) as fakdebnr
+, '20' as Magcode
+, 'ZZ_OP' as kstplcode
+, a.FreeTextField_10 as selcode
+, '0' as colli
+, '0' as Netto_gew
+, '0' as Bruto_gew
+--, cast(ltrim(rtrim(a.RequestComments)) as varchar(max)) as Note
+, 'Artikel 1: ' + cast((CASE ISNULL(a.freetextfield_06, 'leeg') WHEN 'leeg' THEN ltrim(rtrim(a.itemcode)) ELSE ltrim(rtrim(a.freetextfield_06)) END) as varchar) + '/ sn:  ' + ltrim(rtrim(a.FreeTextField_05)) + '/ Locatie: ' + cast (ltrim(rtrim(a.FreeTextField_01)) as varchar) as freefield1
+
+FROM			  dbo.land AS la INNER JOIN
+                  dbo.Addresses AS ad INNER JOIN
+                  dbo.Absences AS a INNER JOIN
+                  [420].dbo.cicmpy AS vic INNER JOIN
+                  dbo.cicmpy AS c ON vic.debnr = c.debnr ON a.CustomerID = c.cmp_wwn LEFT OUTER JOIN
+                  dbo.cicntp AS ci ON a.CustomerContactID = ci.cnt_id ON ad.Account = c.cmp_wwn ON la.landcode = ad.Country
+				  left outer join [420].dbo.cicntp as cit (nolock) on vic.cnt_id = cit.cnt_id
+
+WHERE      1=1
+                  AND (a.Type = 640) 
+                  AND (a.FreeBoolField_01 = 0) 
+                  AND (a.FreeBoolField_05 = 0)
+				  AND (ad.Type = 'DEL')
+				  AND (ad.Main = 1)
+				  and (a.HID='1304624')
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken salesorderheader vanuit verzoektype 640</stepname></step><step><id>1429</id><entity>SalesOrderLine</entity><action>create</action><source>1</source><target>105</target><datasource>SELECT     
+
+  a.HID as HeaderID
+, 'TXT' as artcode
+, '1' as esr_aantal
+, 'Artikel 1: ' + cast((CASE ISNULL(a.freetextfield_06, 'leeg') WHEN 'leeg' THEN ltrim(rtrim(a.itemcode)) ELSE ltrim(rtrim(a.freetextfield_06)) END) as varchar) + '/ sn:  ' + ltrim(rtrim(a.FreeTextField_05)) + '/ Locatie: ' + cast (ltrim(rtrim(a.FreeTextField_01)) as varchar) as oms45
+, 'Artikel 1: ' + cast((CASE ISNULL(a.freetextfield_06, 'leeg') WHEN 'leeg' THEN ltrim(rtrim(a.itemcode)) ELSE ltrim(rtrim(a.freetextfield_06)) END) as varchar) + '/ sn:  ' + ltrim(rtrim(a.FreeTextField_05)) + '/ Locatie: ' + cast (ltrim(rtrim(a.FreeTextField_01)) as varchar) as TextDescription
+
+FROM			  dbo.land AS la INNER JOIN
+                  dbo.Addresses AS ad INNER JOIN
+                  dbo.Absences AS a INNER JOIN
+                  [420].dbo.cicmpy AS vic INNER JOIN
+                  dbo.cicmpy AS c ON vic.debnr = c.debnr ON a.CustomerID = c.cmp_wwn LEFT OUTER JOIN
+                  dbo.cicntp AS ci ON a.CustomerContactID = ci.cnt_id ON ad.Account = c.cmp_wwn ON la.landcode = ad.Country
+				  left outer join [420].dbo.cicntp as cit (nolock) on vic.cnt_id = cit.cnt_id
+
+WHERE      1=1
+                  AND (a.Type = 640) 
+                  AND (a.FreeBoolField_01 = 0) 
+                  AND (a.FreeBoolField_05 = 0)
+				  AND (ad.Type = 'DEL')
+				  AND (ad.Main = 1)
+				  and (a.HID='1304624')
+
+
+
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken salesorderlines vanuit verzoektype 640</stepname></step></steps></job></jobs>

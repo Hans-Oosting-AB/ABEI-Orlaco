@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>292</id><jobname>! EG: HPP PROD aanmaken (400)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=2;timescale=minutes;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=0;day5=0;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1351</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>update _AB_prognose with(rowlock, nowait) set status = '2' where ID in  (select top 200 ID from _AB_prognose with(nolock) where Status = '1')</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Selecteer budgetregels voorbewerking in tussentabel</stepname></step><step><id>1350</id><entity>Budget</entity><action>create</action><source>107</source><target>107</target><datasource>Select 
+[Artcode]
+      ,[oms25]
+      ,[Warehouse]
+      ,[aantal]
+      ,[bud_vers]
+      ,[Datum]
+      ,[reknr]
+      ,[bkjrcode]
+      ,[periode]
+      ,[CompanyCode]
+      ,[TransactionType]
+      ,[FreeField1]
+      ,[Transsubtype]
+      ,[bdr_val]
+      ,[kstplcode]
+      ,[Koop_maak]
+      ,[voorraadkenmerk]
+      ,[artikeltype]
+      ,[voorraadpolicy]
+      ,[leverancier]
+      ,[Status]
+      ,[bdr_val] as amountdivision
+
+
+from _AB_prognose with(nolock)
+     
+where 1=1
+    and Status = '2'
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Maak nieuw budgetregels aan in 'PROD' budget</stepname></step><step><id>1352</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>update _AB_prognose with(rowlock, nowait) set status = '3' where ID in  (select ID from _AB_prognose with(nolock) where status = '2')
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Zet status verwerkt in tussentabel</stepname></step></steps></job></jobs>

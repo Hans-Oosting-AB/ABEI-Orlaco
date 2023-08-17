@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>368</id><jobname>! EG: Pakbon in facuur zetten (483)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=5;timescale=minutes;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1768</id><entity>InvoiceHeader</entity><action>update</action><source>126</source><target>126</target><datasource>select fh483.ID ,MAX(ol400.PakbonNr) as freefield2
+from [483].dbo.orhsrg as ohl483
+ inner join [400].dbo.orsrg as ol400 on ohl483.CSPickITCWSysGUIDCWDB  = ol400.sysguid 
+ inner join [483].dbo.frkrg as fh483 on fh483.pakbon_nr = ohl483.pakbon_nr
+where ISNULL(fh483.freefield2,'') = ''
+ GROUP BY fh483.ID</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname /></step></steps></job></jobs>

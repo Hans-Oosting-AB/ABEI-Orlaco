@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>310</id><jobname>! ESE: HRM ziekmelding start</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=09:15:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1439</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>select 
+	  cast('0' as int) as Type
+	, 'Systeemmelding: ' + hr.fullname + ' is ziek (zie registratie ' + cast(ab.HID as varchar) + ')' as description
+	, hr2.res_id as empID
+
+from 
+	absences ab with (nolock),
+	humres hr with (nolock),
+	humres hr2 with (nolock)
+where
+	1=1 
+	and ab.type = 485
+	and ab.empID = hr.res_ID
+	and hr.repto_id = hr2.res_id
+	and ab.status = 1
+	and ab.syscreated &gt; dateadd(dd, -1,getdate())
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Stuur taak naar manager</stepname></step></steps></job></jobs>

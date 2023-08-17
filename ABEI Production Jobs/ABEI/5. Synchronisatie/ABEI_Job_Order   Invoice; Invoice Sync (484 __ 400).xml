@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>538</id><jobname>Order / Invoice: Invoice Sync (484 &lt;&gt; 400)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>1. Generate sales orders in 400 for purchase orders in 484 for Orlaco Products
+2. Generate purchase orders in 484 for sales invoices created in 400 for Orlaco Inc. 
+
+60 minutes</remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>1</freq><timescale>hours</timescale><frequency>weekly</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>15:00:49</startat><beginat>06:00:00</beginat><endat>21:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>0</day6><day7>0</day7><duration_start>2022-02-22</duration_start><duration_end>2073-02-22</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>prm_ABSC_Data</name><type>String</type><value>ABSC_Data</value></jobparam></jobparams></settings></settingsxml><steps><step><id>3792</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings></settings><settingsxml /><stepname>==== Create purchase invoice on sales invoice</stepname></step><step><id>3688</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>112</target><datasource>INSERT INTO [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync]
+
+----
+---- LET OP: DIT DRAAIT LOS VAN DE EERSTE STAP,
+----         BACO IS NODIG OMDAT BIJ HET AANMAKEN VAN DE FACTUUR DIRECT OOK DE BIJLAGE MOET WORDEN GEKOPPELD
+----
+    (
+      [AOS_id]
+      ,[purchase_ordernr]
+      ,[sales_ordernr]
+      ,[sales_faknr]
+      ,[sales_docnumber]
+      ,[invoicedate]
+      ,[orderreferenceid]
+      ,[linereferenceid]
+      ,[runid1]
+      ,[rowstatus1]
+      ,[rowmessage1]
+      ,[retrycounter1]
+      ,[runid2]
+      ,[rowstatus2]
+      ,[rowmessage2]
+      ,[retrycounter2]
+      ,[sysmodified]
+      ,[syscreated]
+      ,[baid]
+    )
+    
+SELECT
+    [S].ID          --[AOS_id]
+    ,[S].[purchase_ordernr] collate database_default
+    ,[S].[sales_ordernr] collate database_default
+    ,[SalesF].faknr --[sales_faknr]
+    ,[SalesF].docnumber     --[sales_docnumber]
+    ,[SalesF].fakdat -- invoicdate
+    ,NULL           --[orderreferenceid]
+    ,NULL           --[linereferenceid]
+    ,'%runid%'      --[runid1]
+    ,1              --[rowstatus1]
+    ,''             --[rowmessage1]
+    ,0              --[retrycounter1]
+    ,NULL           --[runid2]
+    ,0              --[rowstatus2]
+    ,''             --[rowmessage2]
+    ,0              --[retrycounter2]
+    ,GETDATE()      --[sysmodified]
+    ,GETDATE()      --[syscreated]
+    ,[SalesB].ID    --[baid]
+
+-- SELECT S.* , [SalesB].ID , [SalesF].*
+
+FROM  [ABSC_Data].[dbo].[_AB_tb_ABEI_Order_Sync] AS [S]
+INNER JOIN [%abeisourcedb%].dbo.frhkrg AS [SalesF] with (nolock) ON [SalesF].ordernr = [S].sales_ordernr COLLATE DATABASE_DEFAULT -- &gt; 100
+INNER JOIN [%abeitargetdb%].dbo.orkrg  AS [PurchaseH] with (nolock) on [PurchaseH].ordernr   = [S].purchase_ordernr COLLATE DATABASE_DEFAULT   --&gt; 184
+INNER JOIN [%abeisourcedb%].dbo.bacodiscussions AS [SalesB] with (nolock) on [SalesB].id = [SalesF].DocAttachmentID AND [SalesB].[OurRef] = [SalesF].faknr -- &gt; 100
+
+where  [PurchaseH].ord_soort = 'B'
+AND [PurchaseH].crdnr = 151048
+AND [SalesB].type = '14'
+AND [SalesF].fakdat &gt; '2022-09-19' -- live date
+AND NOT EXISTS (SELECT 1 FROM [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock) WHERE 1 = 1 AND [IS].[sales_faknr] COLLATE DATABASE_DEFAULT = [SalesF].[faknr])
+
+UNION  --- include invoices not in order sync
+
+SELECT
+    -1 as ID          --[AOS_id]
+    ,[purchaseh].ordernr
+    ,[salesf].ordernr
+    ,[SalesF].faknr --[sales_faknr]
+    ,[SalesF].docnumber     --[sales_docnumber]
+    ,[SalesF].fakdat -- invoicdate
+    ,NULL           --[orderreferenceid]
+    ,NULL           --[linereferenceid]
+    ,'%runid%'      --[runid1]
+    ,1              --[rowstatus1]
+    ,''             --[rowmessage1]
+    ,0              --[retrycounter1]
+    ,NULL           --[runid2]
+    ,0              --[rowstatus2]
+    ,''             --[rowmessage2]
+    ,0              --[retrycounter2]
+    ,GETDATE()      --[sysmodified]
+    ,GETDATE()      --[syscreated]
+    ,[SalesB].ID    --[baid]
+
+-- SELECT S.* , [SalesB].ID , [SalesF].*
+
+FROM  [%abeisourcedb%].dbo.frhkrg AS [SalesF] with (nolock) 
+INNER JOIN [%abeitargetdb%].dbo.orkrg  AS [PurchaseH] with (nolock) on [PurchaseH].ordernr   = SalesF.docnumber COLLATE DATABASE_DEFAULT   --&gt; 184
+INNER JOIN [%abeisourcedb%].dbo.bacodiscussions AS [SalesB] with (nolock) on [SalesB].id = [SalesF].DocAttachmentID AND [SalesB].[OurRef] = [SalesF].faknr -- &gt; 100
+
+WHERE 
+ [PurchaseH].ord_soort = 'B'
+AND [PurchaseH].crdnr = 151048
+AND [SalesB].type = '14'
+AND [SalesF].fakdat &gt; '2022-09-19' -- live date
+AND NOT EXISTS (SELECT 1 FROM [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock) WHERE 1 = 1 AND [IS].[sales_faknr] COLLATE DATABASE_DEFAULT = [SalesF].[faknr])
+AND NOT EXISTS (SELECT 1 FROM [ABSC_Data].[dbo].[_AB_tb_ABEI_Order_Sync] AS [OS] WITH(nolock) WHERE 1 = 1 AND [OS].sales_ordernr COLLATE DATABASE_DEFAULT = [SalesF].ordernr and OS.purchase_ordernr IS NOT NULL)
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>210</seqno><settings /><settingsxml /><stepname>... Controleer of de inkoop factuur al bestaat [100:184]</stepname></step><step><id>3689</id><entity>FinancialHeader</entity><action>create</action><source>107</source><target>112</target><datasource>SELECT  
+    [S].[sales_faknr] as HeaderID
+    ,151048 as crdnr
+    ,'16' as dagbknr
+    --,CONVERT(varchar(10),CURRENT_TIMESTAMP,120) as datum
+    ,invoicedate as datum
+    ,[S].[sales_faknr] as docnumber 
+    ,concat([S].[sales_ordernr] COLLATE DATABASE_DEFAULT, ' - ', [S].[sales_docnumber] COLLATE DATABASE_DEFAULT ) as oms25
+    ,CONCAT('538/220/H/',[S].[sales_faknr] COLLATE DATABASE_DEFAULT) as ReferenceKey
+
+FROM [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [S] WITH(nolock)
+
+WHERE 1=1 
+AND [S].[rowstatus1] = 1
+AND [S].[runid1] = '%runid%'
+
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceKey</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>crdnr</name><type>Int32</type></datacolumn><datacolumn><name>dagbknr</name><type>String</type></datacolumn><datacolumn><name>datum</name><type>String</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>oms25</name><type>String</type></datacolumn><datacolumn><name>ReferenceKey</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>... Generate purchase invoice (Header) [100:184]</stepname></step><step><id>3690</id><entity>FinancialLine</entity><action>create</action><source>107</source><target>112</target><datasource>SELECT 
+    [SalesH].faknr as HeaderID
+    ,151048 as crdnr
+    ,[SalesFL].regel
+    ,[PurchaseI].itemcode as artcode 
+    ,2400 as reknr
+    ,[SalesFL].esr_aantal as aantal
+    ,[SalesFL].pr_bedr as bedrag
+    -- ,[FH].docnumber as ordernumber
+    ,[PurchaseH].ordernr as ordernumber
+
+    ,[IS].baid AS docattachmentid
+    
+    ,CONCAT('538/220/L/',[SalesH].faknr COLLATE DATABASE_DEFAULT) as ReferenceKey
+
+FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock)
+INNER JOIN [%abeisourcedb%].dbo.frhkrg AS [SalesH] with (nolock) ON [SalesH].[ordernr] = [IS].[sales_ordernr] COLLATE DATABASE_DEFAULT AND [SalesH].[faknr] = [IS].[sales_faknr]  COLLATE DATABASE_DEFAULT -- 100  source
+INNER JOIN [%abeisourcedb%].dbo.frhsrg AS [SalesFL] with (nolock) on [SalesFL].faknr = [SalesH].faknr -- 100  source
+
+LEFT JOIN  [%abeitargetdb%].dbo.items AS [PurchaseI] with (nolock) on [PurchaseI].itemcode = [SalesFL].artcode  -- 184 Target
+INNER JOIN [%abeitargetdb%].dbo.orkrg [PurchaseH] with (nolock) on  [PurchaseH].ordernr = [IS].[purchase_ordernr] COLLATE DATABASE_DEFAULT -- 184 Target
+INNER JOIN [%abeitargetdb%].dbo.cicmpy [PurchaseC] with (nolock) on [PurchaseH].crdnr = [PurchaseC].crdnr -- 184 Target
+
+WHERE 1=1 
+AND [PurchaseI].[Type] IN ('S')
+AND [IS].[rowstatus1] = 1
+AND [IS].[runid1] = '%runid%'
+  
+
+-- Type description
+-- B Bulk issue
+-- C Contract
+-- L Labor hour
+-- M Machine hour
+-- P Phantom
+-- R Reason codes
+-- S Standard
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceKey</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>crdnr</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>reknr</name><type>Int32</type></datacolumn><datacolumn><name>aantal</name><type>Double</type></datacolumn><datacolumn><name>bedrag</name><type>Double</type></datacolumn><datacolumn><name>ordernumber</name><type>String</type></datacolumn><datacolumn><name>ReferenceKey</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>... Generate purchase invoice (Lines) [100:184]</stepname></step><step><id>3691</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>112</target><datasource>UPDATE [S] SET
+    [rowstatus1] = ISNULL([OA_ER].rowstatus,-1)
+    ,[rowmessage1] = ISNULL([OA_ER].errormessage,'Onbekende fout')
+
+    ,[rowstatus2] = CASE WHEN ISNULL([OA_ER].rowstatus,-1) = 2 THEN 1 ELSE 0 END
+    ,[runid2] = CASE WHEN ISNULL([OA_ER].rowstatus,-1) = 2 THEN [S].[runid1] ELSE NULL END
+
+    ,[sysmodified] = getdate()
+
+-- SELECT [OA_ER].*, [S].*
+FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [S] 
+
+
+OUTER APPLY
+    (
+        SELECT TOP (1) 
+            [R].rowstatus
+            ,[R].NewKeyvalue
+            ,[R].errormessage
+            ,[R].runid
+            ,[R].id
+        FROM [%abeidb%].[DBO].[_AB_Entity_results] AS [R] WITH(nolock)
+        WHERE 1 = 1
+          AND [R].Entity = 'FinancialHeader'
+          AND [R].Action = 'create'
+          AND [R].runid = [S].[runid1]   
+          AND [R].ReferenceValue = CONCAT('538/220/H/',[S].[sales_faknr] COLLATE DATABASE_DEFAULT) 
+    ) AS [OA_ER]
+
+WHERE 1 = 1 
+AND [S].[rowstatus1] = 1
+AND [S].[runid1] = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>240</seqno><settings /><settingsxml /><stepname>... Verwerk resultaat [100:184]</stepname></step><step><id>3793</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings></settings><settingsxml /><stepname>==== Store document in 484</stepname></step><step><id>3693</id><entity>Document</entity><action>create</action><source>107</source><target>112</target><datasource> Select 
+    [SalesB].ID          AS ID
+    ,[SalesB].[filename]  AS BinaryFileName
+    ,[SalesB].[Document] AS BinaryDocument
+    ,'Attachments'  AS Category
+    ,'artlnk'       AS SubCategory
+    ,7              AS Type
+    ,'I'            AS Source
+    ,[PurchaseC].cmp_wwn        AS cmpwwn
+    ,[SalesB].[OurRef] AS Ourref -- (faktuurnummer) 
+    ,[SalesB].[Yourref] AS YourRef -- (docnumber)
+    ,[SalesB].[subject]  AS subject
+    ,[IS].purchase_ordernr AS Ordernumber
+       --,x.sysguid                                                                                      AS Entrykey
+       --,[C].cmp_name  
+    
+    ,CONCAT('538/310/B/',[IS].ID) as ReferenceKey
+ FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock)
+ INNER JOIN [%abeisourcedb%].[dbo].[BacoDiscussions] AS [SalesB] WITH (nolock) ON [SalesB].ID = [IS].[BAID]        -- 100 source = verkoop
+ 
+ INNER JOIN [%abeitargetdb%].[dbo].[ORKRG] AS [PurchaseH] WITH(nolock) ON [PurchaseH].ordernr = [IS].purchase_ordernr COLLATE DATABASE_DEFAULT -- 184 target = inkoop
+ INNER JOIN [%abeitargetdb%].[dbo].[cicmpy] AS [PurchaseC] WITH(nolock) ON [PurchaseC].crdnr = [PurchaseH].crdnr -- 184 target = inkoop
+ 
+ WHERE 1 = 1
+ AND [IS].rowstatus2 = 1
+ AND [IS].runid2 = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>310</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceKey</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>BinaryFileName</name><type>String</type></datacolumn><datacolumn><name>BinaryDocument</name><type>Byte[]</type></datacolumn><datacolumn><name>Category</name><type>String</type></datacolumn><datacolumn><name>SubCategory</name><type>String</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>Source</name><type>String</type></datacolumn><datacolumn><name>cmpwwn</name><type>Guid</type></datacolumn><datacolumn><name>Ourref</name><type>String</type></datacolumn><datacolumn><name>YourRef</name><type>String</type></datacolumn><datacolumn><name>subject</name><type>String</type></datacolumn><datacolumn><name>Ordernumber</name><type>String</type></datacolumn><datacolumn><name>ReferenceKey</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>... Inkoop document aanmaken en koppelen</stepname></step><step><id>3694</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>112</target><datasource>UPDATE [IS] SET
+    [rowstatus2] = ISNULL([OA_ER].rowstatus,-1)
+    ,[rowmessage2] = ISNULL([OA_ER].errormessage,'Onbekende fout')
+    ,[sysmodified] = getdate()
+
+-- SELECT [OA_ER].*, [IS].*
+FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] 
+
+
+OUTER APPLY
+    (
+        SELECT TOP (1) 
+            [R].rowstatus
+            ,[R].NewKeyvalue
+            ,[R].errormessage
+            ,[R].runid
+            ,[R].id
+        FROM [%abeidb%].[DBO].[_AB_Entity_results] AS [R] WITH(nolock)
+        WHERE 1 = 1
+        -- AND [R].Entity = 'FinancialHeader'
+        --  AND [R].Action = 'create'
+        AND [R].runid = [IS].[runid2]   
+        AND [R].ReferenceValue = CONCAT('538/310/B/',[IS].ID)
+    ) AS [OA_ER]
+
+WHERE 1 = 1 
+AND [IS].[rowstatus2] = 1
+AND [IS].[runid2] = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>340</seqno><settings /><settingsxml /><stepname>... Verwerk resultaat [100:184]</stepname></step><step><id>3701</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT TOP 1000 
+    [IS].[purchase_ordernr] AS [purchase_ordernr]
+    ,[IS].[sales_ordernr] AS [sales_ordernr]
+    ,CONCAT( [IS].[rowmessage1]COLLATE DATABASE_DEFAULT , ' / ' , [IS].[rowmessage2] COLLATE DATABASE_DEFAULT)   AS [message]
+    ,GETDATE() AS [syscreated]
+    ,[SalesB].[Document]
+    ,[SalesB].[Filename]
+    ,sales_faknr as InvoiceNr
+  
+FROM  [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock)
+LEFT JOIN [%abeisourcedb%].[dbo].[BacoDiscussions] AS [SalesB] WITH(nolock) ON [SalesB].OrderNumber = [IS].[sales_ordernr] COLLATE DATABASE_DEFAULT and type = 14
+
+where 1 = 1
+and ([IS].[rowstatus1] &lt; 0 OR [IS].[rowstatus2] &lt; 0)
+and [IS].[runid1] = '%runid%'
+
+order by [IS].sysmodified desc</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Geachte lezer,&lt;/p&gt;&lt;p&gt;Voor de onderstaande verkooporders zijn&amp;nbsp; geen inkoopfacturen aangemaakt. De inkoopfacturen zullen nog moeten worden aangemaakt:&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;purchase_ordernr&lt;/td&gt;&lt;td&gt;sales_ordernr&lt;/td&gt;&lt;td&gt;message&lt;/td&gt;&lt;td&gt;syscreated&lt;/td&gt;&lt;td&gt;InvoiceNr&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%purchase_ordernr%&lt;/td&gt;&lt;td&gt;%sales_ordernr%&lt;/td&gt;&lt;td&gt;%message%&lt;/td&gt;&lt;td&gt;%syscreated%&lt;/td&gt;&lt;td&gt;%InvoiceNr%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Met vriendelijke groet,&lt;/p&gt;&lt;p&gt;De ABEI mailer&lt;/p&gt;&lt;p&gt;&lt;font color="gray"&gt;Basis gegevens: &lt;br&gt;RunID: %runid%&lt;br&gt;Tijd: %abei_now_121%&lt;br&gt;Server: %abeiserver% \ %jobid% \ %jobstepid%&lt;/font&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com%semicolon%ap@orlaco.com;emailcc=;emailbcc=;emailsub=Er gaat wat fout bij het aanmaken van de inkoop factuur;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=purchase_ordernr,sales_ordernr,message,syscreated,InvoiceNr;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>purchase_ordernr</name><type>String</type></datacolumn><datacolumn><name>sales_ordernr</name><type>String</type></datacolumn><datacolumn><name>message</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>Filename</name><type>String</type></datacolumn><datacolumn><name>InvoiceNr</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%Filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>... Stuur mail met Fouten [100:mail]</stepname></step><step><id>3794</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings></settings><settingsxml /><stepname>==== Mail errors to user</stepname></step><step><id>3795</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT TOP 1000 
+    [IS].[purchase_ordernr] AS [purchase_ordernr]
+    ,[IS].[sales_ordernr] AS [sales_ordernr]
+    ,CONCAT( [IS].[rowmessage1]COLLATE DATABASE_DEFAULT , ' / ' , [IS].[rowmessage2] COLLATE DATABASE_DEFAULT)   AS [message]
+    ,GETDATE() AS [syscreated]
+    ,[SalesB].[Document]
+    ,[SalesB].[Filename]
+  
+FROM  [ABSC_Data].[dbo].[_AB_tb_ABEI_Invoice_Sync] AS [IS] WITH(nolock)
+LEFT JOIN [%abeisourcedb%].[dbo].[BacoDiscussions] AS [SalesB] WITH(nolock) ON [SalesB].OrderNumber = [IS].[sales_ordernr] COLLATE DATABASE_DEFAULT and type = 14
+
+where 1 = 1
+and ([IS].[rowstatus1] &lt; 0 OR [IS].[rowstatus2] &lt; 0)
+and [IS].[runid1] = '%runid%'
+
+order by [IS].sysmodified desc</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Geachte lezer,&lt;/p&gt;&lt;p&gt;Voor de onderstaande verkooporders zijn&amp;nbsp; geen inkoopfacturen aangemaakt. De inkoopfacturen zullen nog moeten worden aangemaakt:&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;purchase_ordernr&lt;/td&gt;&lt;td&gt;sales_ordernr&lt;/td&gt;&lt;td&gt;message&lt;/td&gt;&lt;td&gt;syscreated&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%purchase_ordernr%&lt;/td&gt;&lt;td&gt;%sales_ordernr%&lt;/td&gt;&lt;td&gt;%message%&lt;/td&gt;&lt;td&gt;%syscreated%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="4"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Met vriendelijke groet,&lt;/p&gt;&lt;p&gt;De ABEI mailer&lt;/p&gt;&lt;p&gt;&lt;font color="gray"&gt;Basis gegevens: &lt;br&gt;RunID: %runid%&lt;br&gt;Tijd: %abei_now_121%&lt;br&gt;Server: %abeiserver% \ %jobid% \ %jobstepid%&lt;/font&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>420</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com%semicolon%ap@orlaco.com;emailcc=;emailbcc=;emailsub=Er gaat wat fout bij het aanmaken van de inkoop factuur;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=purchase_ordernr,sales_ordernr,message,syscreated;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>purchase_ordernr</name><type>String</type></datacolumn><datacolumn><name>sales_ordernr</name><type>String</type></datacolumn><datacolumn><name>message</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>Filename</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%Filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>Send mail for other invoices.</stepname></step></steps></job></jobs>

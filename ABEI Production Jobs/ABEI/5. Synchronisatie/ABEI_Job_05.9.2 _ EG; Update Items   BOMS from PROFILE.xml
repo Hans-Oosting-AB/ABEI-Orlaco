@@ -1,0 +1,655 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>332</id><jobname>05.9.2 - EG: Update Items / BOMS from PROFILE</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>param_partid=21825;param_itemcode=1002127
+param_partid=22354;param_itemcode=0416140
+param_partid=22120;param_itemcode=0171480
+param_partid=22352;param_itemcode=0146300
+param_partid=22129;param_itemcode=0172060
+0187000 - 21539</remarks><schedulename /><schedulesettings>startat=14:34:27;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>param_partid</name><type>String</type><value>27027</value></jobparam><jobparam><name>param_itemcode</name><type>String</type><value>0106040</value></jobparam></jobparams></settings></settingsxml><steps><step><id>3786</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>UPDATE [ExactData].dbo._ST_EG_UpdateItemBOMProFile 
+SET State = 3, RunID = '%runid%', ModifiedOn = GETDATE()
+WHERE State = 2 and runid is null and itemcode = '%param_itemcode%' and partid = %param_partid%
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>1</seqno><settings /><settingsxml /><stepname>UPDATE row state to 3</stepname></step><step><id>3790</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT MAX(CASE WHEN id IS NULL THEN 1 ELSE 0 END) as doQuit
+FROM [ExactData].[dbo].[_ST_EG_UpdateItemBOMProFile]
+where state = 3 and runid = '%runid%' and itemcode = '%param_itemcode%' and partid = %param_partid%
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>2</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if row is not found</stepname></step><step><id>2930</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_Profile_log] (partid,itemcode,runid,[action],sysmessage)
+SELECT '%param_partid%', '%param_itemcode%', '%runid%', 'START', 'Start'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>8</seqno><settings /><settingsxml /><stepname>Log start parameters</stepname></step><step><id>1567</id><entity>Item</entity><action>update</action><source>124</source><target>107</target><datasource>-- update Item
+SELECT 
+    P.NFT_STK5 AS ItemCode ,
+    CASE WHEN (P.NFT_STK4 &lt;&gt; 'pcs') THEN 1 ELSE 0 END AS IsFractionAllowedItem,
+    CASE WHEN (SELECT COUNT(*) FROM NFSTAMM AS P WITH (NOLOCK) 
+        INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+        WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+        AND P.NFT_STL2 != 'Trade parts' AND TL_RELEVANT = 1
+    GROUP BY P.NFT_GUID ) &gt; 0 THEN 1 ELSE 0 END AS IsAssembled,
+    P.NFT_STH2 AS UserField_08, -- TypeDecodingKey, 
+    V.NVT_STL0 AS UserField_09, -- PL Customer,  
+    V.NVT_STL1 AS UserField_10, -- CustomerNr, 
+    CASE WHEN P.NFT_STL59 = 'CTS' OR P.NFT_STL59 = 'PTC - CTS' THEN 1 ELSE 0 END AS UserNumber_03, -- CTS
+    Convert(Int, [%abeisourcedb%].dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2)) AS UserNumber_04 -- Revision,
+
+FROM [%abeisourcedb%].dbo.NFSTAMM AS P WITH (NOLOCK)
+LEFT JOIN [%abeisourcedb%].dbo.NVSTAMM AS V  WITH (NOLOCK) ON P.NFT_IDNR = V.NVT_IDNR AND V.NVT_DRNR = 1778
+WHERE NFT_STL2 != 'Virtual part' AND NFT_ZUST != 360 -- Tech released 
+AND NFT_IDNR = '%param_partid%' AND '%param_itemcode%' IN (SELECT Itemcode FROM [%abeitargetdb%].dbo.Items WITH (NOLOCK))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;body&gt;&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;NFT_IDNR&lt;/TD&gt;
+&lt;TD&gt;NFT_STK5&lt;/TD&gt;
+&lt;TD&gt;NFT_STL0&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%NFT_IDNR%&lt;/TD&gt;
+&lt;TD&gt;%NFT_STK5%&lt;/TD&gt;
+&lt;TD&gt;%NFT_STL0%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update Item</stepname></step><step><id>3266</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>==== Items</stepname></step><step><id>2089</id><entity>-none-</entity><action>create</action><source>124</source><target>6</target><datasource>-- New Sales '0*' Item
+SELECT 
+    P.NFT_STK5 AS ItemCode ,
+    NFT_STH1 AS Description, 
+    [%abeisourcedb%].dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2) AS Revision
+FROM [%abeisourcedb%].dbo.NFSTAMM AS P WITH (NOLOCK)
+WHERE '%param_itemcode%' like '0%' AND NFT_IDNR = '%param_partid%' AND '%param_itemcode%' NOT IN (SELECT Itemcode FROM [400].dbo.Items WITH (NOLOCK))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;A new sales item is created from Pro.File in Globe 400.&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="WIDTH: 90%" cellPadding=1&gt;
+&lt;TBODY&gt;
+&lt;TR&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;&lt;/TR&gt;
+&lt;TR&gt;
+&lt;TD&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;ItemCode&lt;/TD&gt;
+&lt;TD&gt;Description&lt;/TD&gt;
+&lt;TD&gt;Revision&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%ItemCode%&lt;/TD&gt;
+&lt;TD&gt;%Description%&lt;/TD&gt;
+&lt;TD&gt;%Revision%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=3&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.halum@orlaco.com;emailcc=;emailbcc=;emailsub=New item created;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ItemCode,Description,Revision;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Mail new Item</stepname></step><step><id>1584</id><entity>Item</entity><action>create</action><source>124</source><target>107</target><datasource>-- New or update Item
+SELECT 
+    P.NFT_STK5 AS ItemCode ,
+    NFT_STH1 AS Description, NFT_STH1 AS Description_0, NFT_STH1 AS Description_1, 
+    CASE WHEN P.NFT_STK5 like '0%' THEN 30 ELSE 10 END AS Assortment, 
+    CASE WHEN P.NFT_STK5 like '0%' THEN 1 ELSE 0 END AS IsSalesItem, 
+    CASE WHEN (P.NFT_STK4 &lt;&gt; 'pcs') THEN 1 ELSE 0 END AS IsFractionAllowedItem,
+    CASE WHEN (SELECT COUNT(*) FROM NFSTAMM AS P WITH (NOLOCK) 
+        INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+        LEFT JOIN [ABEI].dbo._AB_entity_results_log l WITH (NOLOCK) ON l.runid = '%runid%' and l.jobid = '%jobid%' and l.rowstatus &lt;&gt; -1 and l.Property = 'Quantity' and l.Action = 'update' and l.entity = 'BOMHeader'
+        WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+        AND P.NFT_STL2 != 'Trade parts' AND TL_RELEVANT = 1
+    GROUP BY P.NFT_GUID, l.valueFloat ) &gt; 0 THEN 1 ELSE 0 END AS IsAssembled,
+    P.NFT_STH2 AS UserField_08, -- TypeDecodingKey, 
+    V.NVT_STL0 AS UserField_09, -- PL Customer,  
+    V.NVT_STL1 AS UserField_10, -- CustomerNr, 
+    CASE WHEN P.NFT_STL59 = 'CTS' OR P.NFT_STL59 = 'PTC - CTS' THEN 1 ELSE 0 END AS UserNumber_03, -- CTS
+    CONVERT(Int, [%abeisourcedb%].dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2)) AS UserNumber_04, -- Revision,
+    GETDATE() AS AvailableFrom, 
+    --CONVERT(date, ISNULL([%abeisourcedb%].dbo.PLMXC_FN_DateFromFloat(P.NFT_FLO2, 'yyyy-mm-dd'), convert(varchar(10), GETDATE(), 102))) AS AvailableFrom, --04.825.617
+    
+    1 AS UserYesNo_01, -- IncomingCheck
+    'F' AS Condition,
+    'S' AS Type,
+    '203' AS SalesVatCode,
+    '1' AS Warehouse,
+    'EUR' AS StockCurrency,
+
+    P.NFT_STK4 AS Unit, 
+    P.NFT_STK0 AS Variant
+
+FROM [%abeisourcedb%].dbo.NFSTAMM AS P WITH (NOLOCK)
+LEFT JOIN [%abeisourcedb%].dbo.NVSTAMM AS V  WITH (NOLOCK) ON P.NFT_IDNR = V.NVT_IDNR AND V.NVT_DRNR = 1778
+WHERE NFT_STL2 != 'Virtual part' AND NFT_ZUST != 360 -- Tech released 
+AND NFT_IDNR = '%param_partid%' AND '%param_itemcode%' NOT IN (SELECT Itemcode FROM [%abeitargetdb%].dbo.Items WITH (NOLOCK))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;body&gt;&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;NFT_IDNR&lt;/TD&gt;
+&lt;TD&gt;NFT_STK5&lt;/TD&gt;
+&lt;TD&gt;NFT_STL0&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%NFT_IDNR%&lt;/TD&gt;
+&lt;TD&gt;%NFT_STK5%&lt;/TD&gt;
+&lt;TD&gt;%NFT_STL0%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>12</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create item</stepname></step><step><id>1576</id><entity>WarehouseStock</entity><action>create</action><source>107</source><target>107</target><datasource>SELECT '%param_itemcode%' AS artcode, 'MRP' as magcode
+WHERE EXISTS (SELECT Itemcode FROM [%abeitargetdb%].dbo.Items WITH (NOLOCK) WHERE Itemcode = '%param_itemcode%') 
+  AND NOT EXISTS ( SELECT magcode FROM [%abeitargetdb%].dbo.voorrd WITH (NOLOCK) WHERE magcode = 'MRP' AND artcode = '%param_itemcode%')
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>15</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create item warehouse MRP</stepname></step><step><id>1571</id><entity>-none-</entity><action>create</action><source>124</source><target>6</target><datasource>SELECT NFT_STK5 AS Itemcode, NFT_STH1 AS Description 
+FROM NFSTAMM AS C WITH (NOLOCK)
+INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR 
+WHERE T.TL_VIDNR = '%param_partid%' AND C.NFT_ZUST != 360 AND C.NFT_STL2 != 'Virtual part' AND
+    C.NFT_STK5 collate database_default NOT IN (SELECT Itemcode collate database_default FROM [400].dbo.ITEMS WITH (NOLOCK))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;Article&amp;nbsp;%param_itemcode% with Pro.File ID %param_partid% is released to Exact Globe.&lt;/P&gt;
+&lt;P&gt;The following items in the BOM are created in Globe. &lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TH&gt;Itemcode&lt;/TH&gt;
+&lt;TH&gt;Description&lt;/TH&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%Itemcode%&lt;/TD&gt;
+&lt;TD&gt;%description%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD&gt;&amp;nbsp;&lt;/TD&gt;
+&lt;TD&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;Send form ABEI %jobid% on %abeinow%&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=j.stouthamer@orlaco.com;emailcc=;emailbcc=;emailsub=New BOM Items created;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Send mail non-existing BOM items</stepname></step><step><id>1570</id><entity>Item</entity><action>create</action><source>124</source><target>107</target><datasource>-- New or update Item
+SELECT 
+    P.NFT_STK5 AS Itemcode ,
+    P.NFT_STH1 AS Description, P.NFT_STH1 AS Description_0, P.NFT_STH1 AS Description_1, 
+    CASE WHEN P.NFT_STK5 like '0%' THEN 30 ELSE 10 END AS Assortment, 
+    CASE WHEN P.NFT_STK5 like '0%' THEN 1 ELSE 0 END AS IsSalesItem, 
+    CASE WHEN (P.NFT_STK4 &lt;&gt; 'pcs') THEN 1 ELSE 0 END AS IsFractionAllowedItem,
+    P.NFT_STH2 AS UserField_08, -- TypeDecodingKey, 
+    V.NVT_STL0 AS UserField_09, -- PL Customer,  
+    V.NVT_STL1 AS UserField_10, -- CustomerNr, 
+    CONVERT(Int, [%abeisourcedb%].dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2)) AS UserNumber_04, -- Revision,
+    GETDATE() AS AvailableFrom,  
+    
+    1 AS UserYesNo_01, -- IncomingCheck
+    'F' AS Condition,
+    'S' AS Type,
+    '203' AS SalesVatCode,
+    '1' AS Warehouse,
+    'EUR' AS StockCurrency
+
+ FROM [%abeisourcedb%].dbo.TEILLIST AS T WITH (NOLOCK)
+ INNER JOIN  [%abeisourcedb%].dbo.NFSTAMM AS P WITH (NOLOCK) ON T.TL_SIDNR = P.NFT_IDNR
+ LEFT JOIN [%abeisourcedb%].dbo.NVSTAMM AS V  WITH (NOLOCK) ON P.NFT_IDNR = V.NVT_IDNR AND V.NVT_DRNR = 1778
+
+ WHERE T.TL_VIDNR = '%param_partid%' AND P.NFT_ZUST != 360  AND P.NFT_STL2 != 'Virtual Part'
+ AND P.NFT_STK5 Collate database_default NOT IN (SELECT Itemcode Collate database_default FROM [%abeitargetdb%].dbo.ITEMS WITH (NOLOCK))</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>21</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create non-existing BOM items</stepname></step><step><id>1572</id><entity>ItemRelation</entity><action>delete</action><source>107</source><target>107</target><datasource>Select ID from ItemRelations WITH (NOLOCK)
+WHERE ItemCode = '%param_itemcode%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Remove variantset</stepname></step><step><id>1573</id><entity>ItemRelation</entity><action>create</action><source>124</source><target>107</target><datasource>-- Variant Item Relations
+SELECT top 100 percent P.NFT_IDNR AS PartId,
+    100 AS Type,
+    P.NFT_STK5 AS ItemCode,
+    C.NFT_STK5 As ItemCodeRelated, 
+    T.TL_FLO0 AS Quantity,
+    10 AS State, 
+    '%abeitargetdb%' AS Division 
+FROM dbo.NFSTAMM AS P WITH (NOLOCK)
+INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+WHERE P.NFT_IDNR = '%param_partid%' AND  P.NFT_STK0 = 'Yes' -- Variant
+AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part'  AND P.NFT_ZUST != 360 AND TL_RELEVANT = 1 AND TL_STL3 != 'Phantom'
+AND C.NFT_STL2 != 'Virtual part' AND C.NFT_ZUST != 360
+ORDER BY T.TL_POSNR
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>31</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create variantset</stepname></step><step><id>3059</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC dbo._AB_sp_Profile_save_BOM_update '%param_itemcode%', '%param_partid%', '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>35</seqno><settings /><settingsxml /><stepname>Calculate BOM update</stepname></step><step><id>3267</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>35</seqno><settings></settings><settingsxml /><stepname>==== BOM delete</stepname></step><step><id>1577</id><entity>BOMHeader</entity><action>update</action><source>124</source><target>107</target><datasource>SELECT 
+    r.ID as headerid, --P.NFT_GUID as headerid,
+    r.id,
+    0 AS sequenceno, 
+    '%param_itemcode%' as itemprod, 
+    dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2) + '-' + dbo.PRO_FN_GetFormattedVersion(P.NFT_IDNR, 2) AS Description,
+    1 AS MainVersion, 
+    r.version as version,
+    CONVERT(int, ISNULL(R.Quantity, ISNULL(r.quantity, 1))) AS Quantity, 
+    CONVERT(date, GETDATE()) as Eff_Date
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    inner JOIN [400].dbo.recipe AS R WITH (NOLOCK) ON R.itemprod collate database_default = P.NFT_STK5 collate database_default AND R.sequenceno = 0 and r.mainversion = 1
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' --AND P.NFT_STK0 &lt;&gt; 'Yes'-- Geen Variant  [20180502\ESL] Aangepast: indien een artikel per ongeluk als niet-variant is aangemaakt, kan deze stap de BOM opruimen indien nog niet in productie.
+    AND (SELECT COUNT(*) FROM TEILLIST WITH (NOLOCK) WHERE TL_VIDNR = '%param_partid%' AND TL_RELEVANT = 1) &gt; 0
+
+
+
+
+
+    --SELECT ID, cast(ID as varchar(50)) as headerid, quantity--, sysguid AS TransactionKey 
+    --FROM [%abeitargetdb%].dbo.recipe WITH (NOLOCK)  
+    --WHERE itemprod = '%param_itemcode%' and sequenceno = '0'
+--AND itemprod collate database_default NOT IN 
+--    (SELECT NFT_STK5 collate database_default
+--        FROM NFSTAMM WITH (NOLOCK)
+--        WHERE NFT_STK0 = 'No' AND 
+--        (SELECT COUNT(*) FROM TEILLIST WITH (NOLOCK) WHERE TL_VIDNR = '%param_partid%') &gt; 0)
+/*and (SELECT 
+CASE WHEN count(*) &gt; 0 THEN 1 ELSE 0 END
+FROM [profile_test].dbo.NFSTAMM AS P WITH (NOLOCK) 
+INNER JOIN [profile_test].dbo.TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+INNER JOIN [profile_test].dbo.NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 = 'No') = 0*/</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update BOM header after removing lines</stepname></step><step><id>1579</id><entity>BOMLine</entity><action>update</action><source>124</source><target>107</target><datasource>Select top 1000 r.ID, 'DELETE' AS Action, r.sequenceno, r.itemreq, rheader.ID AS HeaderId, r.itemprod, 0 as quantity, r.pos_no as position, r.variant
+ from [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) 
+    inner join [%abeitargetdb%].dbo.recipe rheader with (nolock) on r.itemprod = rheader.itemprod and r.version = rheader.version and rheader.sequenceno = 0 and rheader.mainversion = 1
+    WHERE r.itemprod = '%param_itemcode%' and r.sequenceno &gt; 0 --and r.itemreq != '1000-LABOR'
+ order by r.sequenceno desc
+ /*union  
+ 
+select rec.ID, 'DELETE' AS Action, rec.sequenceno, rec.itemreq, recheader.ID AS HeaderId, rec.itemprod, 0 as quantity, rec.pos_no as position, rec.variant
+from [100].dbo.recipe rec WITH (NOLOCK) inner join [100].dbo.recipe recheader with (nolock) on rec.itemprod = recheader.itemprod and rec.version = recheader.version and recheader.sequenceno = 0
+where 1=1
+    and rec.itemprod = '%param_itemcode%' and rec.sequenceno = 1
+    and (SELECT case when count(*) &gt; 0 then 1 else 0 end
+FROM dbo.NFSTAMM AS P WITH (NOLOCK) 
+INNER JOIN dbo.TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+INNER JOIN dbo.NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 = 'No') = 0*/</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>itemreq</referencekey><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>sequenceno</name><type>Int32</type></datacolumn><datacolumn><name>itemreq</name><type>String</type></datacolumn><datacolumn><name>HeaderId</name><type>Int32</type></datacolumn><datacolumn><name>itemprod</name><type>String</type></datacolumn><datacolumn><name>quantity</name><type>Int32</type></datacolumn><datacolumn><name>position</name><type>String</type></datacolumn><datacolumn><name>variant</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Remove BOM lines</stepname></step><step><id>2931</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_Profile_log] (partid,itemcode,runid,[action],retrycount,sysmessage)
+SELECT '%param_partid%', '%param_itemcode%', '%runid%', 'BOMDELETE', ISNULL(MAX(max_retry.retrycount), 0)+1, CONCAT(COUNT(r.ID), ' left')
+FROM dbo._AB_sy_recipe r WITH (NOLOCK)
+    INNER JOIN dbo._AB_sy_recipe rheader WITH (NOLOCK)
+        ON r.itemprod = rheader.itemprod and r.version = rheader.version and rheader.sequenceno = 0 and rheader.mainversion = 1
+    OUTER APPLY (
+        SELECT MAX(l.retrycount) as retrycount
+        FROM dbo._AB_tb_Profile_log l WITH (NOLOCK)
+        WHERE 1=1
+            AND l.runid = '%runid%'
+            AND l.[action] = 'BOMDELETE') as max_retry
+WHERE 1=1
+    AND r.itemprod = '%param_itemcode%' 
+    AND r.sequenceno &gt; 0 
+    AND r.quantity &lt;&gt; 0
+    --and r.itemreq != '1000-LABOR'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>41</seqno><settings /><settingsxml /><stepname>Log remaining BOM lines</stepname></step><step><id>3277</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC dbo._AB_sp_Profile_save_BOM_delete '%param_itemcode%', '%param_partid%', '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>42</seqno><settings /><settingsxml /><stepname>Delete from recipe</stepname></step><step><id>2932</id><entity>-none-</entity><action>process</action><source>129</source><target>80</target><datasource>;WITH retryloop AS (
+    SELECT ISNULL(MAX(max_retry.retrycount), 0) as retrycount, COUNT(r.ID) as ct
+    FROM dbo._AB_sy_recipe r WITH (NOLOCK)
+        INNER JOIN dbo._AB_sy_recipe rheader WITH (NOLOCK)
+            ON r.itemprod = rheader.itemprod and r.version = rheader.version and rheader.sequenceno = 0 and rheader.mainversion = 1
+        OUTER APPLY (
+            SELECT MAX(l.retrycount) as retrycount
+            FROM dbo._AB_tb_Profile_log l WITH (NOLOCK)
+            WHERE 1=1
+                AND l.runid = '%runid%'
+                AND l.[action] = 'BOMDELETE') as max_retry
+    WHERE 1=1
+        AND r.itemprod = '%param_itemcode%' 
+        AND r.sequenceno &gt; 0 
+        AND r.quantity &lt;&gt; 0
+        --and r.itemreq != '1000-LABOR'
+)
+SELECT CASE WHEN EXISTS (
+    SELECT 1
+    FROM retryloop
+    WHERE ct &gt; 0 -- items left in BOM
+        AND retrycount &lt;= 10 -- Max 5 retries
+    ) THEN '40' -- Go back to try again
+    ELSE '50' END as Step -- Continue</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>45</seqno><settings>uniquekey=;retryunique=0;sysaction=12;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Step</name><type>String</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno>%Step%</systemtarget_skiptoseqno><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Skip to step 40/50 for retry</stepname></step><step><id>1624</id><entity>BOMHeader</entity><action>update</action><source>124</source><target>107</target><datasource>SELECT ID, ID as headerid, 
+    (SELECT dbo.PRO_FN_GetFormattedRevision(NFT_IDNR, 2) + '-' + dbo.PRO_FN_GetFormattedVersion(NFT_IDNR, 2) FROM [%abeisourcedb%]..NFSTAMM WHERE NFT_IDNR = '%param_partid%' )AS Description
+    , r.quantity as drawingno
+FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK)  
+ WHERE itemprod = '%param_itemcode%' and sequenceno = '0' and mainversion = 1</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>headerid</name><type>Int32</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>drawingno</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update BOM header</stepname></step><step><id>2138</id><entity>BOMLine</entity><action>update</action><source>124</source><target>107</target><datasource>
+SELECT TOP 100 percent
+    ROW_NUMBER() OVER (ORDER BY possort) AS sequenceno,
+    a.Position,
+    a.position as pos_no,
+    a.position as freefield7,
+    'ADDNEW' as Action,
+    rh.ID AS headerid,
+    rh.itemprod,
+    a.LineType,
+    a.itemreq,
+    'N' AS Variant,
+    1 AS  BackFlush, 
+    a.Quantity * ISNULL(rh.quantity,1) AS Quantity
+
+FROM (
+    SELECT  TOP 100 percent
+        FORMAT(0, 'd3') AS possort,
+        '0' as position,
+        P.NFT_STK5 AS itemprod,
+        'L' AS LineType, 
+        '1000-LABOR' AS itemreq,
+        1 AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+    AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND TL_RELEVANT = 1
+    --AND '1000-LABOR' not in (SELECT TOP 100 r.itemreq collate database_default from [%abeitargetdb%].dbo.recipe r (NOLOCK) 
+    --WHERE R.itemprod = '%param_itemcode%' AND R.sequenceno &gt; 0 AND R.Itemreq = '1000-LABOR' AND r.Version = '       1'  )
+    GROUP BY P.NFT_STK5
+    HAVING COUNT(*) &gt; 0 
+    
+UNION
+
+    SELECT  TOP 100 percent
+        FORMAT(T.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) as position,
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        C.NFT_STK5 AS itemreq,
+        CASE WHEN C.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+    AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND C.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND T.TL_STL3 != 'Phantom'
+    --AND C.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) = r.pos_no collate database_default)
+        AND (C.NFT_ZUST != 360) -- NO Tech release articles
+
+UNION
+
+    SELECT TOP 100 percent
+        FORMAT(T.TL_POSNR, 'd3') + '.' + FORMAT(CT.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) as position,
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        CC.NFT_STK5 AS itemreq,
+        CASE WHEN C.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    INNER JOIN TEILLIST AS CT WITH (NOLOCK) ON CT.TL_VIDNR = C.NFT_IDNR
+    INNER JOIN NFSTAMM AS CC WITH (NOLOCK) ON CT.TL_SIDNR = CC.NFT_IDNR
+     WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+     AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND CT.TL_RELEVANT = 1  AND (C.NFT_STL2 = 'Virtual part' OR T.TL_STL3 = 'Phantom')
+     --AND CC.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) = r.pos_no  collate database_default)
+        AND (CC.NFT_ZUST != 360) -- NO Tech release articles
+
+        
+UNION
+
+    SELECT TOP 100 percent
+        FORMAT(T.TL_POSNR, 'd3') + '.' + FORMAT(CT.TL_POSNR, 'd3') + '.' + FORMAT(CCT.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CCT.TL_POSNR) as position,
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        CCC.NFT_STK5 AS itemreq,
+        CASE WHEN CC.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 * CCT.TL_FLO0 * CCT.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 * CCT.TL_FLO0 * CCT.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    INNER JOIN TEILLIST AS CT WITH (NOLOCK) ON CT.TL_VIDNR = C.NFT_IDNR
+    INNER JOIN NFSTAMM AS CC WITH (NOLOCK) ON CT.TL_SIDNR = CC.NFT_IDNR
+    INNER JOIN TEILLIST AS CCT WITH (NOLOCK) ON CCT.TL_VIDNR = CC.NFT_IDNR
+    INNER JOIN NFSTAMM AS CCC WITH (NOLOCK) ON CCT.TL_SIDNR = CCC.NFT_IDNR
+     WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+     AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND CT.TL_RELEVANT = 1 AND CCT.TL_RELEVANT = 1 
+     AND (C.NFT_STL2 = 'Virtual part' OR T.TL_STL3 = 'Phantom')
+     AND (CC.NFT_STL2 = 'Virtual part' OR CT.TL_STL3 = 'Phantom')
+     --AND CC.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) = r.pos_no  collate database_default)
+        AND (CCC.NFT_ZUST != 360) -- NO Tech release articles
+) a 
+LEFT JOIN [%abeitargetdb%].dbo.recipe AS rh WITH (NOLOCK) ON rh.itemprod = '%param_itemcode%' AND rh.sequenceno = 0 AND rh.MainVersion = 1 
+ORDER BY possort</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update create bomlines</stepname></step><step><id>3269</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings></settings><settingsxml /><stepname>==== BOM update</stepname></step><step><id>3271</id><entity>BOMLine</entity><action>update</action><source>129</source><target>107</target><datasource>SELECT TOP (1000000) 
+    l.ID as referencekey
+    , l.sequenceno
+    , l.position as pos_no
+    , l.freefield7
+    , l.Action
+    , l.HeaderID
+    , l.itemprod
+    , l.linetype
+    , l.itemreq
+    , l.variant
+    , l.backflush
+    , l.quantity
+    , l.FromDay
+    , l.ToDay
+FROM dbo._AB_tb_Profile_BOM_lines l WITH (NOLOCK)
+WHERE 1=1
+    AND l.runid = '%runid%'
+    AND l.isUpdate = 1
+    AND l.rowstatus = 1
+    AND l.seqno = 100 -- from insert
+ORDER BY l.possort</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>sequenceno</name><type>Int32</type></datacolumn><datacolumn><name>pos_no</name><type>String</type></datacolumn><datacolumn><name>freefield7</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>itemprod</name><type>String</type></datacolumn><datacolumn><name>linetype</name><type>String</type></datacolumn><datacolumn><name>itemreq</name><type>String</type></datacolumn><datacolumn><name>variant</name><type>String</type></datacolumn><datacolumn><name>backflush</name><type>Boolean</type></datacolumn><datacolumn><name>quantity</name><type>Double</type></datacolumn><datacolumn><name>FromDay</name><type>Int32</type></datacolumn><datacolumn><name>ToDay</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>NEW Update BOM lines from calculated table</stepname></step><step><id>3272</id><entity>BOMHeader</entity><action>update</action><source>129</source><target>107</target><datasource>SELECT 
+    h.ID as referencekey
+    , h.HeaderID
+    , h.HeaderID as ID
+    , h.Description
+    , h.drawingno
+    --, h.pos_no -- lead time
+FROM dbo._AB_tb_Profile_BOM_header h WITH (NOLOCK)
+WHERE 1=1
+    AND h.runid = '%runid%'
+    AND h.isUpdate = 1
+    AND h.rowstatus = 1
+    AND h.seqno = 100 -- from insert</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>String</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>drawingno</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>NEW Update BOM header from calculated table</stepname></step><step><id>3273</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN -1 ELSE 2 END
+    , seqno = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN t.seqno ELSE %seqno% END
+    , sysmessage = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_Profile_BOM_header] t 
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_results r with (nolock) 
+        ON t.runid = r.runid 
+        and r.jobid = %jobid%
+        and r.Entity = 'BOMHeader'
+        and r.Action = 'update'
+        and r.ReferenceValue = CAST(t.ID as varchar(100))
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.rowstatus = 1
+    AND t.seqno = 100
+    AND t.isUpdate = 1 -- Update action
+
+UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN -1 ELSE 2 END
+    , seqno = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN t.seqno ELSE %seqno% END
+    , sysmessage = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_Profile_BOM_lines] t 
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_results r with (nolock) 
+        ON t.runid = r.runid 
+        and r.jobid = %jobid%
+        and r.Entity = 'BOMLine'
+        and r.Action = 'update'
+        and r.ReferenceValue = CAST(t.ID as varchar(100))
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.rowstatus = 1
+    AND t.seqno = 100
+    AND t.isUpdate = 1 -- Update action</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>NEW Update status</stepname></step><step><id>3270</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>199</seqno><settings></settings><settingsxml /><stepname>==== BOM create</stepname></step><step><id>3060</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC dbo._AB_sp_Profile_save_BOM_create '%param_itemcode%', '%param_partid%', '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>200</seqno><settings /><settingsxml /><stepname>Calculate BOM create</stepname></step><step><id>1622</id><entity>BOMHeader</entity><action>create</action><source>124</source><target>107</target><datasource>SELECT TOP 100 percent
+    Convert(varchar(36), P.NFT_GUID) as headerid, 
+    0 AS sequenceno, 
+    '%param_itemcode%' as itemprod, 
+    dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2) + '-' + dbo.PRO_FN_GetFormattedVersion(P.NFT_IDNR, 2) AS Description,
+    1 AS MainVersion, 
+    1 as version,
+    CONVERT(int, ISNULL(R.Quantity, ISNULL(l.valueFloat, 1))) AS Quantity, 
+    CONVERT(date, GETDATE()) as Eff_Date
+
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    LEFT JOIN [%abeitargetdb%].dbo.recipe AS R WITH (NOLOCK) ON R.itemprod collate database_default = P.NFT_STK5 collate database_default AND R.sequenceno = 0 AND r.Mainversion = 1
+    LEFT JOIN [ABEI].dbo._AB_entity_results_log l WITH (NOLOCK) ON l.runid = '%runid%' and l.jobid = '%jobid%' and l.rowstatus &lt;&gt; -1 and l.Property = 'Quantity' and l.Action = 'update' and l.entity = 'BOMHeader'
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND P.NFT_STK0 &lt;&gt; 'Yes'-- Geen Variant 
+    AND (SELECT COUNT(*) FROM TEILLIST WITH (NOLOCK) WHERE TL_VIDNR = '%param_partid%' AND TL_RELEVANT = 1) &gt; 0
+    AND (SELECT COUNT(*) FROM [%abeitargetdb%].dbo.recipe WITH (NOLOCK) WHERE itemprod collate database_default = P.NFT_STK5 collate database_default ) = 0 </datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>210</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create bomheader</stepname></step><step><id>1623</id><entity>BOMLine</entity><action>create</action><source>124</source><target>107</target><datasource>SELECT TOP 100 percent
+    ROW_NUMBER() OVER (ORDER BY possort) AS sequenceno,
+    Position,
+    position as pos_no,
+    position as freefield7,
+    'ADDNEW' as Action,
+    headerid,
+    itemprod,
+    LineType,
+    itemreq,
+    'N' AS Variant,
+    1 AS  BackFlush, 
+    Quantity
+
+FROM (
+    SELECT  TOP 1000
+        FORMAT(0, 'd3') AS possort,
+        '0' as position,
+        CONVERT(VARCHAR(36), P.NFT_GUID) AS headerid, -- GUID
+        P.NFT_STK5 AS itemprod,
+        'L' AS LineType, 
+        '1000-LABOR' AS itemreq,
+        1 AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+    AND P.NFT_STL2 != 'Trade parts' AND TL_RELEVANT = 1 AND P.NFT_STL2 != 'Virtual part'
+        AND '1000-LABOR' not in (SELECT r.itemreq collate database_default from [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE R.itemprod = '%param_itemcode%' AND R.sequenceno &gt; 0)
+    GROUP BY P.NFT_GUID, P.NFT_STK5
+    HAVING COUNT(*) &gt; 0 
+    
+UNION
+
+    SELECT  TOP 1000
+        FORMAT(T.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) as position,
+        CONVERT(VARCHAR(36), P.NFT_GUID) AS headerid, -- GUID
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        C.NFT_STK5 AS itemreq,
+        CASE WHEN C.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+    AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND C.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND T.TL_STL3 != 'Phantom'
+        AND C.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) = r.pos_no collate database_default)
+        AND (C.NFT_ZUST != 360) -- NO Tech release articles
+
+UNION
+
+    SELECT TOP 1000
+        FORMAT(T.TL_POSNR, 'd3') + '.' + FORMAT(CT.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) as position,
+        CONVERT(VARCHAR(36), P.NFT_GUID) AS headerid, -- GUID
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        CC.NFT_STK5 AS itemreq,
+        CASE WHEN C.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    INNER JOIN TEILLIST AS CT WITH (NOLOCK) ON CT.TL_VIDNR = C.NFT_IDNR
+    INNER JOIN NFSTAMM AS CC WITH (NOLOCK) ON CT.TL_SIDNR = CC.NFT_IDNR
+     WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+        AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND CT.TL_RELEVANT = 1 AND (C.NFT_STL2 = 'Virtual part' OR T.TL_STL3 = 'Phantom')
+        AND CC.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) = r.pos_no  collate database_default)
+        AND (CC.NFT_ZUST != 360) -- NO Tech release articles
+        
+UNION
+
+    SELECT TOP 1000
+        FORMAT(T.TL_POSNR, 'd3') + '.' + FORMAT(CT.TL_POSNR, 'd3') + '.' + FORMAT(CCT.TL_POSNR, 'd3') AS possort,
+        CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CCT.TL_POSNR) as position,
+        CONVERT(VARCHAR(36), P.NFT_GUID) AS headerid, -- GUID
+        P.NFT_STK5 AS itemprod,
+        'I' AS LineType,    
+        CCC.NFT_STK5 AS itemreq,
+        CASE WHEN CC.NFT_STK4 = 'mm' THEN (T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 * CCT.TL_FLO0 * CCT.TL_FLO1) / 1000
+            ELSE T.TL_FLO0 * T.TL_FLO1 * CT.TL_FLO0 * CT.TL_FLO1 * CCT.TL_FLO0 * CCT.TL_FLO1 END AS Quantity
+    FROM NFSTAMM AS P WITH (NOLOCK) 
+    INNER JOIN TEILLIST AS T WITH (NOLOCK) ON T.TL_VIDNR = P.NFT_IDNR
+    INNER JOIN NFSTAMM AS C WITH (NOLOCK) ON T.TL_SIDNR = C.NFT_IDNR
+    INNER JOIN TEILLIST AS CT WITH (NOLOCK) ON CT.TL_VIDNR = C.NFT_IDNR
+    INNER JOIN NFSTAMM AS CC WITH (NOLOCK) ON CT.TL_SIDNR = CC.NFT_IDNR
+    INNER JOIN TEILLIST AS CCT WITH (NOLOCK) ON CCT.TL_VIDNR = CC.NFT_IDNR
+    INNER JOIN NFSTAMM AS CCC WITH (NOLOCK) ON CCT.TL_SIDNR = CCC.NFT_IDNR
+     WHERE P.NFT_IDNR = '%param_partid%' AND P.NFT_STK0 &lt;&gt; 'Yes'  -- Variant
+     AND P.NFT_STL2 != 'Trade parts' AND P.NFT_STL2 != 'Virtual part' AND T.TL_RELEVANT = 1 AND CT.TL_RELEVANT = 1 AND CCT.TL_RELEVANT = 1 
+     AND (C.NFT_STL2 = 'Virtual part' OR T.TL_STL3 = 'Phantom')
+     AND (CC.NFT_STL2 = 'Virtual part' OR CT.TL_STL3 = 'Phantom')
+     --AND CC.NFT_STK5 NOT IN (SELECT r.itemreq collate database_default FROM [%abeitargetdb%].dbo.recipe r WITH (NOLOCK) WHERE r.itemprod collate database_default = P.NFT_STK5 ) -- AND CONVERT(VARCHAR(5), T.TL_POSNR) + '.' + CONVERT(VARCHAR(5), CT.TL_POSNR) = r.pos_no  collate database_default)
+        AND (CCC.NFT_ZUST != 360) -- NO Tech release articles
+) a ORDER BY possort
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>210</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create bomlines</stepname></step><step><id>3274</id><entity>BOMLine</entity><action>create</action><source>129</source><target>107</target><datasource>SELECT TOP (1000000) 
+    l.ID as referencekey
+    , l.sequenceno
+    , l.position as pos_no
+    , l.freefield7
+    , l.Action
+    , l.HeaderID
+    , l.itemprod
+    , l.linetype
+    , l.itemreq
+    , l.variant
+    , l.backflush
+    , l.quantity
+    , l.FromDay
+    , l.ToDay
+FROM dbo._AB_tb_Profile_BOM_lines l WITH (NOLOCK)
+WHERE 1=1
+    AND l.runid = '%runid%'
+    AND l.isUpdate = 0
+    AND l.rowstatus = 1
+    AND l.seqno = 200 -- from insert
+ORDER BY l.possort</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>211</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>sequenceno</name><type>Int32</type></datacolumn><datacolumn><name>pos_no</name><type>String</type></datacolumn><datacolumn><name>freefield7</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>itemprod</name><type>String</type></datacolumn><datacolumn><name>linetype</name><type>String</type></datacolumn><datacolumn><name>itemreq</name><type>String</type></datacolumn><datacolumn><name>variant</name><type>String</type></datacolumn><datacolumn><name>backflush</name><type>Boolean</type></datacolumn><datacolumn><name>quantity</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>NEW Create BOM lines from calculated table</stepname></step><step><id>3275</id><entity>BOMHeader</entity><action>create</action><source>129</source><target>107</target><datasource>SELECT 
+    h.ID as referencekey
+    , h.HeaderID
+    , 0 as sequenceno
+    , h.itemprod
+    , h.Description
+    , 1 as MainVersion
+    , 1 as Version
+    , h.quantity
+    , h.eff_date
+    , h.drawingno
+    --, h.pos_no -- lead time
+FROM dbo._AB_tb_Profile_BOM_header h WITH (NOLOCK)
+WHERE 1=1
+    AND h.runid = '%runid%'
+    AND h.isUpdate = 0
+    AND h.rowstatus = 1
+    AND h.seqno = 200 -- from insert</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>211</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>String</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>drawingno</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>NEW Create BOM header from calculated table</stepname></step><step><id>3276</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN -1 ELSE 2 END
+    , seqno = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN t.seqno ELSE %seqno% END
+    , sysmessage = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_Profile_BOM_header] t 
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_results r with (nolock) 
+        ON t.runid = r.runid 
+        and r.jobid = %jobid%
+        and r.Entity = 'BOMHeader'
+        and r.Action = 'update'
+        and r.ReferenceValue = CAST(t.ID as varchar(100))
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.rowstatus = 1
+    AND t.seqno = 200
+    AND t.isUpdate = 0 -- Create action
+
+UPDATE t WITH (ROWLOCK, NOWAIT) SET
+    rowstatus = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN -1 ELSE 2 END
+    , seqno = CASE WHEN ISNULL(r.rowstatus,-1) &lt;&gt; 2 THEN t.seqno ELSE %seqno% END
+    , sysmessage = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_Profile_BOM_lines] t 
+    LEFT JOIN [%abeidb%].dbo._AB_Entity_results r with (nolock) 
+        ON t.runid = r.runid 
+        and r.jobid = %jobid%
+        and r.Entity = 'BOMLine'
+        and r.Action = 'update'
+        and r.ReferenceValue = CAST(t.ID as varchar(100))
+WHERE 1=1
+    AND t.runid = '%runid%'
+    AND t.rowstatus = 1
+    AND t.seqno = 200
+    AND t.isUpdate = 0 -- Create action</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>220</seqno><settings /><settingsxml /><stepname>NEW Update status</stepname></step><step><id>3061</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_Profile_log] (partid,itemcode,runid,[action],retrycount,sysmessage)
+SELECT bl.partid, bl.itemcode, bl.runid, 'BOMUPDATE', 0, CONCAT(bl.sequenceno, ' item ', bl.itemreq COLLATE DATABASE_DEFAULT, ' with quantity ', bl.quantity, ' is missing from ', bl.itemprod COLLATE DATABASE_DEFAULT) as sysmessage
+FROM dbo._AB_tb_Profile_BOM_lines bl WITH (NOLOCK) 
+WHERE 1=1
+    AND bl.runid = '%runid%'
+    -- Check if item is available in main version
+    AND NOT EXISTS (
+        SELECT 1
+        FROM dbo._AB_sy_recipe rh WITH (NOLOCK)
+            INNER JOIN dbo._AB_sy_recipe r WITH (NOLOCK)
+                ON r.itemprod = rh.itemprod
+                AND r.version = rh.version
+                AND r.sequenceno &gt; 0
+        WHERE 1=1
+            AND rh.itemprod = bl.itemprod
+            AND rh.sequenceno = 0
+            AND rh.mainversion = 1
+
+            AND r.itemreq = bl.itemreq
+            AND r.quantity = bl.quantity
+            AND r.sequenceno = bl.sequenceno
+    )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>230</seqno><settings /><settingsxml /><stepname>Log missing lines</stepname></step><step><id>3268</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>499</seqno><settings></settings><settingsxml /><stepname>==== Finish</stepname></step><step><id>1890</id><entity>-none-</entity><action>create</action><source>124</source><target>7</target><datasource>-- update Item
+SELECT 
+    '%param_itemcode%' AS ItemCode ,
+    '%param_partid%' AS PartId,
+    CASE WHEN (P.NFT_STK4 &lt;&gt; 'pcs') THEN 1 ELSE 0 END AS IsFractionAllowedItem,
+    P.NFT_STH2 AS UserField_08, -- TypeDecodingKey, 
+    P.NFT_STL9 AS UserField_09, --Customer, 
+    Convert(Int, [profile].dbo.PRO_FN_GetFormattedRevision(P.NFT_IDNR, 2)) AS UserNumber_01 -- Revision,
+
+FROM [%abeisourcedb%].dbo.NFSTAMM AS P WITH (NOLOCK)
+WHERE NFT_IDNR = '%param_partid%' </datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;&amp;nbsp;&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping>partid=%param_partid%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>500</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/PLM/BCPhantom;ssrsformat=HTML4.0;ssrsfile=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com,karel.helden@stoneridge.com;emailcc=;emailbcc=;emailsub=Synchronization Pro.File - Globe finished - Item: %param_itemcode% - PartID: %param_partid%;emailbodyusesource=-1;emailsendifnoresults=-1;emailcontentcolumns=ItemCode,PartId,IsFractionAllowedItem,UserField_08,UserField_09,UserNumber_01;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>PartId</name><type>String</type></datacolumn><datacolumn><name>IsFractionAllowedItem</name><type>Int32</type></datacolumn><datacolumn><name>UserField_08</name><type>String</type></datacolumn><datacolumn><name>UserField_09</name><type>String</type></datacolumn><datacolumn><name>UserNumber_01</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>A4</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Mail job bom compare</stepname></step><step><id>3057</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_Profile_log] (partid,itemcode,runid,[action],sysmessage)
+SELECT '%param_partid%', '%param_itemcode%', '%runid%', 'END', 'Finished'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>600</seqno><settings /><settingsxml /><stepname>Log end</stepname></step><step><id>3058</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO [dbo].[_AB_tb_Profile_error_log] (partid,itemcode,Entity,[Action], HeaderID, ReferenceValue, Keyvalue, NewKeyvalue, runid, sysmessage, syscreated, sysmodified)
+SELECT '%param_partid%', '%param_itemcode%', r.Entity, r.[Action], r.HeaderID, r.ReferenceValue, r.Keyvalue, r.NewKeyvalue, r.runid, r.errormessage, r.syscreated, r.sysmodified
+FROM [ABEI].dbo._AB_Entity_results r WITH (NOLOCK)
+WHERE 1=1
+    AND r.jobid = %jobid%
+    AND r.runid = '%runid%'
+    AND r.rowstatus = -1 -- error</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>610</seqno><settings /><settingsxml /><stepname>Log all occured errors</stepname></step><step><id>3787</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>UPDATE [ExactData].dbo._ST_EG_UpdateItemBOMProFile 
+SET State = 4, ModifiedOn = GETDATE()
+WHERE State = 3 and RunID = '%runid%'
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>620</seqno><settings /><settingsxml /><stepname>UPDATE row state to 4</stepname></step></steps></job></jobs>

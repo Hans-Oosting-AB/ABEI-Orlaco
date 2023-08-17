@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>477</id><jobname>11.3 - EG: Update delivery date purchase order</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2863</id><entity>PurchaseOrderLine</entity><action>update</action><source>129</source><target>112</target><datasource>WITH del_dates AS (
+    SELECT DISTINCT t.purchase_ordernr
+        , CAST(DATEADD(DAY, 70, r.mfd_date) as date) as afldat
+    FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+        INNER JOIN dbo._AB_tb_TransfersAbsenceIdReg r WITH (NOLOCK)
+            ON r.absenceid = t.absenceid 
+    WHERE 1=1
+        AND r.marked_for_delivery = 1
+)
+SELECT oh.ordernr as HeaderID
+    , oh.ordernr
+    , ol.ID
+    , d.afldat
+
+    --, oh.afldat as header_afldat_old
+    , ol.afldat as line_afldat_old
+FROM del_dates d 
+    INNER JOIN dbo._AB_sy_US_orkrg oh WITH (NOLOCK)
+        ON oh.ordernr = d.purchase_ordernr COLLATE DATABASE_DEFAULT AND oh.afgehandld = 0 
+    INNER JOIN dbo._AB_sy_US_orsrg ol WITH (NOLOCK)
+        ON ol.ordernr = oh.ordernr AND ol.uitgifte = 0
+WHERE  d.afldat &gt; oh.afldat
+    OR d.afldat &gt; ol.afldat</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>header_afldat_old</name><type>DateTime</type></datacolumn><datacolumn><name>line_afldat_old</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update lines with afldate different from realized date</stepname></step><step><id>2864</id><entity>PurchaseOrderHeader</entity><action>update</action><source>129</source><target>112</target><datasource>WITH del_dates AS (
+    SELECT DISTINCT t.purchase_ordernr
+        , CAST(DATEADD(DAY, 70, r.mfd_date) as date) as afldat
+    FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+        INNER JOIN dbo._AB_tb_TransfersAbsenceIdReg r WITH (NOLOCK)
+            ON r.absenceid = t.absenceid 
+    WHERE 1=1
+        AND r.marked_for_delivery = 1
+)
+SELECT distinct oh.ordernr as HeaderID
+    , oh.ordernr
+    , oh.ID
+    , d.afldat
+
+    --, oh.afldat as header_afldat_old
+    --, ol.afldat as line_afldat_old
+FROM del_dates d 
+    INNER JOIN dbo._AB_sy_US_orkrg oh WITH (NOLOCK)
+        ON oh.ordernr = d.purchase_ordernr COLLATE DATABASE_DEFAULT AND oh.afgehandld = 0 
+    INNER JOIN dbo._AB_sy_US_orsrg ol WITH (NOLOCK)
+        ON ol.ordernr = oh.ordernr AND ol.uitgifte = 0
+WHERE d.afldat &gt; oh.afldat
+    OR d.afldat &gt; ol.afldat</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update header</stepname></step></steps></job></jobs>

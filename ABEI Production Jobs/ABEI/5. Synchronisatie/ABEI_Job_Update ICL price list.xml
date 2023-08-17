@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>522</id><jobname>Update ICL price list</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=10:21:02;beginat=07:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3454</id><entity>-none-</entity><action>process</action><source>107</source><target>80</target><datasource>SELECT TOP (1) 
+ 0 as doQuit
+FROM [%abeisourcedb%].dbo.items i with (nolock) 
+LEFT JOIN  [%abeisourcedb%].dbo.staffl s with (nolock) ON s.prijslijst = 'ICL' AND validfrom &lt; GETDATE() AND ISNULL(validto, '2099-12-31') &gt; GETDATE() AND s.artcode = i.itemcode              
+WHERE ( i.condition = 'A' or i.condition = 'F' ) 
+    AND i.IsSalesItem = 1 
+    AND i.SalesPackagePrice &gt; 0 AND i.CostPriceStandard &gt; 0
+    AND ( s.ID IS NULL OR s.bedr1 &lt;&gt; i.CostPriceStandard OR s.prijs83 &lt;&gt; i.SalesPackagePrice )</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>1</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if nothing to do</stepname></step><step><id>3448</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource>INSERT INTO [%abeitargetdb%].dbo._ST_ICLPriceUpdate
+SELECT  top 50 
+    ltrim(rtrim(i.itemcode)) AS 'ItemCode', 
+    'ICL' as 'PriceListCode',
+    'S' as 'PriceListType',
+    'ICL' as 'PriceListDescription',
+    'EUR' as 'CurrencyCode',
+    'C' as 'AccountType',
+    'A' as 'AccountStatus',
+    cast(i.SalesPackagePrice as numeric(18,3)) as 'Value',
+    CASE WHEN s.unitcode IS NULL THEN 'pcs' else s.unitcode END as 'Unit',
+    1 as 'Factor',
+    1 as 'LineType',
+    CONVERT(DATE, CASE WHEN s.validfrom IS NULL THEN i.syscreated else s.validfrom END) as 'DateStart',
+    CONVERT(DATE, CASE WHEN s.validfrom IS NULL THEN '2099-12-31' else s.validto END) as 'DateEnd',
+    'N' as 'DiscountType',
+    1 as 'DiscountNumber',
+    1 as 'DiscountQuantity',
+    cast(i.costpricestandard as numeric(18,3)) as 'DiscountValue',
+    CASE WHEN  ( s.ID IS NULL )  THEN 'NewItem' 
+        WHEN ( s.bedr1 &lt;&gt; i.CostPriceStandard ) THEN 'UpdateCostPrice' 
+        WHEN ( s.prijs83 &lt;&gt; i.SalesPackagePrice ) THEN 'UpdateSalesPrice' 
+    ELSE 'Other' END AS UpdateReason,
+    GETDATE() AS CreationDate, 
+    '%abeisourcedb%' AS SourceDB,
+    '%runid%' AS RunId
+FROM [%abeisourcedb%].dbo.items i with (nolock) 
+LEFT JOIN  [%abeisourcedb%].dbo.staffl s with (nolock) ON s.prijslijst = 'ICL' AND validfrom &lt; GETDATE() AND ISNULL(validto, '2099-12-31') &gt; GETDATE() AND s.artcode = i.itemcode              
+WHERE ( i.condition = 'A' or i.condition = 'F' ) 
+    AND i.IsSalesItem = 1 
+    AND i.SalesPackagePrice &gt; 0 AND i.CostPriceStandard &gt; 0
+    AND ( s.ID IS NULL OR s.bedr1 &lt;&gt; i.CostPriceStandard OR s.prijs83 &lt;&gt; i.SalesPackagePrice )
+ORDER BY itemcode
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>5</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=C:\APPS\ICL Pricelist\ICLPricelist.xml;fileoverwrite=True;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>xmlcontent</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="1" parent="-1"><name>xmlcontent</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%xmlcontent%</value><fullname>%xmlcontent%</fullname><width>0</width><datatype>String</datatype><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Copy data to log table</stepname></step><step><id>3453</id><entity>-none-</entity><action>create</action><source>107</source><target>5</target><datasource>SELECT '&lt;?xml version="1.0" encoding="iso-8859-1" ?&gt;' + CONVERT(varchar(max),
+  (SELECT   
+
+      (SELECT top 50
+               ltrim(rtrim(i.itemcode)) AS 'Item/@code', 
+               'ICL' as 'PriceList/@code',
+               'S' as 'PriceList/@type',
+               'ICL' as 'PriceList/Description',
+               'EUR' as 'PriceList/Currency/@code',
+               'C' as 'PriceList/AccountType',
+               'A' as 'PriceList/AccountStatus',
+               cast(i.SalesPackagePrice as numeric(18,3)) as 'Value',
+               CASE WHEN s.unitcode IS NULL THEN 'pcs' else s.unitcode END as 'Unit/@unit',
+               1 as 'Factor',
+               1 as 'LineType',
+               CONVERT(DATE, CASE WHEN s.validfrom IS NULL THEN i.syscreated else s.validfrom END) as 'Availability/DateStart',
+               CONVERT(DATE, CASE WHEN s.validfrom IS NULL THEN '2099-12-31' else s.validto END) as 'Availability/DateEnd',
+               'N' as 'Discounts/@type',
+               1 as 'Discounts/Discount/@number',
+               1 as 'Discounts/Discount/Quantity',
+               cast(i.costpricestandard as numeric(18,3)) as 'Discounts/Discount/Value'     
+
+            FROM dbo.items i with (nolock) 
+            LEFT JOIN  dbo.staffl s with (nolock) ON s.prijslijst = 'ICL' AND validfrom &lt; GETDATE() AND ISNULL(validto, '2099-12-31') &gt; GETDATE() AND s.artcode = i.itemcode              
+            WHERE ( i.condition = 'A' or i.condition = 'F' ) 
+                AND i.IsSalesItem = 1 
+                AND i.SalesPackagePrice &gt; 0 AND i.CostPriceStandard &gt; 0
+                AND ( s.ID IS NULL OR s.bedr1 &lt;&gt; i.CostPriceStandard OR s.prijs83 &lt;&gt; i.SalesPackagePrice )
+            ORDER BY itemcode
+        FOR XML PATH ('ItemPrice'), TYPE)
+    FOR XML PATH ('ItemPrices'),ROOT('eExact'), ELEMENTS XSINIL)) as xmlcontent</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>retryunique=0;uniquekey=;filetype=4;filename=C:\APPS\ICL Pricelist\ICLPricelist.xml;fileoverwrite=True;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>xmlcontent</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes><documentnode index="1" parent="-1"><name>xmlcontent</name><groupvalue /><filter /><level>0</level><namespees /><type>20</type><value>%xmlcontent%</value><fullname>%xmlcontent%</fullname><width>0</width><datatype>String</datatype><emptyaction>0</emptyaction></documentnode></documentnodes></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Create XML file</stepname></step><step><id>3449</id><entity>-none-</entity><action>process</action><source>107</source><target>80</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;sysaction=1;sysfilefolder="C:\Program Files (x86)\Exact Software\bin\AsImport.exe";sysparams= -rSQL -D400 -u -~ I -URLC:\APPS\ICL Pricelist\ICLPricelist.xml -TITEMPRICES -OPT18 -Oauto;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns /></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Import XML file</stepname></step><step><id>3450</id><entity>-none-</entity><action>process</action><source>107</source><target>80</target><datasource>DECLARE @path VARCHAR(100) = 'C:/Apps/ICL Pricelist/'
+DECLARE @file VARCHAR(100) = 'ICLPricelist.xml'
+
+SELECT @path + @file AS oldfilename, @path + 'archive/' + REPLACE(REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(50), GETDATE(), 120),' ',''),':', ''),'-', ''),'.','') + '_' + @file as newfilename</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;sysaction=8;sysfilefolder=%oldfilename%;sysparams=%newfilename%;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><jobparams /><datacolumns><datacolumn><name>oldfilename</name><type>String</type></datacolumn><datacolumn><name>newfilename</name><type>String</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_param4 /><systemtarget_param5 /><systemtarget_param6 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Move to Archive</stepname></step></steps></job></jobs>

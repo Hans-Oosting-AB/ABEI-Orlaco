@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>524</id><jobname>! ESE : Work From Home Request</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3455</id><entity>-none-</entity><action>exec SQL</action><source>1</source><target>1</target><datasource>
+UPDATE [orlaco]..RequestFieldOptions 
+SET DefaultString = 
+    (  
+        SELECT CONCAT(YearNr, '-' , RIGHT(Concat('0' , DATEDIFF(WEEK, FirstWeekStart,DATEADD(WEEK, -1, GETDATE())) + 1) , 2), ' (' , 
+        CONVERT(varchar(5),DATEADD(DAY, 1-DATEPART(DW,DATEADD(WEEK, -1, GETDATE())),DATEADD(WEEK, -1, GETDATE())),105), ' - ', 
+        CONVERT(varchar(5),DATEADD(DAY, 7-DATEPART(DW,DATEADD(WEEK, -1, GETDATE())),DATEADD(WEEK, -1, GETDATE())),105), ')') 
+        FROM [ExactData].._ST_VW_YearDates  
+        WHERE  FirstWeekStart &lt;= DATEADD(WEEK, -1, GETDATE()) and LastWeekEnd &gt;= DATEADD(WEEK, -1, GETDATE())
+    )
+, Selection = 
+    (  
+        SELECT CONCAT(YearNr, '-' , RIGHT(Concat('0' , DATEDIFF(WEEK, FirstWeekStart,DATEADD(WEEK, -1, GETDATE())) + 1) , 2), ' (' , 
+        CONVERT(varchar(5),DATEADD(DAY, 1-DATEPART(DW,DATEADD(WEEK, -1, GETDATE())),DATEADD(WEEK, -1, GETDATE())),105), ' - ', 
+        CONVERT(varchar(5),DATEADD(DAY, 7-DATEPART(DW,DATEADD(WEEK, -1, GETDATE())),DATEADD(WEEK, -1, GETDATE())),105), ')') 
+        FROM [ExactData].._ST_VW_YearDates  
+        WHERE  FirstWeekStart &lt;= DATEADD(WEEK, -1, GETDATE()) and LastWeekEnd &gt;= DATEADD(WEEK, -1, GETDATE())
+    )
+, SelectionValues = 
+    (
+        SELECT ';' + WeekNr FROM (
+        SELECT TOP 10 CONCAT(YearNr, '-' , RIGHT(Concat('0' , DATEDIFF(WEEK, FirstWeekStart,DATEADD(WEEK, 1-N, GETDATE())) + 1) , 2), ' (' , 
+        CONVERT(varchar(5),DATEADD(DAY, 1-DATEPART(DW,DATEADD(WEEK, 1-N, GETDATE())),DATEADD(WEEK, 1-N, GETDATE())),105), ' - ', 
+        CONVERT(varchar(5),DATEADD(DAY, 7-DATEPART(DW,DATEADD(WEEK, 1-N, GETDATE())),DATEADD(WEEK, 1-N, GETDATE())),105), ')') AS Weeknr
+        FROM [ExactData].._ST_VW_cteTally t 
+        INNER JOIN [ExactData].._ST_VW_YearDates  ON  FirstWeekStart &lt;= DATEADD(WEEK, 1-N, GETDATE()) and LastWeekEnd &gt;= DATEADD(WEEK, 1-N, GETDATE())
+        WHERE t.N &lt;= 8 AND DATEADD(WEEK, 1-N, GETDATE()) &gt;= '2022-01-01' ORDER BY N ) A FOR XML PATH('')
+    )
+WHERE ID = '5EA86FAB-26C9-4D09-9A7D-E80EEF59A4D60' AND RequestType = 6044 AND FieldID = 44 AND Position = 4 </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Apply weeknr</stepname></step><step><id>3597</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>select ID
+      ,FreeTextField_03 as FreeTextField_04 
+from [orlaco]..absences a with (NOLOCK) 
+Where Type = 6044 and Status = 1 and FreeTextField_04 is null-- only approved</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>FreeTextField_04</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Set weeknr after approval</stepname></step></steps></job></jobs>

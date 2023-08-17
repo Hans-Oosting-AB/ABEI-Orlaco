@@ -1,0 +1,315 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>494</id><jobname>! EG: Offerte inclusief voorwaarden mailen (100)</jobname><disable>False</disable><emailbody></emailbody><emailmode>1</emailmode><emailsubject></emailsubject><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename></schedulename><schedulesettings>startat=00:00:00;beginat=08:00:00;endat=23:00:00;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2988</id><entity>-none-</entity><action>exec SQL</action><source>105</source><target>105</target><datasource>INSERT INTO  _AB_Quotations
+SELECT  distinct
+  BacoID, hid as Bacohid, OrkrgID, ordernr
+  , Taalcode , emailto, '' as bccto,
+--, ISNULL(email_replyto,'') as bccto 
+ -- , 'Quotation_' + ltrim(rtrim(  ordernr)) + '.pdf' as filename
+  CASE WHEN taalcode = 'DE'  THEN  'Angebot_' 
+         WHEN taalcode ='NL' THEN 'Offerte_' 
+         ELSE 'Quotation_' END + ltrim(rtrim( ordernr)) + '.pdf'  as filename
+
+
+  , CASE WHEN taalcode = 'DE'  THEN  'Angebot: '
+         WHEN taalcode ='NL' THEN 'Offerte: ' 
+         ELSE 'Quotation: ' END + LTRIM(ordernr)   as subject,
+ 0 as retrievestatus, 0 as mailstatus, '%runid%' as runid,  CURRENT_TIMESTAMP as syscreated
+ , fullname  as email_displayname,   
+--ISNULL( email_replyto, 'iss@orlaco.com') as email_replyto
+'iss@orlaco.com' as email_replyto
+FROM
+    (
+    SELECT b.ID as BacoID, b.hid, oh.id AS OrkrgID, oh.ordernr, '_' + ltrim( rtrim(b.ordernumber)) + '.pdf' as filename
+      , CASE WHEN oh.ord_landcode  = 'DE' THEN 'DE' ELSE isnull(taal_ord_contact.taalcode, 'EN') END Taalcode
+     , ISNULL(oh.ord_contactemail ,  h.mail) as emailtoFUTURE, h.mail as emailto, ord_contactemail
+     , oh.docnumber 
+     , h.fullname , h.mail  as email_replyto
+    FROM
+       (SELECT top 100   MAX(b2.hid) as max_hid, oh2.ordernr
+        FROM dbo.BacoDiscussions as  b2 with (nolock) 
+         INNER JOIN dbo.orkrg as oh2 WITH (NOLOCK)  on oh2.ordernr = b2.ordernumber and ord_soort = 'Q'
+        WHERE 1=1
+         --AND a.id IS NULL
+         AND b2.type = 13
+         AND b2.Document is not null
+         AND oh2.orddat &gt; '2015-04-02 00:00:00.000'
+         AND b2.filename like '%.pdf'
+         AND b2.CreatedDate  &gt; CURRENT_TIMESTAMP - 1
+        GROUP BY oh2.ordernr    ) bMax 
+      INNER JOIN dbo.BacoDiscussions as  b WITH (NOLOCK)  on b.HID = bMax.max_hid 
+      INNER JOIN dbo.orkrg as oh WITH (NOLOCK)  on oh.ordernr = b.ordernumber and ord_soort = 'Q'
+      INNER JOIN dbo.cicmpy AS ci WITH (nolock) ON oh.fakdebnr = ci.debnr 
+      LEFT OUTER JOIN    (SELECT    dbo.cicmpy.debnr, MIN(cicntp.taalcode) as taalcode
+                          FROM          dbo.cicmpy WITH (nolock) 
+                             INNER JOIN dbo.cicntp WITH (nolock) ON dbo.cicmpy.cmp_wwn = dbo.cicntp.cmp_wwn and cicmpy.cmp_type in ('C', 'R') and dbo.cicmpy.cnt_id = dbo.cicntp.cnt_id 
+                          
+                          GROUP BY  dbo.cicmpy.debnr ) AS taal_ord_contact ON oh.debnr = taal_ord_contact.debnr 
+      INNER JOIN  dbo.humres h with(nolock) on oh.sysmodifier = h.res_id
+      LEFT OUTER JOIN dbo._AB_Quotations a (NOLOCK) on a.ordernr = oh.ordernr
+    WHERE 1=1
+    --AND  a.BacoID IS NULL
+    and b.id not in (select bacoid from _ab_quotations)
+    ) S
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>5</seqno><settings>retryunique=0;</settings><settingsxml /><stepname></stepname></step><step><id>2989</id><entity>Document</entity><action>retrieve</action><source>105</source><target>5</target><datasource>SELECT top 100  
+a.filename,  CONVERT(VARCHAR(50), a.BacoID) as ID
+FROM _AB_Quotations a (NOLOCK)
+WHERE 1=1 
+and a.runid = '%runid%'
+AND a.mailstatus = '0'
+--and a.runid = '033FC584-6B7F-4F07-9D65-B40E4A89B703'
+--and a.syscreated &gt; current_timestamp - 1
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>15</seqno><settings>uniquekey=;retryunique=0;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;filebodyfile=;fileattachmentfile=C:\ABSC\Offerte job\Orlaco_TEST_%Filename%;fileoverwrite=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>String</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes /></xmloutbound><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>0</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents /><documentnodes /></xmlinboud><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn /></filetarget></settings></settingsxml><stepname>Offerte bijlage ophalen en opslaan als PDF -----</stepname></step><step><id>2990</id><entity>-none-</entity><action>create</action><source>105</source><target>7</target><datasource>SELECT top 100
+ orkrgID as ID, rtrim(ltrim(Taalcode)) as Taalcode,  
+ case when rtrim(ltrim(Taalcode)) = 'NL' then 'Voorwaarden'
+when rtrim(ltrim(Taalcode)) = 'DE' then 'Konditionen'
+else 'Terms' END as Terms, Filename
+FROM _AB_Quotations a (nolock)
+WHERE 1=1
+ AND a.runid = '%runid%'
+AND a.mailstatus = '0'
+</datasource><contentbody></contentbody><mapping>orkrgid=%ID%;Taal=%taalcode%</mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/ABEI Reports/Quotation_Terms_483;ssrsformat=PDF;ssrsfile=C:\ABSC\Offerte job\Orlaco_Gmbh_%Terms%_%Filename%;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>A4</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>------ ! Voorwaarden Rapport genereren en opslaan als PDF----</stepname></step><step><id>2991</id><entity>-none-</entity><action>create</action><source>105</source><target>7</target><datasource>SELECT top 100
+ orkrgID as ID, rtrim(ltrim(Taalcode)) as Taalcode , ltrim(rtrim(ISNULL(emailto, 'iss@Orlaco.com'))) as emailto , bccto, ISNULL(email_replyto, 'iss@Orlaco.com')  as email_replyto, ISNULL(email_displayname, 'Orlaco') as email_displayname,
+ case when rtrim(ltrim(Taalcode)) = 'NL' then 'Voorwaarden'
+ when rtrim(ltrim(Taalcode)) = 'DE' then 'Konditionen'
+else 'Terms' END as Terms 
+, subject, a.filename, Case when a.Taalcode = 'NL' then 'Metaalunie_voorwaarden_NL' When a.Taalcode = 'DE' then 'Metaalunie_Konditionen_DE'  else 'Metaalunie_Conditions_EN' END as Filecond
+FROM _AB_QUOTATIONS a (nolock)
+WHERE 1=1
+AND a.runid = '%runid%'
+--AND a.runid = 'CB584F19-F0EE-4D55-A4E5-BBAEEAD60932'
+AND a.mailstatus = '0' 
+</datasource><contentbody></contentbody><mapping>orkrgid=%ID%;Taal=%taalcode%</mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/ABEI Reports/Quotation_Begl_483;ssrsformat=MHTML;ssrsfile=;emailfrom=iss@orlaco.com;emailname=%email_displayname%;emailreplyto=%email_replyto%;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%emailto%;emailcc=;emailbcc=%bccto%;emailsub=%subject%;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>Taalcode</name><type>String</type></datacolumn><datacolumn><name>emailto</name><type>String</type></datacolumn><datacolumn><name>bccto</name><type>String</type></datacolumn><datacolumn><name>email_replyto</name><type>String</type></datacolumn><datacolumn><name>email_displayname</name><type>String</type></datacolumn><datacolumn><name>Terms</name><type>String</type></datacolumn><datacolumn><name>subject</name><type>String</type></datacolumn><datacolumn><name>filename</name><type>String</type></datacolumn><datacolumn><name>Filecond</name><type>String</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments><attachment><filename /><filepath>C:\ABSC\Offerte job\Orlaco_Gmbh_%Filename%</filepath><filetype /><contentcolumn /><isbinary>False</isbinary></attachment></attachments></email></settings></settingsxml><stepname>------ ! Rapport Begeleidend schrijven genereren en mailen </stepname></step><step><id>2993</id><entity>Document</entity><action>create</action><source>105</source><target>1</target><datasource>select distinct --Q.bacoid as id, 
+
+'C:\ABSC\Offerte job\Orlaco_Test_'+Q.filename  as filename, 
+'Offerte_' + Q.ordernr as subject, 105 as type, o.syscreator, o.syscreator as empid,
+dvd.account as cmpwwn 
+,Q.ordernr as Ourref
+from _AB_Quotations Q (nolock )
+inner join orkrg O (nolock) on Q.ordernr = O.Ordernr
+inner join bacodiscussions bc (nolock) on Q.bacoid = bc.id
+Inner join cicmpy C (Nolock) on o.debnr = c.debnr
+Left outer join cisect sct (Nolock) on c.sct_code = sct.sct_code
+inner join [Orlaco]..DivisionDebtors dvd (nolock )on ltrim(o.debnr) = dvd.debtor and dvd.Division in ('400', '100')
+inner join [Orlaco]..cicmpy Csy (Nolock) on dvd.account = csy.cmp_wwn
+--inner join cicntp cpgl (nolock) on o.ord_contactperson = cpgl.cnt_l_name 
+--left outer join [Orlaco]..cicntp cpsy (nolock) on dvd.account = cpsy.cmp_wwn and cpsy.administration = '400' 
+--and o.ord_contactperson = cpsy.cnt_l_name COLLATE Latin1_General_CI_AS  and cpgl.FullName = cpsy.fullname COLLATE Latin1_General_CI_AS
+
+inner join [ABEI].._AB_entity_results ABEI on Q.runid = '%runid%' and jobid = '%jobid%' --'316'
+where mailstatus = '0'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>35</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Offerte document aanmaken in Synergy</stepname></step><step><id>2994</id><entity>Request</entity><action>update</action><source>105</source><target>1</target><datasource>select distinct  ab.id,
+ 213 as type, case when o.sysmodifier = '10152' then '999999' else o.sysmodifier END as sysmodifier  ,   '2 because of received information' as FreetextField_01, dateadd(dd,+14,o.orddat)  as freedatefield_03 ,
+dvd.account as CustomerID, 
+
+Case 
+when sct.ml_desc_0  like '%Agriculture%' then '1 Agriculture'
+when sct.ml_desc_0  like '%Airport%' then '2 Airport'
+when sct.ml_desc_0  like '%Body Builders%' then '3 Body Builders'
+when sct.ml_desc_0  like '%Crane Applications%' then '4 Crane Applications'
+when sct.ml_desc_0  like '%Dangerous Goods%' then '5 Dangerous Goods'
+when sct.ml_desc_0  like '%Explosion Safe%' then '6 Explosion Safe'
+when sct.ml_desc_0  like '%Firetrucks%' then '7 Firetrucks'
+when sct.ml_desc_0  like '%Forklift Applications%' then '8 Forklift Applications'
+when sct.ml_desc_0  like '%Governemental%' then '9 Governemental'
+when sct.ml_desc_0  like '%Heavy Equipment%' then '10 Heavy Equipment'
+when sct.ml_desc_0  like '%Maritime%' then '11 Maritime'
+when sct.ml_desc_0  like '%Military%' then '12 Military'
+when sct.ml_desc_0  like '%Onroad Trucks%' then '13 Onroad Trucks'
+when sct.ml_desc_0  like '%Public Transport%' then '14 Public Transport'
+when sct.ml_desc_0  like '%Railway%' then '15 Railway'
+when sct.ml_desc_0  like '%Road Construction%' then '16 Road Construction'
+when sct.ml_desc_0  like '%Unknown%' then '17 Unknown'
+when sct.ml_desc_0  like '%PUBLIC TRANSPORT%' then '18 Public Transport'
+when sct.ml_desc_0  like '%Retrofit USA%' then '19 Retrofit USA'
+ELSE '17 Unknown' END as freetextfield_02
+
+
+--isnull(cpsy.cnt_id, csy.cnt_id) as Customercontactid,
+ 
+ ,o.ord_contactperson as FreeTextField_08
+,o.refer as description,
+o.docnumber as FreeTextField_05,  '2 Recommendation' as FreeTextField_06, o.ord_contactemail,
+ DATEADD(mm, +2, O.orddat )as freedatefield_01, 
+ O.orddat as freedatefield_02,
+ bdr_ev_val as FreeNumberField_01,
+ o.ordernr as freeintfield_01,
+ bcsy.id as FreeGuidField_06
+from _AB_Quotations Q (nolock )
+inner join orkrg O (nolock) on Q.ordernr = O.Ordernr
+Inner join cicmpy C (Nolock) on o.debnr = c.debnr
+Left outer join cisect sct (Nolock) on c.sct_code = sct.sct_code
+inner join [Orlaco]..DivisionDebtors dvd (nolock )on ltrim(o.debnr) = dvd.debtor and dvd.Division in ('400', '100')
+--inner join [Orlaco]..cicmpy Csy (Nolock) on dvd.account = csy.cmp_wwn
+--inner join cicntp cpgl (nolock) on o.ord_contactperson = cpgl.cnt_l_name 
+--left outer join [Orlaco]..cicntp cpsy (nolock) on dvd.account = cpsy.cmp_wwn and cpsy.administration = '400' 
+--and o.ord_contactperson = cpsy.cnt_l_name COLLATE Latin1_General_CI_AS  and cpgl.FullName = cpsy.fullname COLLATE Latin1_General_CI_AS
+inner join [ABEI].._AB_entity_results ABEI with (nolock) on ABEI.runid = '%runid%' and ABEI.jobid = '%jobid%' 
+and jobstepid = '2993'
+inner join [Orlaco]..bacodiscussions bcsy with (nolock) on abei.NewKeyvalue = bcsy.id and Q.ordernr = bcsy.ourref
+inner join [Orlaco]..absences ab with (nolock) on Q.ordernr = ab.FreeIntField_01 and ab.type = '213'
+where mailstatus = '0' 
+--and o.ordernr in (select a.freeintfield_01 as ordernr from [orlaco]..absences a with (nolock) 
+--              inner join orkrg o (nolock) on a.freeintfield_01 = o.ordernr
+--      where a.type = '213')
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Synergy Sales &amp; Quotation request updaten</stepname></step><step><id>2995</id><entity>Request</entity><action>create</action><source>105</source><target>1</target><datasource>select distinct  --bacoid as id,
+ 213 as type, '999999' as syscreator, 
+o.syscreator as empid, 
+--o.represent_id as empid, 
+
+ '2 because of received information' as FreetextField_01, dateadd(dd,+14,o.orddat)  as freedatefield_03 ,
+dvd.account as CustomerID, 
+
+Case 
+when sct.ml_desc_0  like '%Agriculture%' then '1 Agriculture'
+when sct.ml_desc_0  like '%Airport%' then '2 Airport'
+when sct.ml_desc_0  like '%Body Builders%' then '3 Body Builders'
+when sct.ml_desc_0  like '%Crane Applications%' then '4 Crane Applications'
+when sct.ml_desc_0  like '%Dangerous Goods%' then '5 Dangerous Goods'
+when sct.ml_desc_0  like '%Explosion Safe%' then '6 Explosion Safe'
+when sct.ml_desc_0  like '%Firetrucks%' then '7 Firetrucks'
+when sct.ml_desc_0  like '%Forklift Applications%' then '8 Forklift Applications'
+when sct.ml_desc_0  like '%Governemental%' then '9 Governemental'
+when sct.ml_desc_0  like '%Heavy Equipment%' then '10 Heavy Equipment'
+when sct.ml_desc_0  like '%Maritime%' then '11 Maritime'
+when sct.ml_desc_0  like '%Military%' then '12 Military'
+when sct.ml_desc_0  like '%Onroad Trucks%' then '13 Onroad Trucks'
+when sct.ml_desc_0  like '%Public Transport%' then '14 Public Transport'
+when sct.ml_desc_0  like '%Railway%' then '15 Railway'
+when sct.ml_desc_0  like '%Road Construction%' then '16 Road Construction'
+when sct.ml_desc_0  like '%Unknown%' then '17 Unknown'
+when sct.ml_desc_0  like '%PUBLIC TRANSPORT%' then '18 Public Transport'
+when sct.ml_desc_0  like '%Retrofit USA%' then '19 Retrofit USA'
+ELSE '17 Unknown' END as freetextfield_02
+
+--isnull(cpsy.cnt_id, csy.cnt_id) as Customercontactid,
+ 
+ ,o.ord_contactperson as FreeTextField_08
+ ,ISNULL(o.refer, '-') as description,
+o.docnumber as FreeTextField_05,  '2 Recommendation' as FreeTextField_06, o.ord_contactemail,
+ DATEADD(mm, +2, O.orddat )as freedatefield_01, 
+ O.orddat as freedatefield_02,
+ bdr_ev_val as FreeNumberField_01,
+ o.ordernr as freeintfield_01,
+ o.syscreated, bcsy.id as FreeGuidField_06
+from _AB_Quotations Q (nolock )
+inner join orkrg O (nolock) on Q.ordernr = O.Ordernr
+Inner join cicmpy C (Nolock) on o.debnr = c.debnr
+Left outer join cisect sct (Nolock) on c.sct_code = sct.sct_code
+inner join [Orlaco]..DivisionDebtors dvd (nolock )on ltrim(o.debnr) = dvd.debtor and dvd.Division in ('400','100')
+--inner join [Orlaco]..cicmpy Csy (Nolock) on dvd.account = csy.cmp_wwn
+--inner join cicntp cpgl (nolock) on o.ord_contactperson = cpgl.cnt_l_name 
+--left outer join [Orlaco]..cicntp cpsy (nolock) on dvd.account = cpsy.cmp_wwn and cpsy.administration = '400' 
+--and o.ord_contactperson = cpsy.cnt_l_name COLLATE Latin1_General_CI_AS  and cpgl.FullName = cpsy.fullname COLLATE Latin1_General_CI_AS
+inner join [ABEI].._AB_entity_results ABEI with (nolock) on ABEI.runid = '%runid%' and ABEI.jobid = '%jobid%' 
+and jobstepid = '2993'
+inner join [Orlaco]..bacodiscussions bcsy with (nolock) on abei.NewKeyvalue = bcsy.id and Q.ordernr = bcsy.ourref
+where mailstatus = '0' 
+and o.ordernr not in (select a.freeintfield_01 as ordernr from [orlaco]..absences a with (nolock) 
+                inner join orkrg o (nolock) on a.freeintfield_01 = o.ordernr
+        where a.type = '213')
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Synergy Sales &amp; Quotation request starten</stepname></step><step><id>2996</id><entity>Request</entity><action>update</action><source>105</source><target>1</target><datasource>select ab.id,  ab.hid, bdr_ev_val as FreeNumberField_02, '05 Order - other' as FreeTextField_03, 4 as status, ab.empid as realizer 
+from orkrg Q (nolock)
+inner join [Orlaco]..absences ab with (nolock) on Q.offerte_nr = ab.FreeIntField_01 and ab.type = '213'
+where 1=1
+and Q.offerte_nr = Q.ordernr
+and AB.status = '1'
+and Q.ord_soort = 'V'
+--and ordernr = '11709870'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>60</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Synergy Sales &amp; Quotation update na order</stepname></step><step><id>2997</id><entity>Request</entity><action>update</action><source>105</source><target>1</target><datasource>select ab.id,  4 as status, ab.empid as realizer, 0 as FreeNumberField_02, '16 Lost - no response'
+as freetextfield_03
+ from orkrg Q (nolock)
+inner join [Orlaco]..absences ab with (nolock) on Q.ordernr = ab.FreeIntField_01 and ab.type = '213'
+where 1=1
+and AB.status = '1'
+and Q.ord_soort = 'Q'
+and resulttype = 'R'
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>70</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>------ ! Synergy Sales &amp; Quotation update na verwerpen</stepname></step><step><id>2998</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>Select ae.runid, ab.freeintfield_01 as offerte, ab.hid as Requestnr, FreeTextField_04 as Offerte_Status, 
+Case when ab.status = '4' then 'gerealiseerd' when ab.status = '1' then 'Goedgekeurd' else 'Status onbekend' END as Status_verzoek, 
+Case when ae.rowstatus = '2' then 'Succes' when ae.rowstatus = '-1' then ae.errormessage END AS Status_bijwerken_verzoek
+,concat(isnull(h.mail COLLATE DATABASE_DEFAULT, 'ISS@orlaco.com'), ',',isnull(hc.mail COLLATE DATABASE_DEFAULT, 'ISS@orlaco.com'), ',',isnull(hm.mail COLLATE DATABASE_DEFAULT , 'ISS@orlaco.com')) mail
+from _AB_Entity_results AE  
+inner join [orlaco]..absences AB on AE.keyvalue = CAST(Ab.id AS VARCHAR(50))
+left join [orlaco]..humres h with(nolock) on h.res_id = ab.empid
+left join [orlaco]..humres hc with(nolock) on hc.res_id = ab.syscreator
+left join [orlaco]..humres hm with(nolock) on hm.res_id = ab.sysmodifier
+where AE.jobid = '%JOBID%'
+and AE.jobstepid  in ('2997','2996')
+and ae.runid = '%runid%'
+
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;Dear colleague,&lt;/P&gt;
+&lt;P&gt;A Quotation has been accepted or rejected in Exact Globe. The following report shows the status of the&amp;nbsp; 'SAL: Information and Quotation ' workflow request which is related to the quotation:&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;Offerte&lt;/TD&gt;
+&lt;TD&gt;Requestnr&lt;/TD&gt;
+&lt;TD&gt;Offerte_Status&lt;/TD&gt;
+&lt;TD&gt;Status_verzoek&lt;/TD&gt;
+&lt;TD&gt;Status_bijwerken_verzoek&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=sql&gt;
+&lt;TD colSpan=6&gt;## Query Table Content ##&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=6&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;If&amp;nbsp;an error appears in de column&amp;nbsp;'Status bijwerken verzoek', then the workflow request has not been created or updated. Check the data in the quotation and reprint the quotation or manually update the Synergy request.&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;Kind regards,&lt;/P&gt;
+&lt;P&gt;The&amp;nbsp;Administrator&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>75</seqno><settings>uniquekey=runid;retryunique=1;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%mail%;emailcc=;emailbcc=;emailsub=Status werkstroomverzoek 'SAL: Information and Quotation' n.a.v. promoveren / verwerpen offerte in Globe;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=offerte,Requestnr,Offerte_Status,Status_verzoek,Status_bijwerken_verzoek;mex_connectionid=0;emailsplitcolumn=mail;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Mail sturen bij order of verwerpen</stepname></step><step><id>2999</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>Select ae.runid, ab.freeintfield_01 as offerte, ab.hid as Requestnr, FreeTextField_04 as Offerte_Status, 
+Case when ab.status = '4' then 'gerealiseerd' when ab.status = '1' then 'Goedgekeurd' else 'Status onbekend' END as Status_verzoek, 
+Case when ae.rowstatus = '2' then 'Succes' when ae.rowstatus = '-1' then ae.errormessage END AS Status_bijwerken_verzoek
+,concat(isnull(h.mail COLLATE DATABASE_DEFAULT, 'ISS@orlaco.com'), ',',isnull(hc.mail COLLATE DATABASE_DEFAULT, 'ISS@orlaco.com'), ',',isnull(hm.mail COLLATE DATABASE_DEFAULT , 'ISS@orlaco.com')) mail
+from _AB_Entity_results AE  
+inner join [orlaco]..absences AB on SUBSTRING(newkeyvalue,2,36) = CAST(Ab.id AS VARCHAR(50))
+left join [orlaco]..humres h with(nolock) on h.res_id = ab.empid
+left join [orlaco]..humres hc with(nolock) on hc.res_id = ab.syscreator
+left join [orlaco]..humres hm with(nolock) on hm.res_id = ab.sysmodifier
+where AE.jobid = '%JOBID%'
+and AE.jobstepid  in ('2995', '2994')
+and ae.runid = '%runid%'
+
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;Dear colleague,&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;A Quotation has been created or updated. The following report shows the status of the related Synergy&amp;nbsp;'SAL: Information and Quotation' workflow request:&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;Offerte&lt;/TD&gt;
+&lt;TD&gt;Requestnr&lt;/TD&gt;
+&lt;TD&gt;Offerte_Status&lt;/TD&gt;
+&lt;TD&gt;Status_verzoek&lt;/TD&gt;
+&lt;TD&gt;Status_bijwerken_verzoek&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=sql&gt;
+&lt;TD colSpan=6&gt;## Query Table Content ##&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=6&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;If&amp;nbsp;an error appears in de column&amp;nbsp;'Status bijwerken verzoek', then the workflow request has not been created or updated. Check the data in the quotation and reprint the quotation or manually update the Synergy request.&lt;/P&gt;
+&lt;P&gt;&amp;nbsp;&lt;/P&gt;
+&lt;P&gt;Kind Regards&lt;/P&gt;
+&lt;P&gt;The&amp;nbsp;Administrator&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>80</seqno><settings>uniquekey=runid;retryunique=1;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%mail%;emailcc=;emailbcc=;emailsub=Status aanmaken / bijwerken werkstroomverzoek 'SAL: Information and Quotation';emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=offerte,Requestnr,Offerte_Status,Status_verzoek,Status_bijwerken_verzoek;mex_connectionid=0;emailsplitcolumn=mail;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Mail sturen bij aanmaken / update Request</stepname></step><step><id>2992</id><entity>-none-</entity><action>exec SQL</action><source>105</source><target>105</target><datasource>Update _AB_quotations
+set mailstatus = '1' where runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>90</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Mailstatus in basis tabel bijwerken ----</stepname></step><step><id>3116</id><entity>QuotationHeader</entity><action>delete</action><source>105</source><target>105</target><datasource>select --a.hid, a.Status, a.Description, a.FreeIntField_01, a.syscreator, a.FreeGUIDField_06
+TOP 30 o.ID, o.ordernr, CONVERT(varchar,a.hid) + ' - ' + ISNULL(a.FreeTextField_03,'No Status') as DeletionReason
+from [orlaco]..absences a
+INNER JOIN [100]..orkrg o with (NOLOCK) on a.FreeIntField_01 = o.ordernr
+where a.Type = 213 and --  all SIAQ request
+--a.syscreator = 999999 and -- created by sqlservice
+a.Status in(2,3,4) and -- with status processed or rejected
+a.FreeGUIDField_06 IS NOT NULL and -- with a printed quote document attached
+a.sysmodified &lt; DATEADD(MONTH,-3,GETDATE()) and -- and 3 months closed
+--a.FreeTextField_03 like '1%' and -- the request status is 1x - Order Lost 
+o.ord_soort = 'Q' and -- and related quotation in Globe is not an order
+o.afgehandld = 0 -- and it is still open</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>Delete lost quotations &lt; 3 months</stepname></step></steps></job></jobs>

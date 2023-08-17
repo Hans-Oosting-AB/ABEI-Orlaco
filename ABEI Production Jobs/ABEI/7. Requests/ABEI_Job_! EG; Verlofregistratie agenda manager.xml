@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>207</id><jobname>! EG: Verlofregistratie agenda manager</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=2;timescale=hours;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1025</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>SELECT  _AB_Verlofregistratie_agenda_manager.ID as freeguidfield_01, _AB_Verlofregistratie_agenda_manager.Approver as Emp_id,  Fullname + ' ' + 'is afwezig' as description
+, _AB_Verlofregistratie_agenda_manager.StartDate AS  StartDate , _AB_Verlofregistratie_agenda_manager.EndDate AS  EndDate , '1200' as Type
+FROM _AB_Verlofregistratie_agenda_manager left outer join
+
+(Select hid, empID, freeguidField_01, id, startdate, enddate, type from  Absences with(nolock) where type = '1200' and freeguidfield_01 is not null ) c 
+on _AB_Verlofregistratie_agenda_manager.approver = c.EmpID 
+and _AB_Verlofregistratie_agenda_manager.id = c.FreeGuidField_01
+and _AB_Verlofregistratie_agenda_manager.startdate = c.startdate
+and _AB_Verlofregistratie_agenda_manager.enddate = c.enddate
+
+where c.id is null</datasource><contentbody /><mapping>HeaderID=HeaderID;description=Description;Emp_id=EmpID;EndDate=EndDate;freeguidfield_01=FreeGuidField_01;StartDate=StartDate;Type=Type;</mapping><disable /><remarks /><replace></replace><seqno>10</seqno><settings>uniquekey=freeguidfield_01;retryunique=1;</settings><settingsxml /><stepname /></step></steps></job></jobs>

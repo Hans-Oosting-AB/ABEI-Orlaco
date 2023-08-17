@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>513</id><jobname>Order / Invoice : Order Sync (484 &lt;&gt; 400)</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>1. Generate sales orders in 400 for purchase orders in 484 for Orlaco Products
+2. Generate purchase orders in 484 for sales invoices created in 400 for Orlaco Inc. </remarks><schedulename /><schedulesettings>freq=5;timescale=minutes;startat=15:00:49;beginat=06:00:00;endat=21:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>prm_ABSC_Data</name><type>String</type><value>ABSC_Data</value></jobparam></jobparams></settings></settingsxml><steps><step><id>3617</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>select 1</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>INIT versie3</stepname></step><step><id>3618</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>select 1</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>VERKOOPORDER AANMAKEN OP BASIS INKOOPORDER</stepname></step><step><id>3619</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>107</target><datasource>INSERT INTO [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync]
+    (
+      [purchase_ordernr]
+      ,[runid]
+      ,[rowstatus]
+      ,[rowmessage]
+      ,[retrycounter]
+      ,[sysmodified]
+      ,[syscreated]
+    )
+  
+SELECT 
+    [H].ordernr AS [purchase_ordernr]
+    , '%runid%' AS [runid]
+    , CASE WHEN (SELECT COUNT(ID) FROM  [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] ) &lt; 1 THEN 2 ELSE 1 END AS [rowstatus]
+    ,'' As [rowmessage]
+    ,0 AS [retrycounter]
+    ,getdate()
+    ,getdate()
+    
+    FROM [%abeisourcedb%].dbo.orkrg AS [H] with (nolock) -- 184
+WHERE 1=1 
+AND [H].ord_soort = 'B'
+AND [H].crdnr = 151048
+AND [H].fiattering = 'J'
+AND [H].ordbv_afgd = 1
+AND [H].afgehandld = 0
+and ISNULL([H].refer,'')  not like 'Transfer USA%' -- voorkom dat null problemen geeft
+and [H].syscreated &gt; dateadd(day,-5,getdate()) -- voor de snelheid
+
+AND NOT EXISTS( SELECT 1 FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] AS [T] WHERE [T].purchase_ordernr = [H].ordernr COLLATE DATABASE_DEFAULT )
+AND NOT EXISTS( SELECT 1 FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_TransfersOrders] AS [T] WHERE [T].purchase_ordernr = [H].ordernr COLLATE DATABASE_DEFAULT )
+AND not exists (select 1 from [%abeitargetdb%].dbo.orkrg AS T with (nolock) where 1=1 and t.ord_soort = 'V' and T.docnumber LIKE '%' + [H].ordernr + '%') -- 100  
+
+--and  ordernr = '62257005'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>... Nieuwe te verwerken inkooporders in x84 [184:100]</stepname></step><step><id>3620</id><entity>SalesOrderHeader</entity><action>create</action><source>112</source><target>107</target><datasource>SELECT
+[H].ordernr as HeaderID
+,997354 as debnr
+,[H].orddat
+,[H].afldat
+,[H].ordernr as docnumber
+,[H].refer as refer 
+
+,CONCAT('513/130/H/',  LTRIM(RTRIM([H].ordernr)) ) AS [referkey]
+
+FROM [%prm_ABSC_Data%].[DBO].[_AB_tb_ABEI_Order_Sync] AS [S] WITH(nolock)
+INNER JOIN [%abeisourcedb%].dbo.orkrg AS [H] with (nolock) ON [H].[ordernr] = [S].[purchase_ordernr] COLLATE DATABASE_DEFAULT
+WHERE 1=1 
+
+AND [S].[rowstatus] = 1
+AND [S].[runid] = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referkey</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>Int32</type></datacolumn><datacolumn><name>orddat</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>refer</name><type>String</type></datacolumn><datacolumn><name>referkey</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>... Sales header [184:100]</stepname></step><step><id>3621</id><entity>SalesOrderLine</entity><action>create</action><source>112</source><target>107</target><datasource>SELECT
+    [H].ordernr as HeaderID
+    ,[L].artcode 
+    ,[L].esr_aantal 
+    ,CASE WHEN artcode is null then null ELSE 'ICL' END AS Prijslijst
+    ,[L].afldat
+    ,'ADDNEW' as action
+    ,CONCAT('513/130/L/',  LTRIM(RTRIM([H].ordernr)) ) AS [referkey]
+
+FROM [%prm_ABSC_Data%].[DBO].[_AB_tb_ABEI_Order_Sync] AS [S] WITH(nolock)
+INNER JOIN [%abeisourcedb%].dbo.orkrg AS [H] with (nolock) ON [H].[ordernr] = [S].[purchase_ordernr] COLLATE DATABASE_DEFAULT
+INNER JOIN [%abeisourcedb%].dbo.orsrg AS [L] with (nolock) on [L].ordernr = [H].ordernr 
+
+WHERE 1=1 
+
+AND [S].[rowstatus] = 1
+AND [S].[runid] = '%runid%'
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referkey</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>esr_aantal</name><type>Double</type></datacolumn><datacolumn><name>Prijslijst</name><type>String</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>action</name><type>String</type></datacolumn><datacolumn><name>referkey</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>... Sales Line [184:100]</stepname></step><step><id>3622</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>107</target><datasource>UPDATE [S] SET
+    [rowstatus] = ISNULL([OA_ER].rowstatus,-1)
+    ,[rowmessage] = ISNULL([OA_ER].errormessage,'Onbekende fout')
+    ,[sysmodified] = getdate()
+    ,[sales_ordernr] = ISNULL([OA_ER].NewKeyvalue,'')
+    --,[rowstatus1] = CASE WHEN ISNULL([OA_ER].rowstatus,-1) = 2 THEN 1 ELSE 0 END
+    --,[runid1] = CASE WHEN ISNULL([OA_ER].rowstatus,-1) = 2 THEN [S].[runid] ELSE NULL END
+    
+FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] AS [S]  
+
+OUTER APPLY
+    (
+        SELECT TOP (1) 
+            [R].rowstatus
+            ,[R].NewKeyvalue
+            ,[R].errormessage
+        FROM [%abeidb%].[DBO].[_AB_Entity_results] AS [R] WITH(nolock)
+        WHERE 1 = 1
+        AND [R].Entity = 'SalesOrderHeader'
+        AND [R].Action = 'create'
+        AND [R].runid = [S].[runid]   
+        AND [R].ReferenceValue = CONCAT('513/130/H/',  LTRIM(RTRIM([S].purchase_ordernr ))COLLATE DATABASE_DEFAULT )
+    ) AS [OA_ER]
+
+WHERE 1 = 1 
+AND [S].[rowstatus] = 1
+AND [S].[runid] = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>140</seqno><settings /><settingsxml /><stepname>... Verwerk resultaat [184:100]</stepname></step><step><id>3643</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>112</target><datasource>Select 1</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>150</seqno><settings /><settingsxml /><stepname>TABEL  Order_Invoice_Sync VULLEN MET OVERIGE DATA</stepname></step><step><id>3644</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>107</target><datasource>INSERT INTO [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync]
+    (
+      [purchase_ordernr]
+      ,[sales_ordernr] 
+      ,[runid]
+      ,[rowstatus]
+      ,[rowmessage]
+      ,[retrycounter]
+      ,[sysmodified]
+      ,[syscreated]
+    )
+  
+SELECT TOP 1000 
+    [BH].[ordernr] AS [purchase_ordernr]
+    ,[SH].[ordernr] AS [sales_ordernr]
+    ,'%runid%'  AS [runid]
+    , 3 AS [rowstatus]
+    , 'Manual created' AS [rowmessage]
+    , 0 AS [retrycounter]
+    , GETDATE() AS [sysmodified]
+    , GETDATE() AS [syscreated]
+   
+    FROM [%abeitargetdb%].[dbo].[orkrg] AS [SH] WITH(nolock) -- 100
+    INNER JOIN [%abeisourcedb%].[dbo].[orkrg] AS [BH] WITH(nolock) ON [SH].docnumber LIKE '%' + [BH].ordernr + '%' COLLATE DATABASE_DEFAULT -- 184
+  where 1 = 1
+  and [SH].debnr = '997354'
+  and [SH].afgehandld = 1
+  and datediff(day, [SH].sysmodified, getdate() ) = 0
+
+  AND NOT EXISTS( SELECT 1 FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] AS [T] WHERE [T].purchase_ordernr = [BH].[ordernr] COLLATE DATABASE_DEFAULT )
+ 
+ </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>160</seqno><settings /><settingsxml /><stepname>... Handmatige aangemaakte inkooporders obv verkooporders [184:100]</stepname></step><step><id>3645</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>107</target><datasource>INSERT INTO [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync]
+    (
+      [purchase_ordernr]
+      ,[sales_ordernr] 
+      ,[runid]
+      ,[rowstatus]
+      ,[rowmessage]
+      ,[retrycounter]
+      ,[sysmodified]
+      ,[syscreated]
+
+    )
+  
+SELECT TOP 1000 
+    [BH].[ordernr] AS [purchase_ordernr]
+    ,[SH].[ordernr] AS [sales_ordernr]
+    ,'%runid%'  AS [runid]
+    , 13 AS [rowstatus] -- Niet verder oppakken of verwerken
+    , 'Purchase order not found' AS [rowmessage]
+    , 0 AS [retrycounter]
+    , GETDATE() AS [sysmodified]
+    , GETDATE() AS [syscreated]
+
+     
+  FROM [%abeitargetdb%].[dbo].[orkrg] AS [SH] WITH(nolock)
+  LEFT JOIN [%abeisourcedb%].[dbo].[orkrg] AS [BH] WITH(nolock) ON [SH].docnumber LIKE '%' + [BH].ordernr + '%' COLLATE DATABASE_DEFAULT
+  where 1 = 1
+  and [SH].debnr = '997354'
+  and [SH].afgehandld = 1
+  AND [BH].[ordernr] IS NULL
+  and datediff(day, [SH].sysmodified, getdate() ) = 0
+
+AND NOT EXISTS( SELECT 1 FROM [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] AS [T] WHERE [T].sales_ordernr = [SH].[ordernr] COLLATE DATABASE_DEFAULT )
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>170</seqno><settings /><settingsxml /><stepname>... Handmatige aangemaakte verkooporders zonder inkoop [184:100]</stepname></step><step><id>3675</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>select 1</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>400</seqno><settings /><settingsxml /><stepname>STUUR EEN MELDING BIJ AFWIJKINGEN</stepname></step><step><id>3702</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT TOP 1000 
+    [S].[purchase_ordernr] AS [purchase_ordernr]
+    ,[S].[sales_ordernr] AS [sales_ordernr]
+    ,[S].[rowmessage]  AS [message]
+    ,GETDATE() AS [syscreated]
+    ,[SalesB].[Document]
+    ,[SalesB].[Filename]
+  
+FROM  [ABSC_Data].[dbo].[_AB_tb_ABEI_Order_Sync] AS [S] WITH(nolock)
+LEFT JOIN [%abeisourcedb%].[dbo].[BacoDiscussions] AS [SalesB] WITH(nolock) ON [SalesB].OrderNumber = [S].[sales_ordernr] COLLATE DATABASE_DEFAULT and type = 14
+
+WHERE 1 = 1
+AND [S].[rowstatus] = 13
+AND [S].runid = '%runid%'
+
+order by [S].sysmodified desc</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Geachte lezer,&lt;/p&gt;&lt;p&gt;Voor de onderstaande verkooporders zijn&amp;nbsp; geen gerelateerde inkooporders gevonden. De inkooporders zullen nog moeten worden aangemaakt:&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;purchase_ordernr&lt;/td&gt;&lt;td&gt;sales_ordernr&lt;/td&gt;&lt;td&gt;message&lt;/td&gt;&lt;td&gt;syscreated&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%purchase_ordernr%&lt;/td&gt;&lt;td&gt;%sales_ordernr%&lt;/td&gt;&lt;td&gt;%message%&lt;/td&gt;&lt;td&gt;%syscreated%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="4"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Met vriendelijke groet,&lt;/p&gt;&lt;p&gt;De ABEI mailer&lt;/p&gt;&lt;p&gt;&lt;font color="gray"&gt;Basis gegevens: &lt;br&gt;RunID: %runid%&lt;br&gt;Tijd: %abei_now_121%&lt;br&gt;Server: %abeiserver% \ %jobid% \ %jobstepid%&lt;/font&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Verkoop order zonder gerelateerde inkooporder;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=purchase_ordernr,sales_ordernr,message,syscreated;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>purchase_ordernr</name><type>String</type></datacolumn><datacolumn><name>sales_ordernr</name><type>String</type></datacolumn><datacolumn><name>message</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>Filename</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%Filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>... Stuur mail met verkooporders zonder inkooporder [100:mail]</stepname></step><step><id>3647</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT TOP 1000 
+    [SH].[purchase_ordernr] AS [purchase_ordernr]
+    ,[SH].[sales_ordernr] AS [sales_ordernr]
+    , [SH].[rowmessage]  AS [message]
+    , GETDATE() AS [syscreated]
+
+  FROM  [%prm_ABSC_Data%].[dbo].[_AB_tb_ABEI_Order_Sync] AS [SH] WITH(nolock)
+  where 1 = 1
+  and [SH].[rowstatus] &lt; 0
+  and [SH].runid = '%runid%'
+
+  order by [SH].sysmodified desc</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Geachte lezer,&lt;/p&gt;&lt;p&gt;Voor de onderstaande verkooporders zijn&amp;nbsp; geen gerelateerde inkooporders gevonden. De inkooporders zullen nog moeten worden aangemaakt:&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;purchase_ordernr&lt;/td&gt;&lt;td&gt;sales_ordernr&lt;/td&gt;&lt;td&gt;message&lt;/td&gt;&lt;td&gt;syscreated&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%purchase_ordernr%&lt;/td&gt;&lt;td&gt;%sales_ordernr%&lt;/td&gt;&lt;td&gt;%message%&lt;/td&gt;&lt;td&gt;%syscreated%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="4"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Met vriendelijke groet,&lt;/p&gt;&lt;p&gt;De ABEI mailer&lt;/p&gt;&lt;p&gt;&lt;font color="gray"&gt;Basis gegevens: &lt;br&gt;RunID: %runid%&lt;br&gt;Tijd: %abei_now_121%&lt;br&gt;Server: %abeiserver% \ %jobid% \ %jobstepid%&lt;/font&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>420</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Verkoop order zonder gerelateerde inkooporder;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=purchase_ordernr,sales_ordernr,message,syscreated;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>purchase_ordernr</name><type>String</type></datacolumn><datacolumn><name>sales_ordernr</name><type>String</type></datacolumn><datacolumn><name>message</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>Filename</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%Filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>... Stuur mail met fouten [100:mail]</stepname></step></steps></job></jobs>

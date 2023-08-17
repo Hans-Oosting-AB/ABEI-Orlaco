@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>362</id><jobname>EG: DAF EDI</jobname><disable>True</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=12:24:01;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general></settings></settingsxml><steps><step><id>1734</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT  CAST(ISNULL(t.OrgRegel, '') AS VARCHAR(160)), os.id, ok.ordernr as headerid
+FROM    dbo.orkrg ok WITH (NOLOCK)
+            INNER JOIN TIEExact.dbo.DAF_orderregels t WITH (NOLOCK) ON ok.docnumber = t.docnumber 
+            INNER JOIN dbo.orsrg os WITH (NOLOCK) 
+                ON t.regel = os.regel 
+                AND ok.ordernr = os.ordernr 
+                AND LTRIM(RTRIM(CAST(ISNULL(t.OrgRegel, '') AS varchar(160)))) &lt;&gt; LTRIM(RTRIM(ISNULL(os.instruction, '')))
+where ok.debnr = '040447'
+            </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update line instruction</stepname></step><step><id>1735</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT '0' as fakt_code, '800' as kstplcode, ok.ordernr, ok.ordernr as headerid
+FROM dbo.orkrg ok WITH (NOLOCK)
+    INNER JOIN TIEExact.dbo.DAF_orderregels t WITH (NOLOCK) ON ok.docnumber = t.docnumber
+WHERE   1=1
+        AND ok.debnr = '040447'
+        AND (LTRIM(RTRIM(fakt_code)) &lt;&gt; '0' OR LTRIM(RTRIM(kstplcode)) &lt;&gt; '800')</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Update header</stepname></step><step><id>1736</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT 100 as korting, 0 as prijs_n, os.id, ok.ordernr as headerid
+FROM dbo.orkrg ok WITH (NOLOCK) 
+    INNER JOIN TIEExact.dbo.DAF_orderregels t WITH (NOLOCK) ON ok.docnumber = t.docnumber
+    INNER JOIN dbo.orsrg os WITH (NOLOCK) ON ok.ordernr = os.ordernr 
+    INNER JOIN SDKsrg ss WITH (NOLOCK) ON os.sysguid = ss.linkid
+WHERE   1=1
+        AND ok.debnr = '040447'
+        AND os.esr_aantal &lt;&gt; os.aant_gelev
+        AND os.prijs_n &lt;&gt; 0
+        AND ss.TextDescription LIKE '%********************%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update line korting</stepname></step></steps></job></jobs>

@@ -1,0 +1,320 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>464</id><jobname>05.2 - NEW: ESE &gt; EG Sync - Contacts</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=5;timescale=minutes;startat=16:47:39;beginat=05:00:00;endat=23:30:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2704</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>107</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>0</seqno><settings /><settingsxml /><stepname>-- Sync 400 ------------------------------------------</stepname></step><step><id>2702</id><entity>ContactPerson</entity><action>create</action><source>129</source><target>107</target><datasource>SELECT cg.cmp_wwn, ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man, ct.ESE_cnt_id as textfield5, check_isMain as MainContact, ct.*
+FROM dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+WHERE 1=1
+    AND ct.ESE_active = 1 -- only active contacts
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>2701</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>107</target><datasource>SELECT TOP (10) 
+      ctg.cnt_id
+      ,cg.cmp_wwn
+      ,ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man
+      ,CONVERT(varchar(50),ct.ESE_cnt_id) as textfield5
+      ,check_isMain as MainContact
+      ,CONVERT(bit,CASE WHEN ctg.cnt_id = cg.cnt_id THEN ctg.active_y
+          WHEN ISNULL(a.available, 0) = 1 THEN ctg.active_y -- cant change when linked to address
+          ELSE ct.ESE_active END) as active_y -- when maincontact you can't edit this
+      ,ct.[cnt_f_name]
+      ,ct.[cnt_l_name]
+      ,ct.[cnt_m_name]
+      ,ct.[FullName]
+      ,ct.[Initials]
+      ,ct.[Gender]
+      ,ct.[predcode]
+      ,ct.[cnt_job_desc]
+      ,ct.[cnt_dept]
+      ,ct.[taalcode]
+      ,ct.[cnt_f_ext]
+      ,ct.[cnt_f_fax]
+      ,ct.[cnt_f_tel]
+      ,ct.[cnt_f_mobile]
+      ,ct.[cnt_email]
+      --,ct.[cnt_note]
+      ,ct.[cntp_Directory]
+      ,ct.[ContactChange]
+      ,ct.datefield1
+      ,ct.datefield2
+      ,ct.datefield3
+      ,ct.datefield4
+      ,ct.datefield5
+      ,ct.textfield1
+      ,ct.textfield2
+      ,ct.textfield3
+      ,ct.textfield4
+      ,CONVERT(bit,ct.yesnofield1) as yesnofield1
+      ,CONVERT(bit,ct.yesnofield2) as yesnofield2
+      ,CONVERT(bit,ct.yesnofield3) as yesnofield3
+      ,CONVERT(bit,ct.yesnofield4) as yesnofield4
+      ,CONVERT(bit,ct.yesnofield5) as yesnofield5
+      ,CONVERT(decimal,ct.numberfield1) as numberfield1
+      ,CONVERT(decimal,ct.numberfield2) as numberfield2
+      ,CONVERT(decimal,ct.numberfield3) as numberfield3
+      ,CONVERT(decimal,ct.numberfield4) as numberfield4
+      ,CONVERT(decimal,ct.numberfield5) as numberfield5
+      ,getdate() as DateModified
+FROM [absc_data].dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+    -- Check if contact exists in Addresses because we can't change active status if its there
+    OUTER APPLY (SELECT TOP (1) 1 available FROM [400].dbo.Addresses a WITH (NOLOCK) WHERE a.ContactPerson = ctg.cnt_id) a
+
+WHERE 1=1
+AND CAST((SELECT CASE WHEN EXISTS(SELECT ContactPerson FROM [%abeitargetdb%].dbo.Addresses WHERE Type='INV' AND Addresses.ContactPerson=ctg.cnt_id) THEN 1 ELSE 0 END) AS tinyint) = 0 -- 05.301.350 dont update INV contact
+    AND (cg.cmp_status = 'A') AND (cg.cmp_type = 'C') -- only active customers
+    AND (ct.ESE_active = 1 -- only active contacts
+        OR ctg.active_y = 1)
+    AND ct.ESE_sysmodified &gt; ctg.sysmodified -- modified
+    
+    --AND ctg.cnt_id = '0DAA660C-8389-47A7-966A-12978BB26623'
+    --AND LEN(ct.cnt_job_desc) &lt; 20 
+   
+    ORDER BY check_isMain DESC, ct.ESE_sysmodified</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>active_y</name><type>Boolean</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>yesnofield1</name><type>Boolean</type></datacolumn><datacolumn><name>yesnofield2</name><type>Boolean</type></datacolumn><datacolumn><name>yesnofield3</name><type>Boolean</type></datacolumn><datacolumn><name>yesnofield4</name><type>Boolean</type></datacolumn><datacolumn><name>yesnofield5</name><type>Boolean</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Update</stepname></step><step><id>2703</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>107</target><datasource>SELECT ctg.cnt_id, cg.cmp_wwn, check_isMain as MainContact
+    ,ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man, CAST(ct.ESE_cnt_id as varchar(255)) as textfield5
+    ,ct.ESE_cmp_code,ct.cnt_f_name,ct.cnt_l_name,ct.cnt_m_name
+    ,ct.FullName,ct.Initials,ct.Gender,ct.predcode,ct.cnt_job_desc,ct.cnt_dept
+    ,ct.taalcode,ct.cnt_f_ext,ct.cnt_f_fax,ct.cnt_f_tel,ct.cnt_f_mobile,ct.cnt_email
+    ,ct.ESE_cnt_acc_man--,ct.cnt_note
+    --,ct.ESE_active -- cant edit this
+    ,ct.WebAccess
+    ,ct.datefield1,ct.datefield2,ct.datefield3,ct.datefield4,ct.datefield5
+    ,ct.numberfield1,ct.numberfield2,ct.numberfield3,ct.numberfield4,ct.numberfield5
+    ,ct.YesNoField1,ct.YesNoField2,ct.YesNoField3,ct.YesNoField4,ct.YesNoField5
+    ,ct.textfield1,ct.textfield2,ct.textfield3,ct.textfield4--,ct.ESE_textfield5
+    ,ct.cntp_Directory,ct.ContactChange
+    ,CURRENT_TIMESTAMP as datemodified -- update modified date
+FROM dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [400].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+    -- Select the first created for the criteria, to eliminate duplicates (for main account)
+    CROSS APPLY (SELECT TOP 1 * 
+        FROM [400].dbo.cicntp ctg WITH (NOLOCK) 
+        WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id
+        ORDER BY ctg.syscreated ASC) as ctg
+    --INNER JOIN [400].dbo.cicntp ctg WITH (NOLOCK) 
+    --    ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [400].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+WHERE 1=1
+    AND (ct.ESE_active = 1 -- only active contacts
+        OR ctg.active_y = 1)
+    AND cg.cmp_type = 'C' -- Debtors only
+    AND cg.cmp_status = 'A' -- Active only
+    --AND ct.ese_cmp_code = 972291
+    --AND ct.ESE_sysmodified &gt; ctg.sysmodified -- modified
+    --AND ctg.cnt_id = '5E9D5B61-0640-42BA-9134-0007D435157A'
+EXCEPT
+--UNION ALL
+SELECT ESE_cnt_id as cnt_id, cg.cmp_wwn, check_isMain as MainContact
+     ,ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man, ct.ESE_textfield5 as textfield5
+     ,ct.ESE_cmp_code COLLATE DATABASE_DEFAULT,ct.cnt_f_name COLLATE DATABASE_DEFAULT,ct.cnt_l_name COLLATE DATABASE_DEFAULT,ct.cnt_m_name COLLATE DATABASE_DEFAULT
+     ,ct.FullName COLLATE DATABASE_DEFAULT,ct.Initials COLLATE DATABASE_DEFAULT,ct.Gender COLLATE DATABASE_DEFAULT,ct.predcode COLLATE DATABASE_DEFAULT,ct.cnt_job_desc COLLATE DATABASE_DEFAULT,ct.cnt_dept COLLATE DATABASE_DEFAULT
+     ,ct.taalcode COLLATE DATABASE_DEFAULT,ct.cnt_f_ext COLLATE DATABASE_DEFAULT,ct.cnt_f_fax COLLATE DATABASE_DEFAULT,ct.cnt_f_tel COLLATE DATABASE_DEFAULT,ct.cnt_f_mobile COLLATE DATABASE_DEFAULT,ct.cnt_email COLLATE DATABASE_DEFAULT
+     ,ct.ESE_cnt_acc_man--,ct.cnt_note COLLATE DATABASE_DEFAULT
+     --,ct.ESE_active -- cant edit this
+     ,ct.WebAccess
+     ,ct.datefield1,ct.datefield2,ct.datefield3,ct.datefield4,ct.datefield5
+     ,ct.numberfield1,ct.numberfield2,ct.numberfield3,ct.numberfield4,ct.numberfield5
+     ,ct.YesNoField1,ct.YesNoField2,ct.YesNoField3,ct.YesNoField4,ct.YesNoField5
+     ,ct.textfield1 COLLATE DATABASE_DEFAULT,ct.textfield2 COLLATE DATABASE_DEFAULT,ct.textfield3 COLLATE DATABASE_DEFAULT,ct.textfield4 COLLATE DATABASE_DEFAULT--,ct.ESE_textfield5 COLLATE DATABASE_DEFAULT
+    ,ct.cntp_Directory,ct.ContactChange 
+    ,CURRENT_TIMESTAMP as datemodified -- update modified date
+FROM _AB_vw_ESE_Sync_ContactPerson_400 ct WITH (NOLOCK)
+    INNER JOIN [400].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [400].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+WHERE 1=1
+    --AND ct.ESE_cnt_id = '5E9D5B61-0640-42BA-9134-0007D435157A'
+    --AND ct.ese_cmp_code = 972291
+ORDER BY MainContact DESC -- first set main</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff</stepname></step><step><id>2708</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>126</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>-- Sync 483 ------------------------------------------</stepname></step><step><id>2706</id><entity>ContactPerson</entity><action>create</action><source>129</source><target>126</target><datasource>SELECT cg.cmp_wwn, ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man, ct.ESE_cnt_id as textfield5, check_isMain as MainContact, ct.*
+FROM dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+WHERE 1=1
+    AND ct.ESE_active = 1 -- only active contacts
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>2705</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT TOP (10) 
+      ctg.cnt_id
+      ,cg.cmp_wwn
+      ,ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man
+      ,CONVERT(varchar(50),ct.ESE_cnt_id) as textfield5
+      ,check_isMain as MainContact
+      ,CONVERT(bit,CASE WHEN ctg.cnt_id = cg.cnt_id THEN ctg.active_y
+          WHEN ISNULL(a.available, 0) = 1 THEN ctg.active_y -- cant change when linked to address
+          ELSE ct.ESE_active END) as active_y -- when maincontact you can't edit this
+      ,ct.[cnt_f_name]
+      ,ct.[cnt_l_name]
+      ,ct.[cnt_m_name]
+      ,ct.[FullName]
+      ,ct.[Initials]
+      ,ct.[Gender]
+      ,ct.[predcode]
+      ,ct.[cnt_job_desc]
+      ,ct.[cnt_dept]
+      ,ct.[taalcode]
+      ,ct.[cnt_f_ext]
+      ,ct.[cnt_f_fax]
+      ,ct.[cnt_f_tel]
+      ,ct.[cnt_f_mobile]
+      ,ct.[cnt_email]
+      --,ct.[cnt_note]
+      ,ct.[cntp_Directory]
+      ,ct.[ContactChange]
+      ,ct.datefield1
+      ,ct.datefield2
+      ,ct.datefield3
+      ,ct.datefield4
+      ,ct.datefield5
+      ,ct.textfield1
+      ,ct.textfield2
+      ,ct.textfield3
+      ,ct.textfield4
+      ,CONVERT(bit,ct.yesnofield1) as yesnofield1
+      ,CONVERT(bit,ct.yesnofield2) as yesnofield2
+      ,CONVERT(bit,ct.yesnofield3) as yesnofield3
+      ,CONVERT(bit,ct.yesnofield4) as yesnofield4
+      ,CONVERT(bit,ct.yesnofield5) as yesnofield5
+      ,CONVERT(decimal,ct.numberfield1) as numberfield1
+      ,CONVERT(decimal,ct.numberfield2) as numberfield2
+      ,CONVERT(decimal,ct.numberfield3) as numberfield3
+      ,CONVERT(decimal,ct.numberfield4) as numberfield4
+      ,CONVERT(decimal,ct.numberfield5) as numberfield5
+      ,getdate() as DateModified
+FROM [absc_data].dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+    -- Check if contact exists in Addresses because we can't change active status if its there
+    OUTER APPLY (SELECT TOP (1) 1 available FROM [400].dbo.Addresses a WITH (NOLOCK) WHERE a.ContactPerson = ctg.cnt_id) a
+
+WHERE 1=1
+AND CAST((SELECT CASE WHEN EXISTS(SELECT ContactPerson FROM [%abeitargetdb%].dbo.Addresses WHERE Type='INV' AND Addresses.ContactPerson=ctg.cnt_id) THEN 1 ELSE 0 END) AS tinyint) = 0 -- 05.301.350 dont update INV contact
+    AND (cg.cmp_status = 'A') AND (cg.cmp_type = 'C') -- only active customers
+    AND (ct.ESE_active = 1 -- only active contacts
+        OR ctg.active_y = 1)
+    AND ct.ESE_sysmodified &gt; ctg.sysmodified -- modified
+    
+    --AND ctg.cnt_id &lt;&gt; 'fd198218-7797-4caa-b9ff-33acb24cca7d'
+    --AND LEN(ct.cnt_job_desc) &lt; 20 
+   
+    ORDER BY check_isMain DESC, ct.ESE_sysmodified</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update</stepname></step><step><id>2707</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT 1 as not availableyet</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff</stepname></step><step><id>2712</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>112</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>200</seqno><settings /><settingsxml /><stepname>-- Sync 484 ------------------------------------------</stepname></step><step><id>2710</id><entity>ContactPerson</entity><action>create</action><source>129</source><target>112</target><datasource>SELECT cg.cmp_wwn, ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man, ct.ESE_cnt_id as textfield5, check_isMain as MainContact, ct.*
+FROM dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+WHERE 1=1
+    AND ct.ESE_active = 1 -- only active contacts
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>210</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>2709</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP (10) 
+      ctg.cnt_id
+      ,cg.cmp_wwn
+      ,ISNULL(h.res_id, cg.cmp_acc_man) as cnt_acc_man
+      ,CONVERT(varchar(50),ct.ESE_cnt_id) as textfield5
+      ,check_isMain as MainContact
+      ,CONVERT(bit,CASE WHEN ctg.cnt_id = cg.cnt_id THEN ctg.active_y
+          WHEN ISNULL(a.available, 0) = 1 THEN ctg.active_y -- cant change when linked to address
+          ELSE ct.ESE_active END) as active_y -- when maincontact you can't edit this
+      ,ct.[cnt_f_name]
+      ,ct.[cnt_l_name]
+      ,ct.[cnt_m_name]
+      ,ct.[FullName]
+      ,ct.[Initials]
+      ,ct.[Gender]
+      ,ct.[predcode]
+      ,ct.[cnt_job_desc]
+      ,ct.[cnt_dept]
+      ,ct.[taalcode]
+      ,ct.[cnt_f_ext]
+      ,ct.[cnt_f_fax]
+      ,ct.[cnt_f_tel]
+      ,ct.[cnt_f_mobile]
+      ,ct.[cnt_email]
+      --,ct.[cnt_note]
+      ,ct.[cntp_Directory]
+      ,ct.[ContactChange]
+      ,ct.datefield1
+      ,ct.datefield2
+      ,ct.datefield3
+      ,ct.datefield4
+      ,ct.datefield5
+      ,ct.textfield1
+      ,ct.textfield2
+      ,ct.textfield3
+      ,ct.textfield4
+      ,CONVERT(bit,ct.yesnofield1) as yesnofield1
+      ,CONVERT(bit,ct.yesnofield2) as yesnofield2
+      ,CONVERT(bit,ct.yesnofield3) as yesnofield3
+      ,CONVERT(bit,ct.yesnofield4) as yesnofield4
+      ,CONVERT(bit,ct.yesnofield5) as yesnofield5
+      ,CONVERT(decimal,ct.numberfield1) as numberfield1
+      ,CONVERT(decimal,ct.numberfield2) as numberfield2
+      ,CONVERT(decimal,ct.numberfield3) as numberfield3
+      ,CONVERT(decimal,ct.numberfield4) as numberfield4
+      ,CONVERT(decimal,ct.numberfield5) as numberfield5
+      ,getdate() as DateModified
+FROM [absc_data].dbo._AB_vw_ESE_Sync_ContactPerson ct WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = ct.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = ct.ESE_cnt_id
+
+    -- Check if manager exists, conversion from old nr to new is done in view
+    LEFT JOIN [%abeitargetdb%].dbo.humres h WITH (NOLOCK) ON h.emp_type IN ('E','C','S','T') AND h.emp_stat = 'A' 
+        AND h.res_id = ct.ESE_cnt_acc_man
+
+    -- Check if contact exists in Addresses because we can't change active status if its there
+    OUTER APPLY (SELECT TOP (1) 1 available FROM [400].dbo.Addresses a WITH (NOLOCK) WHERE a.ContactPerson = ctg.cnt_id) a
+
+WHERE 1=1 
+AND CAST((SELECT CASE WHEN EXISTS(SELECT ContactPerson FROM [%abeitargetdb%].dbo.Addresses WHERE Type='INV' AND Addresses.ContactPerson=ctg.cnt_id) THEN 1 ELSE 0 END) AS tinyint) = 0 -- 05.301.350 dont update INV contact
+    AND (cg.cmp_status = 'A') AND (cg.cmp_type = 'C') -- only active customers
+    AND (ct.ESE_active = 1 -- only active contacts
+        OR ctg.active_y = 1)
+    AND ct.ESE_sysmodified &gt; ctg.sysmodified -- modified
+    
+    --AND ctg.cnt_id &lt;&gt; 'fd198218-7797-4caa-b9ff-33acb24cca7d'
+    --AND LEN(ct.cnt_job_desc) &lt; 20 
+   
+    ORDER BY check_isMain DESC, ct.ESE_sysmodified</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>220</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update</stepname></step><step><id>2711</id><entity>ContactPerson</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT 1 as not availableyet</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>230</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff</stepname></step></steps></job></jobs>

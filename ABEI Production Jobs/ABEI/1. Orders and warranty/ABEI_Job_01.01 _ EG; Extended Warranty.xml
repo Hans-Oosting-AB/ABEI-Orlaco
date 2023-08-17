@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>489</id><jobname>01.01 - EG: Extended Warranty</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>1x in het uur tussen 06:48:09 en 23:59:59</remarks><schedulename /><schedulesettings>freq=1;timescale=hours;startat=15:14:30;beginat=06:48:09;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2951</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC [dbo].[_AB_sp_ExtendedWarranty_100] @runid = '%runid%';</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Register new numbers for 100</stepname></step><step><id>2962</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC [dbo].[_AB_sp_ExtendedWarranty_400] @runid = '%runid%';</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Register new numbers for 400</stepname></step><step><id>2963</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC [dbo].[_AB_sp_ExtendedWarranty_483] @runid = '%runid%';</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>12</seqno><settings /><settingsxml /><stepname>Register new numbers for 483</stepname></step><step><id>2964</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>EXEC [dbo].[_AB_sp_ExtendedWarranty_484] @runid = '%runid%';</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Register new numbers for 484</stepname></step><step><id>2954</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = 10 -- skip update because date is the same
+    , abei_message = 'Skipped, date is up to date'
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n 
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND ISNULL(n.DateEnd, '2020-01-01') = ISNULL(n.DateEnd_old, '2020-01-01');
+    
+UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = 1 -- retry
+    , abei_runid = '%runid%'
+    , abei_retrycount = n.abei_retrycount+1
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n 
+WHERE 1=1
+    AND n.abei_rowstatus = -1
+    AND n.abei_retrycount &lt; 4 -- max x times</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Retry or skip</stepname></step><step><id>2952</id><entity>ItemNumber</entity><action>update</action><source>129</source><target>105</target><datasource>SELECT ID, DateEnd, LotNumber
+    , tID as referencekey
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n WITH (NOLOCK)
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeitargetdb%'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>LotNumber</name><type>String</type></datacolumn><datacolumn><name>referencekey</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update ItemNumbers for Target DB</stepname></step><step><id>2953</id><entity>-none-</entity><action>exec SQL</action><source>105</source><target>129</target><datasource>UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = ISNULL(r.rowstatus, -1)
+    , abei_message = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n
+    LEFT JOIN [ABEI].[dbo].[_AB_Entity_results] AS r WITH (NOLOCK)
+        ON r.runid = n.abei_runid
+        AND r.jobid = '%jobid%'
+        AND r.Entity = 'ItemNumber'
+        AND r.TargetDB = n.administration
+        AND r.ReferenceValue = CAST(n.tID as varchar(100))
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeisourcedb%'</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>Check result (Source to Exact)</stepname></step><step><id>2955</id><entity>ItemNumber</entity><action>update</action><source>129</source><target>107</target><datasource>SELECT ID, DateEnd, LotNumber
+    , tID as referencekey
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n WITH (NOLOCK)
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeitargetdb%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>LotNumber</name><type>String</type></datacolumn><datacolumn><name>referencekey</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update ItemNumbers for Target DB</stepname></step><step><id>2956</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>129</target><datasource>UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = ISNULL(r.rowstatus, -1)
+    , abei_message = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n
+    LEFT JOIN [ABEI].[dbo].[_AB_Entity_results] AS r WITH (NOLOCK)
+        ON r.runid = n.abei_runid
+        AND r.jobid = '%jobid%'
+        AND r.Entity = 'ItemNumber'
+        AND r.TargetDB = n.administration
+        AND r.ReferenceValue = CAST(n.tID as varchar(100))
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeisourcedb%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>210</seqno><settings /><settingsxml /><stepname>Check result (Source to Exact)</stepname></step><step><id>2957</id><entity>ItemNumber</entity><action>update</action><source>129</source><target>127</target><datasource>SELECT ID, DateEnd, LotNumber
+    , tID as referencekey
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n WITH (NOLOCK)
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeitargetdb%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>LotNumber</name><type>String</type></datacolumn><datacolumn><name>referencekey</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update ItemNumbers for Target DB</stepname></step><step><id>2958</id><entity>-none-</entity><action>exec SQL</action><source>127</source><target>129</target><datasource>UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = ISNULL(r.rowstatus, -1)
+    , abei_message = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n
+    LEFT JOIN [ABEI].[dbo].[_AB_Entity_results] AS r WITH (NOLOCK)
+        ON r.runid = n.abei_runid
+        AND r.jobid = '%jobid%'
+        AND r.Entity = 'ItemNumber'
+        AND r.TargetDB = n.administration
+        AND r.ReferenceValue = CAST(n.tID as varchar(100))
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeisourcedb%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>310</seqno><settings /><settingsxml /><stepname>Check result (Source to Exact)</stepname></step><step><id>2959</id><entity>ItemNumber</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT ID, DateEnd, LotNumber
+    , tID as referencekey
+FROM [dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n WITH (NOLOCK)
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeitargetdb%'</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>400</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>LotNumber</name><type>String</type></datacolumn><datacolumn><name>referencekey</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update ItemNumbers for Target DB</stepname></step><step><id>2960</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>129</target><datasource>UPDATE n WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = ISNULL(r.rowstatus, -1)
+    , abei_message = ISNULL(r.errormessage, 'No result found')
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_AB_tb_ExtendedWarranty_ItemNumbers] n
+    LEFT JOIN [ABEI].[dbo].[_AB_Entity_results] AS r WITH (NOLOCK)
+        ON r.runid = n.abei_runid
+        AND r.jobid = '%jobid%'
+        AND r.Entity = 'ItemNumber'
+        AND r.TargetDB = n.administration
+        AND r.ReferenceValue = CAST(n.tID as varchar(100))
+WHERE 1=1
+    AND n.abei_rowstatus = 1
+    AND n.abei_runid = '%runid%'
+    AND n.administration = '%abeisourcedb%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>410</seqno><settings /><settingsxml /><stepname>Check result (Source to Exact)</stepname></step><step><id>2961</id><entity>ItemNumber</entity><action>update</action><source>127</source><target>107</target><datasource>select i.id, i.ItemCode, i.Number, ii.DateEnd, ii.LotNumber
+from [400]..itemnumbers i with (nolock)
+inner join [483]..itemnumbers ii with (nolock)  on ii.Number = i.Number
+where i.DateEnd is not  null and ii.DateEnd is not null and DATEDIFF(dd,i.DateEnd, ii.DateEnd) &gt; 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>900</seqno><settings /><settingsxml /><stepname>(400 only) Update EW ICL orders</stepname></step><step><id>3000</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT n.administration, n.ordernr, n.debnr, n.regel, n.artcode, n.oms45, n.afldat, n.warranty_artcode, n.DateEnd, n.abei_message, n.abei_checkmessage
+FROM dbo._AB_tb_ExtendedWarranty_ItemNumbers n WITH (NOLOCK)
+WHERE 1=1
+    AND n.syscreated &gt;= CAST(CURRENT_TIMESTAMP as date)
+    AND n.abei_runid = '%runid%'
+    AND (n.abei_rowstatus = -1 -- Error
+        OR (n.abei_rowstatus = 10 AND n.abei_message NOT LIKE 'Skipped%') 
+        OR (ISNULL(n.abei_checkmessage, '') != '')
+    )
+ORDER BY n.administration, n.ordernr, n.regel, n.tID</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;Onderstaande meldingen zijn voorgekomen tijdens het berekenen van de Extended Warranty.&lt;/p&gt;&lt;p&gt;Graag de orders controleren.&lt;/p&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;administration&lt;/td&gt;&lt;td&gt;ordernr&lt;/td&gt;&lt;td&gt;debnr&lt;/td&gt;&lt;td&gt;regel&lt;/td&gt;&lt;td&gt;artcode&lt;/td&gt;&lt;td&gt;oms45&lt;/td&gt;&lt;td&gt;afldat&lt;/td&gt;&lt;td&gt;warranty_artcode&lt;/td&gt;&lt;td&gt;DateEnd&lt;/td&gt;&lt;td&gt;abei_message&lt;/td&gt;&lt;td&gt;abei_checkmessage&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%administration%&lt;/td&gt;&lt;td&gt;%ordernr%&lt;/td&gt;&lt;td&gt;%debnr%&lt;/td&gt;&lt;td&gt;%regel%&lt;/td&gt;&lt;td&gt;%artcode%&lt;/td&gt;&lt;td&gt;%oms45%&lt;/td&gt;&lt;td&gt;%afldat%&lt;/td&gt;&lt;td&gt;%warranty_artcode%&lt;/td&gt;&lt;td&gt;%DateEnd%&lt;/td&gt;&lt;td&gt;%abei_message%&lt;/td&gt;&lt;td&gt;%abei_checkmessage%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="11"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;br&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>1000</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Meldingen Extended Warranty berekening;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=administration,ordernr,debnr,regel,artcode,oms45,afldat,warranty_artcode,DateEnd,abei_message,abei_checkmessage;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>administration</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>warranty_artcode</name><type>String</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>abei_message</name><type>String</type></datacolumn><datacolumn><name>abei_checkmessage</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>EW: Send mail for errors</stepname></step></steps></job></jobs>

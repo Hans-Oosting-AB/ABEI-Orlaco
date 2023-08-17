@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>453</id><jobname>IConneqt Sync contact information</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=07:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2591</id><entity>ContactPerson</entity><action>update</action><source>1</source><target>1</target><datasource>select top 100 percent C.id, C.cnt_ID, 
+textfield2 AS OLD_T2,
+CASE WHEN S.Id IS NULL THEN 'non-confirmed' ELSE CASE WHEN S.Bounced = 1 THEN 'bounced' WHEN S.Unsubscribed = 1 THEN 'unsubscribed' WHEN S.Confirmed = 1 THEN 'confirmed' ELSE 'non-confirmed' END END AS TextField2, -- optin
+textfield4 AS OLD_T4, 
+SUBSTRING(ISNULL(S.Subscriptions,''),0,80) COLLATE DATABASE_DEFAULT AS TextField4 -- classification, 
+FROM [orlaco]..cicntp C WITH (NOLOCK)
+INNER JOIN [ExactData].._ST_IC_Subscribers S WITH (NOLOCK) ON c.cnt_email = S.Email COLLATE DATABASE_DEFAULT
+WHERE 
+S.Deleted = 0 AND (
+(textfield2 IS NULL OR textfield2 != (CASE WHEN S.Bounced IS NULL THEN 'non-confirmed' ELSE CASE WHEN S.Bounced = 1 THEN 'bounced' WHEN S.Unsubscribed = 1 THEN 'unsubscribed' WHEN S.Confirmed = 1 THEN 'confirmed' ELSE 'non-confirmed' END END ))
+OR ( ISNULL(textfield4, '') != SUBSTRING(ISNULL(S.Subscriptions,''),0,80) COLLATE DATABASE_DEFAULT))</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update Synergy Contacts with IConneqt data</stepname></step><step><id>2987</id><entity>ContactPerson</entity><action>update</action><source>1</source><target>1</target><datasource>select DISTINCT TOP 1000  C.id, C.cnt_ID, 
+textfield2 AS OLD_T2,
+'deleted' AS TextField2 -- optin
+FROM [orlaco]..cicntp C WITH (NOLOCK)
+INNER JOIN [ExactData].._ST_IC_Subscribers S WITH (NOLOCK) ON c.cnt_email = S.Email COLLATE DATABASE_DEFAULT
+WHERE 
+S.Deleted = 1 AND C.ID NOT IN (SELECT C.ID FROM [orlaco]..cicntp C WITH (NOLOCK)
+INNER JOIN [ExactData].._ST_IC_Subscribers S WITH (NOLOCK) ON c.cnt_email = S.Email COLLATE DATABASE_DEFAULT 
+WHERE S.Deleted = 0) AND (textfield2 != 'deleted')</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Update Synergy Contacts with DELETED IConneqt data</stepname></step></steps></job></jobs>

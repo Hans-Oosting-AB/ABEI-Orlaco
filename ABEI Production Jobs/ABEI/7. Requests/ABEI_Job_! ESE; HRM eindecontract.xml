@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>307</id><jobname>! ESE: HRM eindecontract</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=09:15:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1434</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>select 
+	ab.HID as sleutel
+	,'Systeemmelding: contract ' + hr.fullname + ' verloopt op ' + cast(convert(nvarchar, ab.enddate, 105) as varchar) as Description
+	, 'Type contract: ' +  ab.description as WorkflowComments
+	, cast('1' as int) as Private
+	, cast('7350' as int) as empID
+	, cast('0' as int) as Type
+from 
+	absences ab with (nolock),
+	humres hr with (nolock)
+where 
+	ab.empid = hr.res_id
+	and type = 11001 
+	and ab.enddate &gt; getdate()
+	and ab.enddate &lt; dateadd (day, 63 ,getdate())
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=sleutel;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Taak aanmaken HR-manager</stepname></step><step><id>1435</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>select 
+	ab.HID as sleutel
+	,'Systeemmelding: contract ' + hr.fullname + ' verloopt op ' + cast(convert(nvarchar, ab.enddate, 105) as varchar)  as Description
+	, 'Type contract: ' +  ab.description as WorkflowComments
+	, cast('1' as int) as Private
+	, hr.repto_id as empID
+	, cast('0' as int) as Type
+from 
+	absences ab with (nolock),
+	humres hr with (nolock)
+where 
+	ab.empid = hr.res_id
+	and type = 11001 
+	and ab.enddate &gt; getdate()
+	and ab.enddate &lt; dateadd (day, 63 ,getdate())</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=sleutel;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Taak aanmaken manager medewerker</stepname></step></steps></job></jobs>

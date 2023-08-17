@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>491</id><jobname>EG: Test Transferorder - weight on invoice</jobname><disable>True</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>5277536, 5277024</remarks><schedulename /><schedulesettings>startat=13:14:54;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams><jobparam><name>param_hids</name><type>String</type><value>5277024</value></jobparam></jobparams></settings></settingsxml><steps><step><id>2976</id><entity>SalesOrderLine</entity><action>create</action><source>129</source><target>105</target><datasource>SELECT  
+    t.hid as HeaderID
+    , t.itemcode AS artcode
+    , sum(t.quantity) as esr_aantal
+    , linereferenceid AS ReferenceID
+    , linereferenceid as field01  -- Wordt gebruikt om te controleren of de betreffende regel terug te vinden is in de database
+    --, CAST(sum(t.NetWeight) as decimal(15,2)) as gewicht_bi -- Added 210119 LVE
+FROM [dbo].[_AB_tb_TransfersOrders] AS t WITH(nolock)
+WHERE 1=1
+    --AND t.runid = '%runid%'  
+    --AND t.seqno = 130
+    --AND t.rowstatus = 1
+    -- Test
+    AND t.itemcode != '0174000' -- doesn't exist in test
+    AND t.hid IN (%param_hids%)
+group by t.hid, t.itemcode, linereferenceid</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>Int32</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>esr_aantal</name><type>Double</type></datacolumn><datacolumn><name>ReferenceID</name><type>String</type></datacolumn><datacolumn><name>field01</name><type>String</type></datacolumn><datacolumn><name>gewicht_bi</name><type>Decimal</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create sales order (set target to Globe)</stepname></step><step><id>2977</id><entity>SalesOrderHeader</entity><action>create</action><source>129</source><target>105</target><datasource>SELECT  
+    t.hid as HeaderID
+    , '997354' as debnr
+    , RIGHT(CONCAT('Transfer USA ', t.hid), 20) as refer
+    , t.hid as refer1
+    --, CONCAT('Transfer USA ', t.hid) as docnumber
+    --, ISNULL(t.purchase_ordernr, 'PO unknown') as docnumber
+    , LEFT(CONCAT('po:',ISNULL(t.purchase_ordernr, 'unknown'), ' - rq:', t.hid),30) as docnumber
+    , '60' as magcode
+    , orderreferenceid AS ReferenceID
+    , orderreferenceid AS Freefield3 -- Gebruikt voor het terugzoeken van het InkoopOrdernr
+    , 1 as isuseadditionalfields
+    --, SUM(NetWeight) as netto_gew
+    --, SUM(NetWeight) as bruto_gew
+FROM [dbo].[_AB_tb_TransfersOrders] AS t WITH(nolock)
+WHERE 1 = 1
+    --AND t.runid = '%runid%'  
+    --AND t.seqno = 130
+    --AND t.rowstatus = 1 
+    -- Test
+    AND t.hid IN (%param_hids%)
+    
+   GROUP BY t.hid, t.purchase_ordernr, orderreferenceid
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>ReferenceID</referencekey><datacolumns><datacolumn><name>HeaderID</name><type>Int32</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>refer</name><type>String</type></datacolumn><datacolumn><name>refer1</name><type>Int32</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>magcode</name><type>String</type></datacolumn><datacolumn><name>ReferenceID</name><type>String</type></datacolumn><datacolumn><name>Freefield3</name><type>String</type></datacolumn><datacolumn><name>isuseadditionalfields</name><type>Int32</type></datacolumn><datacolumn><name>netto_gew</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create sales order - Header (set target to Globe)</stepname></step><step><id>2978</id><entity>SDK-SalesOrder-FulfillmentLine</entity><action>process</action><source>129</source><target>105</target><datasource>SELECT TOP (10) r.ordernr as HeaderID, t.ItemCode as artcode, t.quantity as esr_aantal, r.ID, t.ItemNumber as serie_num
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+    -- Get the first orderline we can use to deliver this
+    CROSS APPLY (
+        SELECT TOP (1) r.ordernr, r.ID
+        FROM [100].dbo.orsrg r WITH (NOLOCK)
+        WHERE 1=1
+        AND r.ordernr = '12100079' --t.sales_ordernr COLLATE DATABASE_DEFAULT
+            AND r.artcode = t.ItemCode COLLATE DATABASE_DEFAULT
+            AND r.uitgifte = 0 -- Not delivered yet
+        ORDER BY r.regel
+    ) r
+WHERE 1=1
+    --AND t.runid1 = '%runid%'
+    --AND t.rowstatus1 = 1
+    
+    -- Test
+    AND t.hid IN (%param_hids%)
+ORDER BY t.ItemNumber</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>240</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>esr_aantal</name><type>Double</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>serie_num</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>SDK Fulfillment Line (set target to Globe)</stepname></step><step><id>2979</id><entity>SDK-SalesOrder-FulfillmentHeader</entity><action>process</action><source>129</source><target>105</target><datasource>SELECT DISTINCT k.ordernr as HeaderID, k.ordernr as ordernr
+    , 1 as InvoiceGenerate -- Generate invoice
+    , k.magcode
+    , 2 as PrintDestination -- Don't print
+    , 'PAKBON' as PrintLayout
+FROM dbo._AB_tb_TransfersOrders t WITH (NOLOCK)
+    INNER JOIN [100].dbo.orkrg k WITH (NOLOCK)
+    ON k.ordernr = '12100079'-- t.sales_ordernr COLLATE DATABASE_DEFAULT 
+        AND k.ord_soort = 'V' AND k.afgehandld = 0
+WHERE 1=1
+    --AND t.runid1 = '%runid%'
+    --AND t.rowstatus1 = 1
+    -- Test
+    AND t.hid IN (%param_hids%)</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>240</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>InvoiceGenerate</name><type>Int32</type></datacolumn><datacolumn><name>magcode</name><type>String</type></datacolumn><datacolumn><name>PrintDestination</name><type>Int32</type></datacolumn><datacolumn><name>PrintLayout</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>SDK Fulfillment Header (set target to Globe)</stepname></step></steps></job></jobs>

@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>455</id><jobname>05.1.1 - ESE - Update CRM type in Synergy</jobname><disable>True</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=05:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2598</id><entity>-none-</entity><action>exec SQL</action><source>1</source><target>0</target><datasource>  INSERT INTO [ExactData].[dbo].[_ST_SYNERGY_RELATIONTYPES_LOG] 
+
+  SELECT [cmp_wwn]
+      ,[Code]
+      ,[Relatienaam]
+      ,[Debiteurcode]
+      ,[Status]
+      ,[TypeCode]
+      ,[TypeDescription]
+      ,[NewTypeCode]
+      ,[NewTypeDescription]
+      ,[ClassificationId]
+      ,[maxorddat]
+      ,[MaxContactDat]
+      ,[MaxQuotDat]
+      ,GETDATE() as updated
+      ,'%runid%' as runid
+  FROM [ExactData].[dbo].[_ST_VW_SYNERGY_RELATIONTYPES]
+  WHERE typecode collate database_default &lt;&gt; newtypecode </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Log account type and runid</stepname></step><step><id>2599</id><entity>Account</entity><action>update</action><source>1</source><target>1</target><datasource>SELECT top 100 percent cmp_wwn, NewTypeCode as cmp_type from [ExactData].[dbo].[_ST_SYNERGY_RELATIONTYPES_LOG] where runid = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Update account type</stepname></step><step><id>2777</id><entity>Account</entity><action>update</action><source>1</source><target>107</target><datasource>select c.cmp_wwn, 'B' as cmp_status, 
+
+CONCAT(ISNULL(c.cmp_note, '') collate database_default, CONVERT(text,('
+[ABEI Synchronisation ' + CONVERT(varchar,GETDATE(),120) + ']
+Blocked because debtor has been downgraded.'   ))) as cmp_note
+
+from [%abeitargetdb%].[dbo].cicmpy c with (NOLOCK) 
+inner join [%abeisourcedb%]..cicmpy cc with (NOLOCK) on c.cmp_code = cc.cmp_code
+where c.cmp_type = 'C' and cc.cmp_type &lt;&gt; 'C' and c.cmp_status = 'A'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>Block accounts in Globe  with different type</stepname></step><step><id>2778</id><entity>Account</entity><action>update</action><source>1</source><target>126</target><datasource>select c.cmp_wwn, 'B' as cmp_status, 
+
+CONCAT(ISNULL(c.cmp_note, '') collate database_default, CONVERT(text,('
+[ABEI Synchronisation ' + CONVERT(varchar,GETDATE(),120) + ']
+Blocked because debtor has been downgraded.'   ))) as cmp_note
+
+from [%abeitargetdb%].[dbo].cicmpy c with (NOLOCK) 
+inner join [%abeisourcedb%]..cicmpy cc with (NOLOCK) on c.cmp_code = cc.cmp_code
+where c.cmp_type = 'C' and cc.cmp_type &lt;&gt; 'C' and c.cmp_status = 'A'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>41</seqno><settings /><settingsxml /><stepname>Block accounts in Globe  with different type</stepname></step><step><id>2779</id><entity>Account</entity><action>update</action><source>1</source><target>112</target><datasource>select c.cmp_wwn, 'B' as cmp_status, 
+
+CONCAT(ISNULL(c.cmp_note, '') collate database_default, CONVERT(text,('
+[ABEI Synchronisation ' + CONVERT(varchar,GETDATE(),120) + ']
+Blocked because debtor has been downgraded.'   ))) as cmp_note
+
+from [%abeitargetdb%].[dbo].cicmpy c with (NOLOCK) 
+inner join [%abeisourcedb%]..cicmpy cc with (NOLOCK) on c.cmp_code = cc.cmp_code
+where c.cmp_type = 'C' and cc.cmp_type &lt;&gt; 'C' and c.cmp_status = 'A' </datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>42</seqno><settings /><settingsxml /><stepname>Block accounts in Globe  with different type</stepname></step></steps></job></jobs>

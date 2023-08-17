@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>543</id><jobname>05.9.1 - EG: Start Sync Item From Pro.File</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=minutes;startat=12:46:14;beginat=01:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3788</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT MAX(CASE WHEN r.id IS NULL THEN 0 ELSE 1 END) as doQuit
+FROM (VALUES (0)) l(v)
+    LEFT JOIN dbo._AB_Entity_Log r WITH (NOLOCK)
+    ON r.jobid = 332
+        AND r.syscreated &gt; DATEADD(HOUR, -2, CURRENT_TIMESTAMP) -- check for max 2 hours back
+        AND NOT EXISTS (SELECT 1 FROM dbo._AB_Entity_Log r1 WITH (NOLOCK) WHERE r1.runid = r.runid AND r1.seqno = -10) -- -10 is 'Finished Running Job'
+        
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;sysaction=6;sysfilefolder=;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>doQuit</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Quit if 332 job running already</stepname></step><step><id>3785</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>UPDATE TOP(1) [ExactData].dbo._ST_EG_UpdateItemBOMProFile 
+SET State = 1, ModifiedOn = GETDATE()
+WHERE State = 0
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>5</seqno><settings /><settingsxml /><stepname>Set row State</stepname></step><step><id>3784</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>INSERT INTO [ABEI].[dbo].[_AB_Entity_trigger_table] (jobid, params, syscreated) 
+SELECT TOP 1
+ 332 AS jobid,
+ 'param_partid=' + CONVERT(VARCHAR(10), PartId) + ';param_itemcode=' + Itemcode as params,
+CURRENT_TIMESTAMP as syscreated
+FROM [ExactData].dbo._ST_EG_UpdateItemBOMProFile 
+WHERE State = 1
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>INSERT into TriggerTable</stepname></step><step><id>3789</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>UPDATE [ExactData].dbo._ST_EG_UpdateItemBOMProFile 
+SET State = 2, ModifiedOn = GETDATE()
+WHERE State = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Set row State</stepname></step></steps></job></jobs>

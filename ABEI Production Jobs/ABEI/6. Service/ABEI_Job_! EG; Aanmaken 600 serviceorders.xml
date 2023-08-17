@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>336</id><jobname>! EG: Aanmaken 600 serviceorders</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1594</id><entity>SalesOrderHeader</entity><action>create</action><source>1</source><target>107</target><datasource>SELECT     distinct
+
+  a.HID as HeaderID
+, 'V' as ord_soort
+, '1' as betaald
+, '0' as ordbv_afdr
+, 'S_' + cast(a.HID as varchar(50)) AS refer
+, isnull(cast(ltrim(rtrim(a.FreeTextField_02)) as varchar(max)), '') + '/' + isnull(cast(ltrim(rtrim(a.FreeTextField_03))as varchar(max)), '')  AS refer1
+, a.FreeTextField_06 AS refer2
+, a.FreeTextField_04 as docnumber
+, 'EUR' as Valcode
+, c.debnr as debnr
+, c.debnr as verzdebnr
+, CASE ISNULL(a.freetextfield_13, 'leeg') WHEN 'leeg' THEN (CASE ISNULL(a.freetextfield_07, 'leeg') WHEN 'leeg' THEN (c.cmp_name) ELSE (a.freetextfield_13) END) ELSE (a.freetextfield_13) END collate database_default AS del_debtor_name
+, cast(ltrim(rtrim(a.FreeTextField_14)) as varchar) AS del_ContactPerson
+, '--' as del_cnt_job_desc
+, CASE ISNULL(a.freetextfield_13, 'leeg') WHEN 'leeg' THEN (CASE ISNULL(a.freetextfield_07, 'leeg') WHEN 'leeg' THEN (c.cmp_fadd1) ELSE (a.freetextfield_07) END) ELSE (a.freetextfield_07) END collate database_default AS del_AddressLine1
+, CASE ISNULL(a.freetextfield_13, 'leeg') WHEN 'leeg' THEN (CASE ISNULL(a.freetextfield_07, 'leeg') WHEN 'leeg' THEN (c.cmp_fpc) ELSE (a.freetextfield_08) END) ELSE (a.freetextfield_08) END collate database_default AS del_PostCode
+, CASE ISNULL(a.freetextfield_13, 'leeg') WHEN 'leeg' THEN (CASE ISNULL(a.freetextfield_07, 'leeg') WHEN 'leeg' THEN (c.cmp_fcity) ELSE (a.freetextfield_12) END) ELSE (a.freetextfield_12) END collate database_default AS del_City
+, 'S20' as Magcode
+, 'ZZ_OP' as kstplcode
+, a.FreeTextField_10 as selcode
+, '0' as colli
+, '0' as Netto_gew
+, '0' as Bruto_gew
+, cast(ltrim(rtrim(isnull(a.RequestComments, ''))) as varchar(max)) as Note
+, a.FreeIntField_03 as fakt_code
+FROM         dbo.Absences AS a (nolock) 
+                  INNER JOIN dbo.cicmpy AS c (nolock) ON a.CustomerID = c.cmp_wwn 
+                  LEFT OUTER JOIN dbo.cicntp AS ci (nolock) ON a.CustomerContactID = ci.cnt_id 
+                  INNER JOIN [400].dbo.cicmpy AS vic (nolock) ON c.debnr = vic.debnr
+                  left outer join dbo.orkrg ok on ok.refer = 'S_' + cast(a.hid as varchar(50))
+
+WHERE      1=1
+                  AND (a.Type = 600) 
+                  AND (a.FreeBoolField_01 = 1) 
+                  AND (a.FreeBoolField_05 = 0)
+                   and ok.id is null
+
+Group by     a.HID
+                 , a.FreeTextField_02
+                 , a.FreeTextField_03
+                 , a.FreeTextField_04
+                 , a.FreeTextField_06
+                 , a.FreeTextField_07
+                 , a.FreeTextField_08
+                 , a.FreeTextField_10
+                 , a.FreeTextField_12
+                 , a.FreeTextField_13
+                 , a.FreeTextField_14
+                 , a.RequestComments 
+                 , c.debnr
+                 , c.cmp_name
+                 , c.cmp_fadd1
+                 , c.cmp_fpc
+                 , c.cmp_fcity
+                 , a.FreeIntField_03
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken salesorderheader vanuit verzoektype 600</stepname></step><step><id>1595</id><entity>SalesOrderLine</entity><action>create</action><source>1</source><target>107</target><datasource>SELECT     
+
+  a.HID as HeaderID
+  , 'TXT-RGL' as artcode
+, '1' as esr_aantal
+, 'Servicemelding ' + cast(ltrim(rtrim(a.HID)) as varchar) as oms45
+, 'Servicemelding ' + cast(ltrim(rtrim(a.HID)) as varchar) as TextDescription
+
+FROM         dbo.Absences AS a (nolock) 
+                  INNER JOIN dbo.cicmpy AS c (nolock) ON a.CustomerID = c.cmp_wwn 
+                  LEFT OUTER JOIN dbo.cicntp AS ci (nolock) ON a.CustomerContactID = ci.cnt_id 
+                  INNER JOIN [400].dbo.cicmpy AS vic (nolock) ON c.debnr = vic.debnr
+
+WHERE      1=1
+                  AND (a.Type = 600) 
+                  AND (a.FreeBoolField_01 = 1) 
+                  AND (a.FreeBoolField_05 = 0)
+
+
+
+
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Aanmaken salesorderlines vanuit verzoektype 600</stepname></step><step><id>1617</id><entity>Document</entity><action>create</action><source>1</source><target>107</target><datasource>SELECT      er.newkeyvalue as Ordernumber,
+            at.AttachmentFileName as BinaryFileName,
+            at.Attachment as BinaryDocument,
+            at.AttachmentFileName as subject,
+            221 as type,
+                        1 as status
+from    [abei].dbo._AB_Entity_results as er with (nolock)
+        inner join [400].dbo.orkrg as ok with (nolock) on er.newkeyvalue collate Latin1_General_CI_AS = ok.ordernr
+        inner join dbo.absences as ab with (nolock) on ab.hid = er.headerid collate Latin1_General_CI_AS
+        inner join dbo.Attachments at on ab.ID = at.Entity
+where   1=1
+    and er.jobid = '%jobid%'
+    and er.runid = '%runid%'
+    and er.entity = 'SalesOrderHeader'
+    and er.rowstatus = 2
+    AND (ab.Type = 600) 
+          AND (ab.FreeBoolField_01 = 1)     
+          AND (ab.FreeBoolField_05 = 0)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>15</seqno><settings /><settingsxml /><stepname>Voeg document toe aan order</stepname></step><step><id>1611</id><entity>Request</entity><action>update</action><source>107</source><target>1</target><datasource>select top 100 percent a.ID, 1 as freeboolfield_05, MAX(o.ordernr) as freetextfield_11
+from  [orlaco].dbo.Absences a with (nolock) inner join [ABEI].dbo._AB_Entity_results_log r with (nolock) on r.property = 'Reference' and r.valueString = 'S_' + cast(a.hid as varchar(50))
+                     inner join dbo.orkrg o with (nolock) on 'S_' + cast(a.hid as varchar(50)) = o.refer
+where 1=1
+    and r.jobid = '%jobid%'
+    and r.runid = '%runid%'
+GROUP BY a.ID</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Markeer het verzoek als behandeld</stepname></step></steps></job></jobs>

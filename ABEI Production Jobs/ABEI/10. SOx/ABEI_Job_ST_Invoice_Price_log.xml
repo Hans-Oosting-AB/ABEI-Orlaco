@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>476</id><jobname>ST_Invoice_Price_log</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=06:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2823</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO _AB_LOG_SOX_InvoicePrices_History
+SELECT  CONCAT(DATEPART(YEAR, fakdat), ' - ', DATEPART(MONTH, fakdat)) AS InvMonth, *, GETDATE() AS LogDate
+FROM dbo._AB_vw_SOX_InvoicePrices_History ip 
+WHERE
+ip.fak_soort = 'V' -- Only sales orders
+AND ip.ar_soort IN ('V', 'N') -- Only Sales Items (exclude text rows etc)
+AND ip.NPrice_order &gt; 0 -- Exclude items in a set
+AND ip.NPrice_Exact &gt; 0 -- Exclude items without sales price
+AND ip.esr_aantal &gt; 0 -- Exclude returns
+AND ip.check_status &lt; 0 -- Only errors
+AND ip.sysmodified BETWEEN DATEADD(DAY,-1,CONVERT(DATE,GETDATE())) AND CONVERT(DATE,GETDATE()) -- Yesterday
+AND ip.frhsrgid NOT IN (SELECT frhsrgid FROM _AB_LOG_SOX_InvoicePrices_History) -- prevent double insertion
+ORDER BY frhsrgid</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Log price changes on invoices</stepname></step></steps></job></jobs>

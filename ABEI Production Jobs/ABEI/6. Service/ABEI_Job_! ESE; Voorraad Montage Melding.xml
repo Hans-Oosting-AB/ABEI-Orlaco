@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>343</id><jobname>! ESE: Voorraad Montage Melding</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=11:58:08;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1607</id><entity>Request</entity><action>update</action><source>107</source><target>1</target><datasource>select case when ok.magcode = '4' then 1 else 0 end as freeboolfield_03 
+    ,ab.id
+from 
+    dbo.orkrg ok with(NOLOCK) inner join
+    [orlaco].dbo.absences ab with (NOLOCK) on ok.ordernr = ab.freetextfield_09
+where
+    ok.afgehandld =0 and
+    ab.type = 630 AND
+    ab.freeboolfield_03 != case when ok.magcode = '4' then 1 else 0 end</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Verander checkbox aan de hand van magazijncode 4</stepname></step></steps></job></jobs>

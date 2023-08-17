@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>231</id><jobname>! ESE: Controle nieuwe debiteur</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>Maakt verzoek "ADM: controle debiteurenstam" aan in Synergy
+</remarks><schedulename /><schedulesettings>freq=5;timescale=minutes;startat=00:00:00;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1090</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>SELECT 
+
+  dbo.Orlaco_EEM_debiteurencontrole.relatiecode AS "Customercode"
+, dbo.Orlaco_EEM_debiteurencontrole.relatieID AS "CustomerID"
+, dbo.Orlaco_EEM_debiteurencontrole.relatienaam AS "relatienaam"
+, ('Nieuwe debiteur ' + dbo.Orlaco_EEM_debiteurencontrole.relatiecode + '/' + dbo.Orlaco_EEM_debiteurencontrole.relatienaam collate database_default) as Description
+, dbo.Orlaco_EEM_debiteurencontrole.veranderdatum AS "veranderdatum" 
+, '970' AS Type
+
+FROM dbo.Orlaco_EEM_debiteurencontrole with(nolock) 
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=Customercode;retryunique=0;</settings><settingsxml><settings><general><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Maak verzoek 970 aan om stamgegevens te laten controleren</stepname></step></steps></job></jobs>

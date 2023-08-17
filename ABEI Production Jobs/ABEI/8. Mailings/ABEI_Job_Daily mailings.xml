@@ -1,0 +1,1111 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>460</id><jobname>Daily mailings</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=1;timescale=once;startat=07:00:00;beginat=00:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1737</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT itemcode, description, condition, itemtype
+FROM dbo._AB_Controle_artikelen_MRP WITH (NOLOCK)
+ORDER BY ItemCode</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;TH&gt;Beste Exact gebruiker,&lt;/TH&gt; &lt;BR&gt;&lt;BR&gt;&lt;TH&gt;De volgende artikelen hebben een onjuist type en verschijnen mogelijk niet in het MRP scherm:&lt;/TH&gt; &lt;BR&gt;&lt;BR&gt;
+&lt;TABLE border=1&gt;
+&lt;TBODY&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;itemcode&lt;/TD&gt;
+&lt;TD&gt;description&lt;/TD&gt;
+&lt;TD&gt;condition&lt;/TD&gt;
+&lt;TD&gt;itemtype&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%itemcode%&lt;/TD&gt;
+&lt;TD&gt;%description%&lt;/TD&gt;
+&lt;TD&gt;%condition%&lt;/TD&gt;
+&lt;TD&gt;%itemtype%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=4&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/TABLE&gt;&lt;BR&gt;&lt;TH&gt;Controleer deze artikelen handmatig.&lt;/TH&gt; &lt;BR&gt;&lt;BR&gt;&lt;TH&gt;Met vriendelijke groet,&lt;/TH&gt; &lt;BR&gt;&lt;TH&gt;Orlaco database mailer.&lt;/TH&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=e.burg@orlaco.com,b.kooi@orlaco.com;emailcc=;emailbcc=;emailsub=Noodzakelijke controle status artikelen t.b.v. MRP;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=itemcode,description,condition,itemtype;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>itemcode</name><type>String</type></datacolumn><datacolumn><name>description</name><type>String</type></datacolumn><datacolumn><name>condition</name><type>String</type></datacolumn><datacolumn><name>itemtype</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Sent mail items with incorrect status</stepname></step><step><id>1030</id><entity>-none-</entity><action>create</action><source>1</source><target>7</target><datasource>SELECT top 1  ID 
+FROM absences where ID in 
+
+(SELECT  dbo.Absences.ID FROM dbo.Absences WHERE  dbo.Absences.Type  =  620 AND dbo.Absences.Status  =  1)
+
+and (datepart(dd, current_timestamp) = 1
+     or datediff(dd,(select max(lg.syscreated) from [ABEI].._ab_entity_log lg where jobid = '214'), current_timestamp)&gt;31
+      )
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=1;ssrsserver=http://SQL/reportserver/;ssrsreport=/ABEI Reports/ABEI_Service_verhuur_facturen;ssrsformat=HTML4.0;ssrsfile=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=r.bernhard@orlaco.com;emailcc=;emailbcc=;emailsub=Service Verhuur Facturen;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Service huur facturen</stepname></step><step><id>1044</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>Select  TOP 100 PERCENT
+            ci.cmp_name as Relatie
+            , cp.FullName as Contactpersoon
+            , hrold.fullname as Oud
+            , hrnew.fullname as Nieuw
+            , REPLACE(CONVERT(VARCHAR(16),el.Created, 126), 'T',' ') as Datum
+            , hr.fullname as Naam
+
+FROM                    dbo.EbcDataLog el (nolock)
+            inner join dbo.EbcProps ep (nolock) ON el.Property = ep.PropId
+            left join cicntp cp (nolock) on cp.cnt_id = el.DataKey
+            left join cicmpy ci (nolock) on ci.cmp_wwn = cp.cmp_wwn
+            inner join humres hrold (nolock) on hrold.res_id = el.OldValue
+            inner join humres hrnew (nolock) on hrnew.res_id = el.NewValue
+            inner join humres hr (nolock) on hr.res_id = el.creator
+
+where           1=1
+            and ep.PropName = 'AccountManager'
+            and el.Created &gt;= (getdate()-1)
+ORDER BY ci.cmp_name, cp.FullName</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;&lt;HEAD&gt;
+&lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;
+&lt;META name=GENERATOR content="MSHTML 11.00.9600.18057"&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;P&gt;&lt;FONT size=4 face=Calibri&gt;Beste lezer,&lt;/FONT&gt;&lt;/P&gt;
+&lt;P&gt;&lt;FONT size=4 face=Calibri&gt;Bij de volgende relaties is de Vertegenwoordiger 
+gewijzigd:&lt;/FONT&gt;&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE 
+style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" 
+cellSpacing=0 cellPadding=1 border=1&gt;
+  &lt;TBODY&gt;
+  &lt;TR bgColor=white&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Relatie&lt;/FONT&gt;&lt;/TD&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Contactpersoon&lt;/FONT&gt;&lt;/TD&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Oud&lt;/FONT&gt;&lt;/TD&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Nieuw&lt;/FONT&gt;&lt;/TD&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Datum&lt;/FONT&gt;&lt;/TD&gt;
+    &lt;TD&gt;&lt;FONT size=4 face=Calibri&gt;Naam&lt;/FONT&gt;&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR class=sql&gt;
+    &lt;TD colSpan=6&gt;&lt;FONT size=4 face=Calibri&gt;## Query Table Content 
+  ##&lt;/FONT&gt;&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR bgColor=silver color="black"&gt;
+    &lt;TD colSpan=6&gt;
+      &lt;P&gt;&lt;FONT size=4 face=Calibri&gt;&lt;/FONT&gt;&amp;nbsp;&lt;/P&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;&lt;FONT size=4 face=Calibri&gt;Met vriendelijke groet,&lt;BR&gt;Exact Event 
+Manager&lt;/FONT&gt;&lt;/P&gt;&lt;/BODY&gt;&lt;/HTML&gt;
+</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.nl;emailname=ABEI @ EWS01;emailreplyto=smtpinternal.stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=b.kooi@orlaco.com%semicolon%j.beek@orlaco.com;emailcc=;emailbcc=;emailsub=Vertegenwoordiger is gewijzigd;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Relatie,Contactpersoon,Oud,Nieuw,Datum,Naam;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Relatie</name><type>String</type></datacolumn><datacolumn><name>Contactpersoon</name><type>String</type></datacolumn><datacolumn><name>Oud</name><type>String</type></datacolumn><datacolumn><name>Nieuw</name><type>String</type></datacolumn><datacolumn><name>Datum</name><type>String</type></datacolumn><datacolumn><name>Naam</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Change accountmanager</stepname></step><step><id>1444</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT DISTINCT
+          cast(convert(nvarchar, dbo.gbkmut.docdate , 105) as varchar) AS Date
+          --, dbo.gbkmut.syscreated
+        , dbo.gbkmut.aantal AS Quantity
+        , dbo.gbkmut.artcode AS Item
+        , dbo.Items.Description AS Item_Description
+        , dbo.gbkmut.oms25 AS Description
+        --, dbo.gbkmut.ID
+        , dbo.gbkmut.faktuurnr AS Invoice
+        --, dbo.gbkmut.facode AS Serialno
+
+
+FROM            dbo.gbkmut WITH (NOLOCK) 
+        INNER JOIN dbo.Items WITH (NOLOCK) ON dbo.gbkmut.artcode = dbo.Items.ItemCode
+
+WHERE       1=1
+        and (dbo.gbkmut.transtype = 'N') 
+        AND (dbo.gbkmut.transsubtype = 'A') 
+        AND (dbo.gbkmut.warehouse = '95') 
+        AND (dbo.Items.Assortment = 30) 
+       --AND  (dbo.gbkmut.docdate &gt;= CONVERT(DATETIME, '2018-05-01 00:00:00', 102))
+        AND dbo.gbkmut.syscreated &gt; DATEADD(day, -1, GETDATE())
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;body&gt;&lt;P&gt;The following item is placed in warehouse 95:&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;Item&lt;/TD&gt;
+&lt;TD&gt;Item_Description&lt;/TD&gt;
+&lt;TD&gt;Quantity&lt;/TD&gt;
+&lt;TD&gt;Date&lt;/TD&gt;
+&lt;TD&gt;Description&lt;/TD&gt;
+&lt;TD&gt;Invoice&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%Item%&lt;/TD&gt;
+&lt;TD&gt;%Item_Description%&lt;/TD&gt;
+&lt;TD&gt;%Quantity%&lt;/TD&gt;
+&lt;TD&gt;%Date%&lt;/TD&gt;
+&lt;TD&gt;%Description%&lt;/TD&gt;
+&lt;TD&gt;%Invoice%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=6&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;This email is automaticly created by ABEI %jobid%&amp;nbsp;&lt;/P&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=theo.verhoef@stoneridge.com;emailcc=;emailbcc=;emailsub=Items placed in warehouse 95;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ID,Item,Item_Description,Quantity,Date,syscreated,Description,Invoice,Serialno;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Date</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>Item</name><type>String</type></datacolumn><datacolumn><name>Item_Description</name><type>String</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>Invoice</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Stuur mail artikel boekingen interfiliaal mag 95</stepname></step><step><id>1027</id><entity>-none-</entity><action>create</action><source>107</source><target>7</target><datasource>SELECT top 1  DataKey as ID, Created, fullname AS fullname FROM _AB_Artikelen_op_vervallen_gezet</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>50</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/ABEI Reports/ABEI_vervallen_artikelen;ssrsformat=HTML4.0;ssrsfile=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=p.vliet@orlaco.nl;emailcc=;emailbcc=;emailsub=Vervallen Artikelen;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>String</type></datacolumn><datacolumn><name>Created</name><type>String</type></datacolumn><datacolumn><name>fullname</name><type>String</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Stuurt mail met vervallen artikelen</stepname></step><step><id>1581</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>SELECT '400' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [400].dbo.itemaccounts as i
+INNER JOIN [400].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.ClassificationId = 'OEM' AND c.YesNoField4 = 0 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )
+    
+UNION 
+SELECT '482' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [482].dbo.itemaccounts as i
+INNER JOIN [482].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.ClassificationId = 'OEM' AND c.YesNoField4 = 0 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )
+    
+UNION
+SELECT '484' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [484].dbo.itemaccounts as i
+INNER JOIN [484].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.ClassificationId = 'OEM' AND c.YesNoField4 = 0 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;De volgende OEM klant artikelen zijn nieuw aangemaakt:&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;Administratie&lt;/TD&gt;
+&lt;TD&gt;Orlaco artikelcode&lt;/TD&gt;
+&lt;TD&gt;Klant artikelcode&lt;/TD&gt;
+&lt;TD&gt;Debiteur&lt;/TD&gt;
+&lt;TD&gt;Naam&lt;/TD&gt;
+&lt;TD&gt;Plaats&lt;/TD&gt;
+&lt;TD&gt;Land&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%Administratie%&lt;/TD&gt;
+&lt;TD&gt;%Orlaco artikelcode%&lt;/TD&gt;
+&lt;TD&gt;%Klant artikelcode%&lt;/TD&gt;
+&lt;TD&gt;%Klantcode%&lt;/TD&gt;
+&lt;TD&gt;%Klantnaam%&lt;/TD&gt;
+&lt;TD&gt;%Plaats%&lt;/TD&gt;
+&lt;TD&gt;%Land%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=7&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;Deze email is automatisch verzonden door ABEI %jobid%&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>61</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Karles.Born@stoneridge.com,g.munt@orlaco.com;emailcc=;emailbcc=;emailsub=Nieuwe OEM klant artikelen;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Administratie,Orlaco artikelcode,Klant artikelcode,Klantcode,Klantnaam,Plaats,Land;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Administratie</name><type>String</type></datacolumn><datacolumn><name>Orlaco artikelcode</name><type>String</type></datacolumn><datacolumn><name>Klant artikelcode</name><type>String</type></datacolumn><datacolumn><name>Klantcode</name><type>String</type></datacolumn><datacolumn><name>Klantnaam</name><type>String</type></datacolumn><datacolumn><name>Plaats</name><type>String</type></datacolumn><datacolumn><name>Land</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail new OEM article codes</stepname></step><step><id>1582</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>SELECT '400' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [400].dbo.itemaccounts as i
+INNER JOIN [400].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.YesNoField4 = 1 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )
+    
+UNION 
+SELECT '482' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [482].dbo.itemaccounts as i
+INNER JOIN [482].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.YesNoField4 = 1 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )
+    
+UNION
+SELECT '484' AS [Administratie], i.ItemCode AS [Orlaco artikelcode], i.ItemCodeAccount AS [Klant artikelcode], c.cmp_code AS [Klantcode], c.cmp_name AS [Klantnaam], c.cmp_fcity AS [Plaats], c.cmp_fctry AS [Land]
+FROM [484].dbo.itemaccounts as i
+INNER JOIN [484].dbo.cicmpy as c on c.cmp_wwn = i.AccountCode 
+WHERE NOT ( i.ItemCodeAccount IS NULL ) AND c.YesNoField4 = 1 AND i.ItemCodeAccount collate database_default NOT IN 
+    ( SELECT ItemCodeAccount collate database_default FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles as c WHERE i.ItemCode collate database_default = c.ItemCode collate database_default )</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;&lt;HTML&gt;&lt;HEAD&gt;  &lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;  &lt;META name=GENERATOR content="MSHTML 11.00.9600.18036"&gt;&lt;/HEAD&gt;&lt;P&gt;De volgende nieuwe Caterpillar artikelen zijn aangemaakt:&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" cellSpacing=0 cellPadding=1 border=1&gt;
+&lt;TBODY&gt;
+&lt;TR bgColor=skyblue&gt;
+&lt;TD&gt;Administratie&lt;/TD&gt;
+&lt;TD&gt;Orlaco artikelcode&lt;/TD&gt;
+&lt;TD&gt;Klant artikelcode&lt;/TD&gt;
+&lt;TD&gt;Debiteur&lt;/TD&gt;
+&lt;TD&gt;Naam&lt;/TD&gt;
+&lt;TD&gt;Plaats&lt;/TD&gt;
+&lt;TD&gt;Land&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR class=abei_dynamic_row&gt;
+&lt;TD&gt;%Administratie%&lt;/TD&gt;
+&lt;TD&gt;%Orlaco artikelcode%&lt;/TD&gt;
+&lt;TD&gt;%Klant artikelcode%&lt;/TD&gt;
+&lt;TD&gt;%Klantcode%&lt;/TD&gt;
+&lt;TD&gt;%Klantnaam%&lt;/TD&gt;
+&lt;TD&gt;%Plaats%&lt;/TD&gt;
+&lt;TD&gt;%Land%&lt;/TD&gt;&lt;/TR&gt;
+&lt;TR bgColor=silver color="black"&gt;
+&lt;TD colSpan=7&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;Deze email is automatisch verzonden door ABEI %jobid%&lt;/P&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>62</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Karles.Born@stoneridge.com,g.munt@orlaco.com;emailcc=;emailbcc=;emailsub=Nieuwe Caterpillar artikelen;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Administratie,Orlaco artikelcode,Klant artikelcode,Klantcode,Klantnaam,Plaats,Land;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Administratie</name><type>String</type></datacolumn><datacolumn><name>Orlaco artikelcode</name><type>String</type></datacolumn><datacolumn><name>Klant artikelcode</name><type>String</type></datacolumn><datacolumn><name>Klantcode</name><type>String</type></datacolumn><datacolumn><name>Klantnaam</name><type>String</type></datacolumn><datacolumn><name>Plaats</name><type>String</type></datacolumn><datacolumn><name>Land</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail new CAT article codes</stepname></step><step><id>1583</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>0</target><datasource>INSERT INTO [ABEI].dbo._ST_ABEI_TB_OEM_Articles (Itemcode, ItemCodeAccount, [Timestamp])
+SELECT i.ItemCode, i.ItemCodeAccount, CURRENT_TIMESTAMP
+    FROM [400].dbo.ItemAccounts AS i
+    INNER JOIN [400].dbo.cicmpy AS c ON c.cmp_wwn = i.AccountCode 
+    WHERE NOT ( i.ItemCodeAccount IS NULL ) AND
+        ( c.ClassificationId = 'OEM' OR c.YesNoField4 = 1 ) AND 
+        i.ItemCodeAccount collate database_default NOT IN (
+            SELECT c.ItemCodeAccount collate database_default 
+                FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles AS c 
+                WHERE i.ItemCode collate database_default = c.ItemCode collate database_default)
+                
+INSERT INTO [ABEI].dbo._ST_ABEI_TB_OEM_Articles  (Itemcode, ItemCodeAccount, [Timestamp])
+SELECT i.ItemCode, i.ItemCodeAccount, CURRENT_TIMESTAMP
+    FROM [482].dbo.ItemAccounts AS i
+    INNER JOIN [482].dbo.cicmpy AS c ON c.cmp_wwn = i.AccountCode 
+    WHERE NOT ( i.ItemCodeAccount IS NULL ) AND
+        ( c.ClassificationId = 'OEM' OR c.YesNoField4 = 1 ) AND 
+        i.ItemCodeAccount collate database_default NOT IN (
+            SELECT c.ItemCodeAccount collate database_default 
+                FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles AS c 
+                WHERE i.ItemCode collate database_default = c.ItemCode collate database_default)
+                
+INSERT INTO [ABEI].dbo._ST_ABEI_TB_OEM_Articles  (Itemcode, ItemCodeAccount, [Timestamp])
+SELECT i.ItemCode, i.ItemCodeAccount, CURRENT_TIMESTAMP
+    FROM [484].dbo.ItemAccounts AS i
+    INNER JOIN [484].dbo.cicmpy AS c ON c.cmp_wwn = i.AccountCode 
+    WHERE NOT ( i.ItemCodeAccount IS NULL ) AND
+        ( c.ClassificationId = 'OEM' OR c.YesNoField4 = 1 ) AND 
+        i.ItemCodeAccount collate database_default NOT IN (
+            SELECT c.ItemCodeAccount collate database_default 
+                FROM [ABEI].dbo._ST_ABEI_TB_OEM_Articles AS c 
+                WHERE i.ItemCode collate database_default = c.ItemCode collate database_default)
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>63</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Store article codes</stepname></step><step><id>2725</id><entity>-none-</entity><action>create</action><source>1</source><target>7</target><datasource>select distinct E.employee, ISNULL(E.mail, 'iss@orlaco.com') as email from (
+
+select HID,
+A.status,
+c.cmp_name,
+LTRIM(CMP_CODE) as Customer,
+a.Description,
+a.FreeTextField_04 as Passrate,
+a.FreeDateField_03 as followupdate,
+freetextfield_02 as PMC,
+h.fullname as Employee,
+h.mail,
+a.syscreated
+,DATEDIFF(DAY,GETDATE(),Freedatefield_03) as DaysToLate
+From Absences A WITH (NOLOCK)
+INNER JOIN Cicmpy C on C.cmp_wwn = a.CustomerID
+INNER JOIN Humres H On H.res_id=A.EmpID
+where type = 213 and FreeDateField_03 &lt; GETDATE()+7 and a.status = 1 
+
+Union
+
+select HID,
+A.Status,
+c.cmp_name,
+LTRIM(CMP_CODE) as Customer,
+a.Description,
+a.FreeTextField_04 as Passrate,
+a.FreeDateField_03 as followupdate,
+freetextfield_02 as PMC,
+h.fullname as Employee,
+h.mail,
+a.syscreated
+,DATEDIFF(DAY,GETDATE(),Freedatefield_03) as DaysToLate
+From Absences A WITH (NOLOCK)
+INNER JOIN Cicmpy C on C.cmp_wwn = a.CustomerID
+INNER JOIN Humres H On H.res_id=A.EmpID
+where type = 213  and FreeTextField_04 is null  and a.Status = 1
+)E</datasource><contentbody></contentbody><mapping>Employee=%employee%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>80</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/213  SAL Information and Quotation;ssrsformat=HTML4.0;ssrsfile=;emailfrom=mailings@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%email%;emailcc=;emailbcc=;emailsub=ISS %employee% %email%;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>employee</name><type>String</type></datacolumn><datacolumn><name>email</name><type>String</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>1</xmlin_sqlconn><xmlin_sqltype>1</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>A4</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send SAL : I&amp;Q</stepname></step><step><id>2743</id><entity>-none-</entity><action>create</action><source>124</source><target>7</target><datasource>select DISTINCT P.NFT_IDNR as ParentID
+from [profile]..TEILLIST T
+INNER JOIN [profile]..NFSTAMM P ON P.NFT_IDNR = T.TL_VIDNR
+INNER JOIN [profile]..NFSTAMM C ON C.NFT_IDNR = T.TL_SIDNR
+Inner join (select ae_aedat, ae_aenr, ae_be2 from [profile]..aenlist where ae_be2 = '   500: Obsolete' ) a on a.AE_AENR = C.NFT_IDNR
+Where P.nft_zust In (300,310,400,450) and C.NFT_ZUST = 500 and 
+ Convert(date,[profile].dbo.PRO_FN_GetSQLDatetime(a.AE_AEDAT)) &gt;= Convert(date,DATEADD(DAY, -1, GETDATE()))
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>90</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/WhereUsedCheck;ssrsformat=MHTML;ssrsfile=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=j.vaarkamp@orlaco.com%semicolon%janwillem@schoutentechnology.nl;emailcc=;emailbcc=;emailsub=Obsolete items used in BOM;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ParentID</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send PF Obsolete Items</stepname></step><step><id>2747</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT 
+
+--        gbkm.ID,
+          itn.ID
+--      , gbkm.Datum AS afldat
+        , gbkm.artcode
+--      , it.PackageDescription
+        , it.Description_0 AS ItemDescp
+        , (gbkm.aantal*-1) AS Qty
+--      , gbkm.Faktuurnr AS ourref
+--      , gbkm.facode AS serialnumber
+        , gbkm.Bkstnr_sub AS ordernr
+        , os.regel
+--      , it.Assortment
+        , it.UserNumber_05
+--      , orew.artcode
+        , case when(orew.artcode is null) then dateadd(yy,2, gbkm.datum)
+                when (isnull(it.userNumber_05,0) = 0) then dateadd(yy, 2,gbkm.datum)  else dateadd(yy,isnull(orew.usernumber_08,0), dateadd(yy,2, gbkm.datum)) 
+                end as DateEnd
+
+
+FROM    gbkmut gbkm WITH (NOLOCK) 
+        INNER JOIN Items it WITH (NOLOCK) ON it.itemcode= gbkm.artcode 
+        right outer join orsrg os with(nolock) on gbkm.LinkedLine = os.sysguid
+        left outer join itemnumbers itn with(nolock) on itn.number = gbkm.facode and itn.ItemCode = gbkm.artcode
+        inner join      ( select    os.ordernr
+                              ,os.regel
+                              ,os.regel -1 as vorige_regel
+                              ,os.afldat
+                              ,os.artcode
+                              ,os.oms45 
+                              ,it.UserNumber_08
+        
+                              from  orsrg os with(nolock) 
+                                    inner join items it with(nolock) on os.artcode = it.itemcode
+
+                               where    1=1
+                                        and it.Assortment = '70') orew on orew.vorige_regel = os.regel and os.ordernr = orew.ordernr
+
+
+
+WHERE 
+        1=1
+        AND gbkm.Transtype IN ('N', 'C', 'P') 
+        AND gbkm.Transsubtype = 'B' 
+        AND (gbkm.regel%2)=1  
+--      AND gbkm.bkstnr_sub = '11613025'
+        and it.userNumber_05 = '0'
+        and it.Assortment &lt;&gt; '70'
+        and gbkm.facode is not null
+        and gbkm.datum &gt;= dateadd(dd, -5, current_timestamp)
+
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;&lt;HEAD&gt;
+&lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;
+&lt;META name=GENERATOR content="MSHTML 11.00.9600.18427"&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;P&gt;Hallo,&lt;/P&gt;
+&lt;P&gt;Bij de volgende order&amp;nbsp;is extended warranty verkocht op een artikel waar 
+geen extended warranty voor geldt. Controleerd de order of pas de artikel 
+stamgegevens aan: Vrij veld 20: 'Garantie artikel?'&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE 
+style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" 
+cellSpacing=0 cellPadding=1 border=1&gt;
+  &lt;TBODY&gt;
+  &lt;TR bgColor=skyblue&gt;
+    &lt;TD&gt;Ordernr.&lt;/TD&gt;
+    &lt;TD&gt;Itemcode&lt;/TD&gt;
+    &lt;TD&gt;Description&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR class=sql&gt;
+    &lt;TD colSpan=8&gt;## Query Table Content ##&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR bgColor=silver color="black"&gt;
+    &lt;TD colSpan=8&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;Deze mail is automatisch verzonden door ABEI.&lt;/P&gt;
+&lt;P&gt;Administratie: 400&lt;/P&gt;&lt;/BODY&gt;&lt;/HTML&gt;
+</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=iss@orlaco.com,productmanagement@orlaco.com;emailcc=;emailbcc=;emailsub=Fout in order 400: een artikel heeft geen recht EW;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ordernr,artcode,ItemDescp;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescp</name><type>String</type></datacolumn><datacolumn><name>Qty</name><type>Double</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>UserNumber_05</name><type>Double</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Mailen als artikel geen garantie artikel</stepname></step><step><id>2748</id><entity>-none-</entity><action>create</action><source>126</source><target>6</target><datasource>SELECT 
+
+--        gbkm.ID,
+          itn.ID
+--      , gbkm.Datum AS afldat
+        , gbkm.artcode
+--      , it.PackageDescription
+        , it.Description_0 AS ItemDescp
+        , (gbkm.aantal*-1) AS Qty
+--      , gbkm.Faktuurnr AS ourref
+--      , gbkm.facode AS serialnumber
+        , gbkm.Bkstnr_sub AS ordernr
+        , os.regel
+--      , it.Assortment
+        , it.UserNumber_05
+--      , orew.artcode
+        , case when(orew.artcode is null) then dateadd(yy,2, gbkm.datum)
+                when (isnull(it.userNumber_05,0) = 0) then dateadd(yy, 2,gbkm.datum)  else dateadd(yy,isnull(orew.usernumber_08,0), dateadd(yy,2, gbkm.datum)) 
+                end as DateEnd
+
+
+FROM    gbkmut gbkm WITH (NOLOCK) 
+        INNER JOIN Items it WITH (NOLOCK) ON it.itemcode= gbkm.artcode 
+        right outer join orsrg os with(nolock) on gbkm.LinkedLine = os.sysguid
+        left outer join itemnumbers itn with(nolock) on itn.number = gbkm.facode and itn.ItemCode = gbkm.artcode
+        inner join      ( select    os.ordernr
+                              ,os.regel
+                              ,os.regel -1 as vorige_regel
+                              ,os.afldat
+                              ,os.artcode
+                              ,os.oms45 
+                              ,it.UserNumber_08
+        
+                              from  orsrg os with(nolock) 
+                                    inner join items it with(nolock) on os.artcode = it.itemcode
+
+                               where    1=1
+                                        and it.Assortment = '70') orew on orew.vorige_regel = os.regel and os.ordernr = orew.ordernr
+
+
+
+WHERE 
+        1=1
+        AND gbkm.Transtype IN ('N', 'C', 'P') 
+        AND gbkm.Transsubtype = 'B' 
+        AND (gbkm.regel%2)=1  
+--      AND gbkm.bkstnr_sub = '11613025'
+        and it.userNumber_05 = '0'
+        and it.Assortment &lt;&gt; '70'
+        and gbkm.facode is not null
+        and gbkm.datum &gt;= dateadd(dd, -5, current_timestamp)
+
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;&lt;HEAD&gt;
+&lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;
+&lt;META name=GENERATOR content="MSHTML 11.00.9600.18427"&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;P&gt;Hallo,&lt;/P&gt;
+&lt;P&gt;Bij de volgende order&amp;nbsp;is extended warranty verkocht op een artikel waar 
+geen extended warranty voor geldt. Controleerd de order of pas de artikel 
+stamgegevens aan: Vrij veld 20: 'Garantie artikel?'&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE 
+style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" 
+cellSpacing=0 cellPadding=1 border=1&gt;
+  &lt;TBODY&gt;
+  &lt;TR bgColor=skyblue&gt;
+    &lt;TD&gt;Ordernr.&lt;/TD&gt;
+    &lt;TD&gt;Itemcode&lt;/TD&gt;
+    &lt;TD&gt;Description&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR class=sql&gt;
+    &lt;TD colSpan=8&gt;## Query Table Content ##&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR bgColor=silver color="black"&gt;
+    &lt;TD colSpan=8&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;Deze mail is automatisch verzonden door ABEI.&lt;/P&gt;
+&lt;P&gt;Administratie: 400&lt;/P&gt;&lt;/BODY&gt;&lt;/HTML&gt;
+</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>101</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=iss@orlaco.com,productmanagement@orlaco.com;emailcc=;emailbcc=;emailsub=Fout in order 483: een artikel heeft geen recht EW;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ordernr,artcode,ItemDescp;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescp</name><type>String</type></datacolumn><datacolumn><name>Qty</name><type>Double</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>UserNumber_05</name><type>Double</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Mailen als artikel geen garantie artikel</stepname></step><step><id>2749</id><entity>-none-</entity><action>create</action><source>112</source><target>6</target><datasource>SELECT 
+
+--        gbkm.ID,
+          itn.ID
+--      , gbkm.Datum AS afldat
+        , gbkm.artcode
+--      , it.PackageDescription
+        , it.Description_0 AS ItemDescp
+        , (gbkm.aantal*-1) AS Qty
+--      , gbkm.Faktuurnr AS ourref
+--      , gbkm.facode AS serialnumber
+        , gbkm.Bkstnr_sub AS ordernr
+        , os.regel
+--      , it.Assortment
+        , it.UserNumber_05
+--      , orew.artcode
+        , case when(orew.artcode is null) then dateadd(yy,2, gbkm.datum)
+                when (isnull(it.userNumber_05,0) = 0) then dateadd(yy, 2,gbkm.datum)  else dateadd(yy,isnull(orew.usernumber_08,0), dateadd(yy,2, gbkm.datum)) 
+                end as DateEnd
+
+
+FROM    gbkmut gbkm WITH (NOLOCK) 
+        INNER JOIN Items it WITH (NOLOCK) ON it.itemcode= gbkm.artcode 
+        right outer join orsrg os with(nolock) on gbkm.LinkedLine = os.sysguid
+        left outer join itemnumbers itn with(nolock) on itn.number = gbkm.facode and itn.ItemCode = gbkm.artcode
+        inner join      ( select    os.ordernr
+                              ,os.regel
+                              ,os.regel -1 as vorige_regel
+                              ,os.afldat
+                              ,os.artcode
+                              ,os.oms45 
+                              ,it.UserNumber_08
+        
+                              from  orsrg os with(nolock) 
+                                    inner join items it with(nolock) on os.artcode = it.itemcode
+
+                               where    1=1
+                                        and it.Assortment = '70') orew on orew.vorige_regel = os.regel and os.ordernr = orew.ordernr
+
+
+
+WHERE 
+        1=1
+        AND gbkm.Transtype IN ('N', 'C', 'P') 
+        AND gbkm.Transsubtype = 'B' 
+        AND (gbkm.regel%2)=1  
+--      AND gbkm.bkstnr_sub = '11613025'
+        and it.userNumber_05 = '0'
+        and it.Assortment &lt;&gt; '70'
+        and gbkm.facode is not null
+        and gbkm.datum &gt;= dateadd(dd, -5, current_timestamp)
+
+
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;&lt;HEAD&gt;
+&lt;META content="text/html; charset=unicode" http-equiv=Content-Type&gt;
+&lt;META name=GENERATOR content="MSHTML 11.00.9600.18427"&gt;&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;P&gt;Hallo,&lt;/P&gt;
+&lt;P&gt;Bij de volgende order&amp;nbsp;is extended warranty verkocht op een artikel waar 
+geen extended warranty voor geldt. Controleerd de order of pas de artikel 
+stamgegevens aan: Vrij veld 20: 'Garantie artikel?'&lt;/P&gt;
+&lt;P&gt;
+&lt;TABLE 
+style="BORDER-LEFT-WIDTH: 1px; BORDER-RIGHT-WIDTH: 1px; WIDTH: 90%; BORDER-BOTTOM-WIDTH: 1px; BORDER-COLLAPSE: collapse; BORDER-TOP-WIDTH: 1px" 
+cellSpacing=0 cellPadding=1 border=1&gt;
+  &lt;TBODY&gt;
+  &lt;TR bgColor=skyblue&gt;
+    &lt;TD&gt;Ordernr.&lt;/TD&gt;
+    &lt;TD&gt;Itemcode&lt;/TD&gt;
+    &lt;TD&gt;Description&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR class=sql&gt;
+    &lt;TD colSpan=8&gt;## Query Table Content ##&lt;/TD&gt;&lt;/TR&gt;
+  &lt;TR bgColor=silver color="black"&gt;
+    &lt;TD colSpan=8&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TBODY&gt;&lt;/TABLE&gt;&lt;/P&gt;
+&lt;P&gt;Deze mail is automatisch verzonden door ABEI.&lt;/P&gt;
+&lt;P&gt;Administratie: 400&lt;/P&gt;&lt;/BODY&gt;&lt;/HTML&gt;
+</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>102</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=iss@orlaco.com,productmanagement@orlaco.com;emailcc=;emailbcc=;emailsub=Fout in order 484: een artikel heeft geen recht EW;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ordernr,artcode,ItemDescp;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>ItemDescp</name><type>String</type></datacolumn><datacolumn><name>Qty</name><type>Double</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>UserNumber_05</name><type>Double</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Mailen als artikel geen garantie artikel</stepname></step><step><id>3001</id><entity>-none-</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT n.administration, n.ordernr, n.debnr, n.regel, n.artcode, n.oms45, n.afldat, n.warranty_artcode, n.DateEnd, n.abei_message
+FROM dbo._AB_tb_ExtendedWarranty_ItemNumbers n WITH (NOLOCK)
+WHERE 1=1
+    AND n.syscreated &gt;= CAST(CURRENT_TIMESTAMP as date)
+    --AND n.runid = '%runid%'
+    AND (n.abei_rowstatus = -1 -- Error
+        OR (n.abei_rowstatus = 10 AND n.abei_message NOT LIKE 'Skipped%') )
+ORDER BY n.administration, n.ordernr, n.regel, n.tID</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hallo,&lt;/p&gt;&lt;p&gt;Onderstaande meldingen zijn voorgekomen tijdens het berekenen van de Extended Warranty.&lt;/p&gt;&lt;p&gt;Graag de orders controleren.&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;administration&lt;/td&gt;&lt;td&gt;ordernr&lt;/td&gt;&lt;td&gt;debnr&lt;/td&gt;&lt;td&gt;regel&lt;/td&gt;&lt;td&gt;artcode&lt;/td&gt;&lt;td&gt;oms45&lt;/td&gt;&lt;td&gt;afldat&lt;/td&gt;&lt;td&gt;warranty_artcode&lt;/td&gt;&lt;td&gt;DateEnd&lt;/td&gt;&lt;td&gt;abei_message&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%administration%&lt;/td&gt;&lt;td&gt;%ordernr%&lt;/td&gt;&lt;td&gt;%debnr%&lt;/td&gt;&lt;td&gt;%regel%&lt;/td&gt;&lt;td&gt;%artcode%&lt;/td&gt;&lt;td&gt;%oms45%&lt;/td&gt;&lt;td&gt;%afldat%&lt;/td&gt;&lt;td&gt;%warranty_artcode%&lt;/td&gt;&lt;td&gt;%DateEnd%&lt;/td&gt;&lt;td&gt;%abei_message%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="10"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Deze mail is automatisch gegenereerd door ABEI om %abeinow%&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>103</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Meldingen Extended Warranty berekening;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=administration,ordernr,debnr,regel,artcode,oms45,afldat,warranty_artcode,DateEnd,abei_message;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>administration</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>warranty_artcode</name><type>String</type></datacolumn><datacolumn><name>DateEnd</name><type>DateTime</type></datacolumn><datacolumn><name>abei_message</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>EW: Send mail for errors</stepname></step><step><id>2895</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select o.Ordernr, ok.Refer, ok.Crdnr, ok.ord_debtor_name as Name, Artcode, o.Regel, CONVERT(VARCHAR,o.PlannedDate,105) AS Planned
+from [400]..orsrg o with (nolock)
+inner join [400]..orkrg ok with (nolock) on ok.ordernr = o.ordernr
+where ok.afgehandld= 0 AND o.uitgifte = 0 AND o.artcode = 'TXT-R&amp;D' and (o.projectnr is null or LTRIM(RTRIM(o.projectnr)) = '') 
+order by o.ordernr, o.regel</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear,&lt;/p&gt;&lt;p&gt;The following open purchase orders contains items TXT-R&amp;amp;D without a mandatory projectcode.&lt;/p&gt;&lt;p&gt;Please fill in the R&amp;amp;D projectcode in the purchaseorder before receiving the order. &lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Ordernr&lt;/td&gt;&lt;td&gt;Refer&lt;/td&gt;&lt;td&gt;Crdnr&lt;/td&gt;&lt;td&gt;Name&lt;/td&gt;&lt;td&gt;Artcode&lt;/td&gt;&lt;td&gt;Row&lt;/td&gt;&lt;td&gt;Planned&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Ordernr%&lt;/td&gt;&lt;td&gt;%Refer%&lt;/td&gt;&lt;td&gt;%Crdnr%&lt;/td&gt;&lt;td&gt;%Name%&lt;/td&gt;&lt;td&gt;%Artcode%&lt;/td&gt;&lt;td&gt;%Regel%&lt;/td&gt;&lt;td&gt;%Planned%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=IPR@Orlaco.com;emailcc=;emailbcc=;emailsub=No projectcode for PO R&amp;D;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Ordernr,Refer,Crdnr,Name,Artcode,Regel,Planned;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Ordernr</name><type>String</type></datacolumn><datacolumn><name>Refer</name><type>String</type></datacolumn><datacolumn><name>Crdnr</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>Artcode</name><type>String</type></datacolumn><datacolumn><name>Regel</name><type>String</type></datacolumn><datacolumn><name>Planned</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Mailen bij geen projectcode inkoop order TXT-R&amp;D</stepname></step><step><id>2909</id><entity>-none-</entity><action>create</action><source>1</source><target>6</target><datasource>select TOP 100 PERCENT HID, syscreated AS Created, Description, ItemCode, freetextfield_01 AS ChangeType
+from [orlaco]..absences where type = 6033 and status = 0 and syscreated &lt; DATEADD(Day,-3,getdate())
+ORDER BY HID</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi,&lt;/p&gt;&lt;p&gt;The following Price Change Requests are waiting for approval. Thanks for your attention.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;HID&lt;/td&gt;&lt;td&gt;Created&lt;/td&gt;&lt;td&gt;Description&lt;/td&gt;&lt;td&gt;ItemCode&lt;/td&gt;&lt;td&gt;ChangeType&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%HID%&lt;/td&gt;&lt;td&gt;%Created%&lt;/td&gt;&lt;td&gt;%Description%&lt;/td&gt;&lt;td&gt;%ItemCode%&lt;/td&gt;&lt;td&gt;%ChangeType%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="5"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=marie-noelle.bouquier@stoneridge.com;emailcc=;emailbcc=;emailsub=Price Change Request waiting for approval;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=HID,Created,Description,ItemCode,ChangeType;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HID</name><type>Int32</type></datacolumn><datacolumn><name>Created</name><type>DateTime</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>ChangeType</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail approve Price Change Requests</stepname></step><step><id>3050</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>
+SELECT TOP 100 PERCENT ed.created AS LogDate
+        , c.cmp_name AS Relatie
+        , CASE WHEN c.cmp_type = 'C' THEN 'Debtor'
+            ELSE 'Creditor'
+          END AS Customer_Type
+        , CASE WHEN c.cmp_type = 'C' THEN RTRIM(LTRIM(c.debcode))
+            ELSE RTRIM(LTRIM(c.crdcode))
+          END AS Number
+        , ec.ComponentName AS Entity
+        , ep.PropName AS Field
+        , ed.oldvalue AS OldValue
+        , ed.newvalue AS NewValue
+        , h.fullname AS FullName
+     FROM ebcdatalog ed WITH (NOLOCK)
+         INNER JOIN ebcprops ep WITH (NOLOCK) ON ed.property = ep.propid
+         LEFT OUTER JOIN EbcComponents ec WITH (NOLOCK) ON ed.Component = ec.CompId
+         LEFT OUTER JOIN humres h WITH (NOLOCK) ON ed.creator = h.res_id
+         LEFT OUTER JOIN cicmpy c WITH (NOLOCK) ON ed.DataKey = c.cmp_wwn
+         WHERE c.cmp_type = 'S'
+         AND ( c.crdcode IS NOT NULL)
+        AND ec.CompId = 'DF2C80E9-0A2C-11D4-9DDF-0004AC25BEFA' -- Associates
+        AND ep.PropId IN (
+            --  '10C509D3-0C5B-4430-BBA5-951092208900' -- cnt_FirstName         - Voornaam
+            -- '7B674000-4848-4B53-94EE-93F3C87BA7B1' -- cnt_Initials           - Voorletters
+            --, 'FAED2986-2EC7-4986-B07E-F37DE1028CE6' -- cnt_MiddleName            - Tussenvoegsel
+            --, '7B78A7A7-2291-4C76-B609-C89E7EF714C3' -- cnt_LastName          - Achternaam
+             '89F55AC6-6960-4A61-B51C-50492732BEDB' -- VatCode                  - BTW-Code
+            , '7127B87C-A1CF-4B83-B34B-7FDB414A4590' -- VatNumber               - BTW-Nummer
+            , 'EE062E39-0723-471C-B46A-AE450A90695D' -- BankAccount             - Bankrekening
+            , 'D9F6A9B3-38D0-4BF2-8382-996AE7B9159E' -- CentralizationAccount   - Crediteurenrekening
+            , '22A5FC09-18E8-454E-97DE-B57282DB1E40' -- OffSetAccount           - Tegenrekening
+            , 'DF2C80FE-0A2C-11D4-9DDF-0004AC25BEFA' -- CustomerStatus          - Status
+            , '664C1176-F7A1-4E68-9172-7C9757F80C93' -- PosCountry              - Country of the postal address
+            , 'D9FD6371-F0F5-48B8-93AD-38A7F4913227' -- VisCountry              - Country of the visit address
+            , '3D559504-957D-4180-8E89-EE3A48E41522' -- PaymentCondition        - Betalingsconditie
+            , '6F433F4A-7C8E-4C32-BF08-F54E32D257C8' -- Creditline              - Kredietlimiet
+            , '2D5166CE-039A-4AEE-9B5A-652FC99AA642' -- PriceList
+            , 'DF2C80F1-0A2C-11D4-9DDF-0004AC25BEFA' -- MailAddress                             
+            , 'DF2C80F2-0A2C-11D4-9DDF-0004AC25BEFA' -- MailAddress2                            
+            , '8EFD7A01-E615-4A9C-A553-1B420C2D4DC6' -- MailAddress3                            
+            , 'D1EC3D8E-FC1F-47EA-BBBA-A3EC29404318' -- MailCity                                
+            , '09B03CFE-D48D-46D7-923C-DC7D03DD8CA2' -- MailCounty                              
+            , 'DF2C80F5-0A2C-11D4-9DDF-0004AC25BEFA' -- MailPostcode                            
+            , 'DF2C8123-0A2C-11D4-9DDF-0004AC25BEFA' -- MailState                               
+            , '7772D6D3-685D-4C5A-AF92-E87352EA7F1D' -- DelAddress                              
+            , '76759C2B-807A-407D-8782-4824D2726A91' -- DelAddress2                             
+            , '3ABCCA7E-2ED6-4ED8-AFE6-AED231E635FC' -- DelAddress3                             
+            , '79A12735-E745-422F-B59A-B0A50FCC5B2A' -- DelCity                                 
+            , '4D18F830-7513-4E33-9E6D-8272FD33EA3A' -- DelCounty                               
+            , '2E9E5391-F65A-494B-8545-5B7C09E4CE98' -- DelPostCode                             
+            , '7C5B4A38-2701-45FD-9D64-BDF7CE96B0A2' -- DelState                     
+            , '345E334F-2E81-41E1-9E9E-0086895B0634' -- InvAddress                              
+            , '025CE17E-CFA4-4C00-B925-5817144450ED' -- InvAddress2                             
+            , '87DF35E8-2765-4E7D-B348-3FD0C524C099' -- InvAddress3                             
+            , '0D99F37C-47E4-40D4-BFA5-CBAE682475B2' -- InvCity                                 
+            , '61592D99-46A9-4289-9671-D810252F5A2C' -- InvCounty                               
+            , '07A61FF4-7FC3-40E8-A3F4-63E445E58CB0' -- InvPostCode                             
+            , 'D32A44C7-FEB7-4BFC-828E-8CEFDE8A7E4D' -- InvState
+            , '6A287D4A-13FF-4FF8-B7A3-D809BDF7472F' --IncoTermCode
+            , '3BB63337-A0C2-4792-8633-89407FC6838C' -- IncoTermProperty                                           
+
+            )
+            AND ed.Created BETWEEN DATEADD(DAY, -1, getdate()) AND getdate()
+
+UNION ALL (
+
+SELECT TOP 100 PERCENT ed.created AS LogDate
+        , c.cmp_name AS Relatie
+        , CASE WHEN c.cmp_type = 'C' THEN 'Debtor'
+            ELSE 'Creditor'
+          END AS Customer_Type
+        , CASE WHEN c.cmp_type = 'C' THEN RTRIM(LTRIM(c.debcode))
+            ELSE RTRIM(LTRIM(c.crdcode))
+          END 
+        , ec.ComponentName AS Entity
+        , ep.PropName AS Field
+        , ed.oldvalue AS OldValue
+        , ed.newvalue AS NewValue
+        , h.fullname AS FullName
+     FROM ebcdatalog ed WITH (NOLOCK)
+         INNER JOIN ebcprops ep WITH (NOLOCK) ON ed.property = ep.propid
+         LEFT OUTER JOIN EbcComponents ec WITH (NOLOCK) ON ed.Component = ec.CompId
+         LEFT OUTER JOIN humres h WITH (NOLOCK) ON ed.creator = h.res_id
+    CROSS APPLY (
+        SELECT c.cmp_name, c.debcode, c.crdcode, c.cmp_type
+        FROM   bnkacc as ba WITH (NOLOCK)
+               INNER JOIN bnkkop as bk WITH (NOLOCK) ON bk.bank_rek = ba.banknr 
+               LEFT OUTER JOIN cicmpy as c WITH (NOLOCK)
+                            ON ( ( c.debnr = bk.debnr 
+                                   AND c.debnr IS NOT NULL 
+                                   AND bk.debnr IS NOT NULL ) 
+                                  OR ( c.crdnr = bk.crdnr 
+                                       AND c.crdnr IS NOT NULL 
+                                       AND bk.crdnr IS NOT NULL ) ) 
+                                       WHERE  ba.id = ed.datakey 
+    ) AS c
+    WHERE c.cmp_type = 'S' AND  
+        ec.CompId = '46948FFE-98C5-4BF7-9B9F-3D008E8F268B' -- CRMBankAccount
+        AND ep.PropId IN (
+              'DBA372AB-AE9A-4C00-9E3E-2C4F111AAB4E' -- AccountNumberBank       - Rekeningnummer bank 
+            , '17099E47-ED85-4825-BDC3-62C5C78A1351' -- BankAccountCode         - Bankcode
+            , 'B60ADD34-4EAD-4CCE-A000-0F23CE89FBF5' -- BICCode                 - BIC-Code
+            , '2E125751-97A0-472C-A6AB-8BE5949DFB6A' -- BranchCode              - Filiaalcode
+            , '4D3B47E9-B8AB-40AD-84C2-316878287E2C' -- ClearanceIdentification - Clearing identificatie
+            , '4984B4BF-0208-493D-83A4-F695EAA064FE' -- Currency                - Valuta
+            , '0D927DA1-B86F-41B6-A18B-D9302C20246D' -- SwiftAddress            - SWIFT-adres
+            , '1DEB49CB-EF77-4124-B404-EEE37B7F50AC' -- BankAccountAndMask      - Nummer
+            , 'FB3AF41A-ABED-48E7-871B-786CD7DDBED2' -- BankAccountNumber       - Bankrekening (niet in scherm)
+            , '49CB39C3-5B29-4474-A9E2-963D415552DD' -- BankName                - Banknaam
+            , 'F86A9A0F-B520-4A33-8B7F-3446BE33ED43' -- IBAN                    - IBAN Nummer
+            )
+            AND ed.Created BETWEEN DATEADD(DAY,-1, getdate()) AND getdate()
+)
+ORDER BY c.cmp_name, ed.created, ep.PropName</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font face="Tahoma"&gt;&lt;strong&gt;Account changes %abeitoday%&lt;font face="Tahoma"&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 0px; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;LogDate&lt;/td&gt;&lt;td&gt;Relatie&lt;/td&gt;&lt;td&gt;Customer_Type&lt;/td&gt;&lt;td&gt;Number&lt;/td&gt;&lt;td&gt;Entity&lt;/td&gt;&lt;td&gt;Field&lt;/td&gt;&lt;td&gt;OldValue&lt;/td&gt;&lt;td&gt;NewValue&lt;/td&gt;&lt;td&gt;FullName&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%LogDate%&lt;/td&gt;&lt;td&gt;%Relatie%&lt;/td&gt;&lt;td&gt;%Customer_Type%&lt;/td&gt;&lt;td&gt;%Number%&lt;/td&gt;&lt;td&gt;%Entity%&lt;/td&gt;&lt;td&gt;%Field%&lt;/td&gt;&lt;td&gt;%OldValue%&lt;/td&gt;&lt;td&gt;%NewValue%&lt;/td&gt;&lt;td&gt;%FullName%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="9"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/font&gt;&lt;/strong&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=d.foster@orlaco.com%semicolon% e.dekker@orlaco.com;emailcc=;emailbcc=;emailsub=AP1 - changed accounts;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=LogDate,Relatie,Customer_Type,Number,Entity,Field,OldValue,NewValue,FullName;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>LogDate</name><type>DateTime</type></datacolumn><datacolumn><name>Relatie</name><type>String</type></datacolumn><datacolumn><name>Customer_Type</name><type>String</type></datacolumn><datacolumn><name>Number</name><type>String</type></datacolumn><datacolumn><name>Entity</name><type>String</type></datacolumn><datacolumn><name>Field</name><type>String</type></datacolumn><datacolumn><name>OldValue</name><type>String</type></datacolumn><datacolumn><name>NewValue</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send AP01 changes on accounts</stepname></step><step><id>3096</id><entity>-none-</entity><action>create</action><source>0</source><target>6</target><datasource>SELECT * FROM [ExactData].[dbo].[_ST_ErrorLog] where syscreated &gt; DATEADD(DAY,-1,GETDATE())</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;The following Errors occur in the software components:&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;
+&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Id&lt;/td&gt;&lt;td&gt;Application&lt;/td&gt;&lt;td&gt;StackTrace&lt;/td&gt;&lt;td&gt;Message&lt;/td&gt;&lt;td&gt;LogMessage&lt;/td&gt;&lt;td&gt;syscreated&lt;/td&gt;&lt;/tr&gt;
+&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Id%&lt;/td&gt;&lt;td&gt;%Application%&lt;/td&gt;&lt;td&gt;%StackTrace%&lt;/td&gt;&lt;td&gt;%Message%&lt;/td&gt;&lt;td&gt;%LogMessage%&lt;/td&gt;&lt;td&gt;%syscreated%&lt;/td&gt;&lt;/tr&gt;
+&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;
+&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Errors in software components;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Id,Application,StackTrace,Message,LogMessage,syscreated;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Id</name><type>Int32</type></datacolumn><datacolumn><name>Application</name><type>String</type></datacolumn><datacolumn><name>StackTrace</name><type>String</type></datacolumn><datacolumn><name>Message</name><type>String</type></datacolumn><datacolumn><name>LogMessage</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for Errors on CustomSoftware</stepname></step><step><id>3117</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select '400' as [Administration], c.cmp_code as [Code], c.cmp_name as [Name], c.cmp_status as [Status], c.sysmodified as [Modified], h.fullname as [Modifier]
+from [400]..cicmpy c with (NOLOCK) 
+inner join [400]..humres h with (NOLOCK) on h.res_id = c.sysmodifier
+where cmp_type = 'S' AND (
+(c.syscreated &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.type_since &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.status_since &gt; DATEADD(DAY, -1, GETDATE())) AND c.cmp_status = 'A')
+
+UNION
+select '483' as [Administration], c.cmp_code as [Code], c.cmp_name as [Name], c.cmp_status as [Status], c.sysmodified as [Modified], h.fullname as [Modifier]
+from [483]..cicmpy c with (NOLOCK) 
+inner join [483]..humres h with (NOLOCK) on h.res_id = c.sysmodifier
+where cmp_type = 'S' AND (
+(c.syscreated &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.type_since &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.status_since &gt; DATEADD(DAY, -1, GETDATE())) AND c.cmp_status = 'A')
+
+UNION 
+select '484' as [Administration], c.cmp_code as [Code], c.cmp_name as [Name], c.cmp_status as [Status], c.sysmodified as [Modified], h.fullname as [Modifier]
+from [484]..cicmpy c with (NOLOCK) 
+inner join [484]..humres h with (NOLOCK) on h.res_id = c.sysmodifier
+where cmp_type = 'S' AND (
+(c.syscreated &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.type_since &gt; DATEADD(DAY, -1, GETDATE())) OR
+(c.status_since &gt; DATEADD(DAY, -1, GETDATE())) AND c.cmp_status = 'A')</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;New suppliers created in Globe&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Administration&lt;/td&gt;&lt;td&gt;Code&lt;/td&gt;&lt;td&gt;Name&lt;/td&gt;&lt;td&gt;Status&lt;/td&gt;&lt;td&gt;Modified&lt;/td&gt;&lt;td&gt;Modifier&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Administration%&lt;/td&gt;&lt;td&gt;%Code%&lt;/td&gt;&lt;td&gt;%Name%&lt;/td&gt;&lt;td&gt;%Status%&lt;/td&gt;&lt;td&gt;%Modified%&lt;/td&gt;&lt;td&gt;%Modifier%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>150</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=a.stomphorst@orlaco.com;emailcc=;emailbcc=;emailsub=New Supplier created in Globe;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Administration,Code,Name,Status,Modified,Modifier;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Administration</name><type>String</type></datacolumn><datacolumn><name>Code</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>Status</name><type>String</type></datacolumn><datacolumn><name>Modified</name><type>DateTime</type></datacolumn><datacolumn><name>Modifier</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for new Suppliers</stepname></step><step><id>3118</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT hc.CostCenter, hc.fullname as Creator, o.OrderNr, o.DebNr, o.ord_debtor_name AS DebtorName, 
+CONVERT(varchar,o.afldat,105) AS OrderDelDate, CONVERT(varchar,MIN(r.PlannedDate),105) AS RowDelDate,
+CASE WHEN MIN(r.PlannedDate) IS NULL OR o.afldat = MIN(r.PlannedDate) THEN 'Yes' ELSE 'No' END AS ValidDelDate, 
+o.bdr_val AS TotalValue, ha.fullname as Approver
+FROM [400]..orkrg o with (NOLOCK) 
+LEFT join (SELECT TOP 100 PERCENT ordernr, xr.PlannedDate FROM [400]..orsrg xr with (NOLOCK) WHERE xr.ar_soort &lt;&gt; 'P' and xr.pakbon_afg = 0 and xr.esr_aantal &gt; 0 order by xr.regel ) r on r.ordernr = o.ordernr
+inner join [400]..humres hc with (NOLOCK) on hc.res_id = o.syscreator
+left join [400]..humres ha with (NOLOCK) on ha.res_id = o.Approver
+where ord_soort = 'V' AND o.syscreated &gt; DATEADD(DAY,-1,GETDATE())
+group by  hc.costcenter, hc.fullname, o.OrderNr, o.DebNr, o.ord_debtor_name, 
+o.afldat, o.bdr_val, ha.fullname
+ORDER BY ValidDelDate, hc.costcenter, hc.fullname</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body&gt;&lt;p&gt;The following orders are created yesterday.&lt;/p&gt;&lt;br&gt;&lt;table style="border-width: 0px; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;&lt;strong&gt;CostCenter&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Creator&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;OrderNr&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;DebNr&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;DebtorName&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;OrderDelDate&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;RowDelDate&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;ValidDelDate&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;TotalValue&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;&lt;strong&gt;Approver&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%CostCenter%&lt;/td&gt;&lt;td&gt;%Creator%&lt;/td&gt;&lt;td&gt;%OrderNr%&lt;/td&gt;&lt;td&gt;%DebNr%&lt;/td&gt;&lt;td&gt;%DebtorName%&lt;/td&gt;&lt;td&gt;%OrderDelDate%&lt;/td&gt;&lt;td&gt;%RowDelDate%&lt;/td&gt;&lt;td&gt;%ValidDelDate%&lt;/td&gt;&lt;td&gt;%TotalValue%&lt;/td&gt;&lt;td&gt;%Approver%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="10"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>160</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=m.velthoven@orlaco.com,j.ruiter@orlaco.com,lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Created orders ;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=CostCenter,Creator,OrderNr,DebNr,DebtorName,OrderDelDate,RowDelDate,ValidDelDate,TotalValue,Approver;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>CostCenter</name><type>String</type></datacolumn><datacolumn><name>Creator</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>DebNr</name><type>String</type></datacolumn><datacolumn><name>DebtorName</name><type>String</type></datacolumn><datacolumn><name>OrderDelDate</name><type>String</type></datacolumn><datacolumn><name>RowDelDate</name><type>String</type></datacolumn><datacolumn><name>ValidDelDate</name><type>String</type></datacolumn><datacolumn><name>TotalValue</name><type>Double</type></datacolumn><datacolumn><name>Approver</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail with created orders</stepname></step><step><id>3456</id><entity>-none-</entity><action>create</action><source>133</source><target>6</target><datasource>select EBC_messageID, SupplierNumber, InvoiceNumberSupplier, GlobeEntryNumber, CurrentStatus, ExactError, InvoiceReveived, MessageTranformed, GlobeCreated, MessageStatus, MessageError
+from [EBC].[EDI].[PurchaseInvoiceLog] 
+WHERE InvoiceReveived &gt; DATEADD(DAY,-1,GETDATE())</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear colleques,&lt;/p&gt;&lt;p&gt;The following invoices are yesterday received and booked in Globe.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;InvoiceNumberSupplier&lt;/td&gt;&lt;td&gt;GlobeEntryNumber&lt;/td&gt;&lt;td&gt;CurrentStatus&lt;/td&gt;&lt;td&gt;ExactError&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%InvoiceNumberSupplier%&lt;/td&gt;&lt;td&gt;%GlobeEntryNumber%&lt;/td&gt;&lt;td&gt;%CurrentStatus%&lt;/td&gt;&lt;td&gt;%ExactError%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="11"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>170</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=ap@orlaco.com;emailcc=;emailbcc=;emailsub=New Invoices from 2Connect;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=InvoiceNumberSupplier,GlobeEntryNumber,CurrentStatus,ExactError;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>EBC_messageID</name><type>String</type></datacolumn><datacolumn><name>SupplierNumber</name><type>String</type></datacolumn><datacolumn><name>InvoiceNumberSupplier</name><type>String</type></datacolumn><datacolumn><name>GlobeEntryNumber</name><type>String</type></datacolumn><datacolumn><name>CurrentStatus</name><type>String</type></datacolumn><datacolumn><name>ExactError</name><type>String</type></datacolumn><datacolumn><name>InvoiceReveived</name><type>DateTime</type></datacolumn><datacolumn><name>MessageTranformed</name><type>DateTime</type></datacolumn><datacolumn><name>GlobeCreated</name><type>DateTime</type></datacolumn><datacolumn><name>MessageStatus</name><type>String</type></datacolumn><datacolumn><name>MessageError</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to AP for 2Connect</stepname></step><step><id>3545</id><entity>-none-</entity><action>create</action><source>1</source><target>6</target><datasource>select hid,a.id as ID, a.Description, projectnumber, a.approved, h.fullname as Responsible, h.mail as EmailAddress, hh.fullname as AssignedTo,
+hh.mail as MailAssigned  from [orlaco]..absences a with (NOLOCK)
+INNER JOIN [orlaco]..PRProject p with (NOLOCK) ON a.ProjectNumber = P.ProjectNr
+INNER JOIN [orlaco]..humres h with (NOLOCK) ON p.Responsible = h.res_id
+LEFT JOIN  [orlaco]..RequestTasks r with (NOLOCK) on r.RequestID = a.ID and OwnershipAssignedBy is not null
+LEFT JOIN  [orlaco]..humres hh with (NOLOCK) on hh.res_id = r.EmpID
+where a.Type = 6034 and a.status = 1
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Open Web RMA &lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Request&lt;/td&gt;&lt;td&gt;Description&lt;/td&gt;&lt;td&gt;Approved on&lt;/td&gt;&lt;td&gt;Project&lt;/td&gt;&lt;td&gt;ProjectResponsible&lt;/td&gt;&lt;td&gt;AssignedTo&lt;/td&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;http://exact.orlaco.nl/synergy/docs/WflRequest.aspx?ID=%ID%&lt;/td&gt;&lt;td&gt;%Description%&lt;/td&gt;&lt;td&gt;%Approved%&lt;/td&gt;&lt;td&gt;%Projectnumber%&lt;/td&gt;&lt;td&gt;%EmailAddress%&lt;/td&gt;&lt;td&gt;%AssignedTo%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>180</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%EmailAddress%%semicolon%%MailAssigned%;emailcc=;emailbcc=;emailsub=Open web RMA ;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>hid</name><type>Int32</type></datacolumn><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>projectnumber</name><type>String</type></datacolumn><datacolumn><name>approved</name><type>DateTime</type></datacolumn><datacolumn><name>Responsible</name><type>String</type></datacolumn><datacolumn><name>EmailAddress</name><type>String</type></datacolumn><datacolumn><name>AssignedTo</name><type>String</type></datacolumn><datacolumn><name>MailAssigned</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for open Web RMA</stepname></step><step><id>3555</id><entity>-none-</entity><action>create</action><source>1</source><target>6</target><datasource>select ID, HID, Description, Approved, StartDate, EndDate from absences a with (NOLOCK) where type = 6033 AND status = 1
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font size="3"&gt;Dear,&lt;/font&gt;&lt;/p&gt;&lt;p&gt;The following pcr's must be realized:&lt;font size="3"&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Request&lt;/td&gt;&lt;td&gt;Description&lt;/td&gt;&lt;td&gt;Approved on&lt;/td&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;http://exact.orlaco.nl/synergy/docs/WflRequest.aspx?ID=%ID%&lt;/td&gt;&lt;td&gt;%Description%&lt;/td&gt;&lt;td&gt;%Approved%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>190</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=iss@orlaco.com;emailcc=;emailbcc=;emailsub=Action needed for PCR;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>HID</name><type>Int32</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>Approved</name><type>DateTime</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>EndDate</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for PCR</stepname></step><step><id>3648</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>
+SELECT     
+    
+'400' as Datasource
+,ci.cmp_code AS Code
+,ci.cmp_name AS Name
+,eb.OldValue
+,eb.NewValue
+,hr.fullname AS ChangedBy
+, eb.Created as ChangedOn
+
+FROM [400].dbo.EbcDataLog AS eb WITH (nolock) INNER JOIN
+     [400].dbo.cicmpy AS ci WITH (nolock) ON eb.DataKey = ci.cmp_wwn INNER JOIN
+     [400].dbo.humres AS hr WITH (nolock) ON eb.Creator = hr.res_id
+WHERE   (eb.Property = 'EE062E39-0723-471C-B46A-AE450A90695D')
+AND eb.created &gt; DATEADD(DAY,-1,GETDATE())
+
+union 
+
+SELECT 
+    
+'Synergy' as Datasource
+,ci.cmp_code collate database_default AS Code
+,ci.cmp_name collate database_default AS Name 
+,eb.OldValue collate database_default
+,eb.NewValue collate database_default
+,hr.fullname collate database_default AS ChangedBy
+, eb.Created
+
+FROM [orlaco].dbo.EbcDataLog AS eb WITH (nolock) INNER JOIN
+     [orlaco].dbo.cicmpy AS ci WITH (nolock) ON eb.DataKey = ci.cmp_wwn INNER JOIN
+     [orlaco].dbo.humres AS hr WITH (nolock) ON eb.Creator = hr.res_id
+WHERE   (eb.Property = 'EE062E39-0723-471C-B46A-AE450A90695D')
+AND eb.created &gt; DATEADD(DAY,-1,GETDATE())</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi, &lt;/p&gt;&lt;p&gt;The following bank accounts are changed:&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Datasource&lt;/td&gt;&lt;td&gt;Code&lt;/td&gt;&lt;td&gt;Name&lt;/td&gt;&lt;td&gt;OldValue&lt;/td&gt;&lt;td&gt;NewValue&lt;/td&gt;&lt;td&gt;ChangedBy&lt;/td&gt;&lt;td&gt;ChangedOn&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%Datasource%&lt;/td&gt;&lt;td&gt;%Code%&lt;/td&gt;&lt;td&gt;%Name%&lt;/td&gt;&lt;td&gt;%OldValue%&lt;/td&gt;&lt;td&gt;%NewValue%&lt;/td&gt;&lt;td&gt;%ChangedBy%&lt;/td&gt;&lt;td&gt;%ChangedOn%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="7"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=finance@orlaco.com;emailcc=;emailbcc=;emailsub=Changed bankaccount creditor;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=Datasource,Code,Name,OldValue,NewValue,ChangedBy,ChangedOn;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Datasource</name><type>String</type></datacolumn><datacolumn><name>Code</name><type>String</type></datacolumn><datacolumn><name>Name</name><type>String</type></datacolumn><datacolumn><name>OldValue</name><type>String</type></datacolumn><datacolumn><name>NewValue</name><type>String</type></datacolumn><datacolumn><name>ChangedBy</name><type>String</type></datacolumn><datacolumn><name>ChangedOn</name><type>DateTime</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for change bank account creditor</stepname></step><step><id>3779</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select  Ordernr, k.orddat, k.afldat,  debnr as OrdDebtor, verzdebnr as DeliveryDebtor, refer2, k.syscreator, h.mail
+
+from [400]..orkrg k with (NOLOCK)
+left join [orlaco]..humres h with (NOLOCK) on k.syscreator = h.res_id
+where  verzdebnr = '040447' and afgehandld = 0 and ord_soort = 'v' and k.refer2 not like '%00924%'</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Beste,&lt;/p&gt;&lt;p&gt;De order&amp;nbsp;%Ordernr%, heeft 040447 als afleveradres, graag de order controleren.&lt;/p&gt;&lt;font face="Consolas" size="2"&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>230</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%mail%;emailcc=janwillem.schouten@stoneridge.com%semicolon% z.oudejans@orlaco.com%semicolon% j.ruiter@orlaco.com;emailbcc=;emailsub=Afleveradres onbekend;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=Ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Ordernr</name><type>String</type></datacolumn><datacolumn><name>orddat</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>OrdDebtor</name><type>String</type></datacolumn><datacolumn><name>DeliveryDebtor</name><type>String</type></datacolumn><datacolumn><name>refer2</name><type>String</type></datacolumn><datacolumn><name>syscreator</name><type>Int32</type></datacolumn><datacolumn><name>mail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for unknown deliverypoint Daf</stepname></step><step><id>3808</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>240</seqno><settings></settings><settingsxml /><stepname>==== Mails for spotbuy</stepname></step><step><id>3741</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select distinct o.ordernr, 
+o.debnr,
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [400]..orkrg o with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [400]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.ordernr not in(select  ordernr from [400]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and rr.prijs83 = 136.98)
+and  o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.artcode = '0404240' and r.pakbon_afg = 0  and r.pakbon_afg = 0 and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [483]..orkrg o with (NOLOCK)
+inner join [483]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [483]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where   o.ordernr not in(select  ordernr from [483]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and rr.prijs83 = 136.98)
+and  o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.artcode = '0404240' and r.pakbon_afg = 0 and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [484]..orkrg o with (NOLOCK)
+inner join [484]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [484]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.ordernr not in(select  ordernr from [484]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 147.02  or rr.prijs83 = 136.98))
+and  o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.artcode = '0404240' and r.pakbon_afg = 0  and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+
+ </datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font size="3"&gt;Dear,&lt;/font&gt;&lt;/p&gt;&lt;p&gt;Recently the 0404240 -&amp;nbsp;%oms45%&amp;nbsp;, quantity %quantity%,&amp;nbsp;was added to %OrdSoort% %ordernr% for customer %debnr% - %ord_debtor_name%. &lt;/p&gt;&lt;p&gt;Due to shortage of components this article can only be supplied if the customer agrees to a spot buy. &lt;/p&gt;&lt;p&gt;Please offer your customer the spot buy with below details:&lt;font size="3"&gt;&lt;br&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Brand&lt;/td&gt;&lt;td&gt;Part#&lt;/td&gt;&lt;td&gt;Broker Price&lt;/td&gt;&lt;td&gt;Broker&lt;/td&gt;&lt;td&gt;Original component price&lt;/td&gt;&lt;td&gt;Variance&lt;/td&gt;&lt;tr class="abei_row"&gt;&lt;td&gt;Microchip&lt;/td&gt;&lt;td&gt;ATSAMC21G18A-MUT&lt;/td&gt;&lt;td&gt;140,00&lt;/td&gt;&lt;td&gt;Amble&lt;/td&gt;&lt;td&gt;€ 3,02&lt;/td&gt;&lt;td&gt;€ 136,98&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;
+If the customer does not agree with the spot buy, the 0404240 has to be rescheduled to &lt;font color="red"&gt;&lt;strong&gt;May&lt;/strong&gt;&lt;/font&gt; 2023. 
+Please contact ISS  if you have any further questions.
+&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>310</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%AccManMail%%semicolon%%CreatorMail%%semicolon%m.velthoven@orlaco.com;emailcc=;emailbcc=;emailsub=Order 0404240 without spotbuy;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>quantity</name><type>Double</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>AccMan</name><type>String</type></datacolumn><datacolumn><name>OrdSoort</name><type>String</type></datacolumn><datacolumn><name>AccManMail</name><type>String</type></datacolumn><datacolumn><name>Creator</name><type>String</type></datacolumn><datacolumn><name>CreatorMail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for order without spotbuy 0404240</stepname></step><step><id>3742</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [400]..orkrg o with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [400]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in(select  ordernr from [400]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and rr.prijs83 = 55.55) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.pakbon_afg = 0 and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and r.artcode IN 
+('0404660', '0404700','0000250','0000300','0000320','0404160','0405100','0405110','0405200','0405300','0405310','0504812','0404410','0404665','0404655','0404675')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [483]..orkrg o with (NOLOCK)
+inner join [483]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [483]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where  o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in(select  ordernr from [483]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and rr.prijs83 = 55.55) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.pakbon_afg = 0 and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and r.artcode IN 
+('0404660', '0404700','0000250','0000300','0000320','0404160','0405100','0405110','0405200','0405300','0405310','0504812','0404410','0404665','0404655','0404675')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [484]..orkrg o with (NOLOCK)
+inner join [484]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [484]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where  o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in(select  ordernr from [484]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-05-16' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 58.55 or rr.prijs83 = 55.55)) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-05-16' and r.pakbon_afg = 0 and o.afgehandld = 0 and r.afldat &lt; '2023-05-01' and r.artcode IN 
+('0404660', '0404700','0000250','0000300','0000320','0404160','0405100','0405110','0405200','0405300','0405310','0504812','0404410','0404665','0404655','0404675')
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font size="3"&gt;Dear,&lt;/font&gt;&lt;/p&gt;&lt;p&gt;Recently the %artcode% - %oms45%, quantity %quantity%&amp;nbsp;was added to %OrdSoort% %ordernr% for customer %debnr% - %ord_debtor_name%. &lt;/p&gt;&lt;p&gt;Due to shortage of components this article can only be supplied if the customer agrees to a spot buy. &lt;/p&gt;&lt;p&gt;Please offer your customer the spot buy with below details:&lt;font size="3"&gt;&lt;br&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Brand&lt;/td&gt;&lt;td&gt;Type nr&lt;/td&gt;&lt;td&gt;Broker Price&lt;/td&gt;&lt;td&gt;Broker&lt;/td&gt;&lt;td&gt;Original component price&lt;/td&gt;&lt;td&gt;Variance&lt;/td&gt;&lt;tr class="abei_row"&gt;&lt;td&gt;LT&lt;/td&gt;&lt;td&gt;ALT8614IUDC#TRPBF&lt;/td&gt;&lt;td&gt;€ 60,04&lt;/td&gt;&lt;td&gt;Amble&lt;/td&gt;&lt;td&gt;€ 4,49&lt;/td&gt;&lt;td&gt;€ 55,55&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/p&gt;&lt;p&gt;
+&lt;strong&gt;&lt;font color="red"&gt;Note: items 0404660 and 0404700 contains 2 spotbuy's !&lt;/font&gt;&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;If the customer does not agree with the spot buy, the %artcode% has to be rescheduled to &lt;strong&gt;&lt;font color="red"&gt;May 2023&lt;/font&gt;&lt;/strong&gt;. 
+Please contact ISS  if you have any further questions.
+&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>320</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%AccManMail%%semicolon%%CreatorMail%%semicolon%m.velthoven@orlaco.com;emailcc=;emailbcc=;emailsub=Order Multiview/ SRD box without spotbuy;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>quantity</name><type>Double</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>AccMan</name><type>String</type></datacolumn><datacolumn><name>OrdSoort</name><type>String</type></datacolumn><datacolumn><name>AccManMail</name><type>String</type></datacolumn><datacolumn><name>Creator</name><type>String</type></datacolumn><datacolumn><name>CreatorMail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for order without spotbuy 55.55</stepname></step><step><id>3778</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [400]..orkrg o with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [400]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in (select  ordernr from [400]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 31.83 or rr.prijs83 = 44.79 or rr.prijs83 = 61.16)) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-07-01' and r.pakbon_afg = 0  and r.afldat &lt; '2023-03-01' and r.artcode IN 
+('0198710',
+'0199700',
+'0199900',
+'0198760',
+'0199760',
+'0198720',
+'0199720',
+'0198211',
+'0199920', 
+'0198750',
+'0198700',
+'0199740',
+'0199730',
+'0198740',
+'0199710',
+'0198730')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [483]..orkrg o with (NOLOCK)
+inner join [483]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [483]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in(select  ordernr from [483]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 31.83 or rr.prijs83 = 44.79 or rr.prijs83 = 61.16)) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-07-01' and r.pakbon_afg = 0  and r.afldat &lt; '2023-03-01' and r.artcode IN 
+('0198710',
+'0199700',
+'0199900',
+'0198760',
+'0199760',
+'0198720',
+'0199720',
+'0198211',
+'0199920', 
+'0198750',
+'0198700',
+'0199740',
+'0199730',
+'0198740',
+'0199710',
+'0198730')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [484]..orkrg o with (NOLOCK)
+inner join [484]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [484]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242') and o.afgehandld = 0 and o.ordernr not in(select  ordernr from [484]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 31.83 or rr.prijs83 = 44.79 or rr.prijs83 = 50.62 or rr.prijs83 = 61.16 or rr.prijs83 = 69.11)) 
+and o.ord_soort IN ('V', 'Q') and r.syscreated &gt;= '2022-07-01' and r.pakbon_afg = 0  and r.afldat &lt; '2023-03-01' and r.artcode IN 
+('0198710',
+'0199700',
+'0199900',
+'0198760',
+'0199760',
+'0198720',
+'0199720',
+'0198211',
+'0199920', 
+'0198750',
+'0198700',
+'0199740',
+'0199730',
+'0198740',
+'0199710',
+'0198730')
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font size="3"&gt;Dear,&lt;/font&gt;&lt;/p&gt;&lt;p&gt;Recently the %artcode% - %oms45%, quantity&amp;nbsp;%Quantity%,&amp;nbsp;was added to %OrdSoort%&amp;nbsp; %ordernr% for customer %debnr% - %ord_debtor_name%. &lt;/p&gt;&lt;p&gt;Due to shortage of components this article can only be supplied if the customer agrees to a spot buy. &lt;/p&gt;&lt;p&gt;Please offer your customer the spot buy with below details:&lt;font size="3"&gt;&lt;br&gt;&lt;/font&gt;&lt;/p&gt;&lt;table style="border-width: 1px; width: 622px; height: 47px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Brand&lt;/td&gt;&lt;td&gt;Type nr&lt;/td&gt;&lt;td&gt;Broker Price&lt;/td&gt;&lt;td&gt;Broker&lt;/td&gt;&lt;td&gt;Original component price&lt;/td&gt;&lt;td&gt;Variance €&lt;/td&gt;&lt;td&gt;Variance $&lt;/td&gt;&lt;tr class="abei_row"&gt;&lt;td&gt;Microchip&lt;/td&gt;&lt;td&gt;&lt;span lang="N"&gt;&lt;p align="LEFT" dir="LTR"&gt;ATMEGA-328 &lt;/p&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;€ &lt;span lang="EN"&gt;46,53&lt;/span&gt;&lt;/td&gt;&lt;td&gt;Amble&lt;/td&gt;&lt;td&gt;€ 1,74&lt;/td&gt;&lt;td&gt;€ 44,79&lt;/td&gt;&lt;td&gt;$ 50.62&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="6"&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;If the customer does not agree with the spot buy, the %artcode% has to be rescheduled to March 2023. 
+Please contact ISS  if you have any further questions.
+&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>330</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%AccManMail%%semicolon%%CreatorMail%%semicolon%m.velthoven@orlaco.com;emailcc=;emailbcc=;emailsub=Order CPH/CFMC without spotbuy;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>AccMan</name><type>String</type></datacolumn><datacolumn><name>OrdSoort</name><type>String</type></datacolumn><datacolumn><name>AccManMail</name><type>String</type></datacolumn><datacolumn><name>Creator</name><type>String</type></datacolumn><datacolumn><name>CreatorMail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for order without spotbuy 44.79</stepname></step><step><id>3809</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [400]..orkrg o with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [400]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where  o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+ and o.ord_soort IN ('V', 'Q') and o.afgehandld = 0 and r.pakbon_afg = 0 and r.afldat &lt; '2023-03-01'
+ and o.ordernr not in (select  ordernr from [400]..orsrg rr with (NOLOCK) where (  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 26.07 or rr.prijs83 = 26.68) ) or ordernr = 12208519 ) 
+ and r.artcode IN ('0224000')
+ 
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [483]..orkrg o with (NOLOCK)
+inner join [483]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [483]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where  o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+ and o.ord_soort IN ('V', 'Q') and o.afgehandld = 0 and r.pakbon_afg = 0 and r.afldat &lt; '2023-03-01'
+ and o.ordernr not in (select  ordernr from [483]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 26.07 or rr.prijs83 = 26.68)) 
+ and r.artcode IN ('0224000')
+
+UNION
+
+select distinct o.ordernr, 
+o.debnr, 
+ord_debtor_name, 
+r.artcode,
+r.oms45,
+r.esr_aantal as Quantity,
+r.afldat,
+h.fullname as AccMan, 
+Case when o.ord_soort = 'V' then 'Order' when o.ord_soort = 'Q' then 'Quotation' end as OrdSoort,
+ISNULL(h.mail ,'iss@orlaco.com')as AccManMail, 
+hh.fullname as Creator, 
+ISNULL(hh.mail,'iss@orlaco.com') as CreatorMail 
+from       [484]..orkrg o with (NOLOCK)
+inner join [484]..orsrg r with (NOLOCK) on r.ordernr = o.ordernr
+inner join [484]..cicmpy c with (NOLOCK) on c.debnr = o.debnr
+left join  [orlaco]..humres h with (NOLOCK) on h.res_id = c.cmp_acc_man
+inner join [orlaco]..humres hh with (NOLOCK) on hh.res_id = o.syscreator
+where  o.debnr NOT IN ('040447', '150200', '997354', '999832', '969242')
+ and o.ord_soort IN ('V', 'Q') and o.afgehandld = 0 and r.pakbon_afg = 0 and r.afldat &lt; '2023-03-01'
+ and o.ordernr not in (select  ordernr from [484]..orsrg rr with (NOLOCK) where  rr.syscreated &gt;= '2022-07-01' and rr.artcode like 'TXT-SPOT%' and (rr.prijs83 = 26.07 or rr.prijs83 = 26.68)) 
+ and r.artcode IN ('0224000')
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font size="3"&gt;Dear,&lt;/font&gt;&lt;/p&gt;&lt;p&gt;Recently the %artcode% - %oms45%, quantity&amp;nbsp;%Quantity%,&amp;nbsp;was added to %OrdSoort%&amp;nbsp; %ordernr% for customer %debnr% - %ord_debtor_name%. &lt;/p&gt;&lt;p&gt;Due to shortage of components this article can only be supplied if the customer agrees to a spot buy. &lt;/p&gt;&lt;p&gt;Please offer your customer the spot buy with below details:&lt;/p&gt;&lt;table style='width: 559pt; color: rgb(36, 36, 36); text-transform: none; line-height: inherit; letter-spacing: normal; font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif; font-size: 15px; font-style: normal; font-weight: 400; margin-left: 0.1pt; word-spacing: 0px; white-space: normal; border-collapse: collapse; orphans: 2; widows: 2; font-stretch: inherit; background-color: rgb(255, 255, 255); font-variant-ligatures: normal; font-variant-caps: normal; font-variant-numeric: inherit; font-variant-east-asian: inherit; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;' border="0" cellspacing="0" cellpadding="0"&gt;&lt;tbody&gt;&lt;tr style="height: 15.75pt;"&gt;&lt;td nowrap="" valign="bottom" style="padding: 0px 3.5pt; border: 1pt solid windowtext; border-image: none; width: 80pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Component&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 91pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Component Brand&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 127pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Original Component Price&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 66pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Broker Name&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 62pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Broker Price&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 66pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Variance EUR&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: solid solid solid none; border-color: windowtext; padding: 0px 3.5pt; width: 67pt; height: 15.75pt; white-space: normal !important; background-color: rgb(198, 224, 180);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Variance USD&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="height: 15pt;"&gt;&lt;td nowrap="" valign="bottom" style="border-width: 1pt; border-style: none solid solid; border-color: windowtext; padding: 0px 3.5pt; width: 80pt; height: 15pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;ATMEGA8L-8MU&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 91pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Microchip&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 127pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;€ 1.93 EUR&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 66pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;Rebound&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 62pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;€ 28.00 EUR&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 66pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;€ 26.07 EUR&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td nowrap="" valign="bottom" style="border-style: none solid solid none; padding: 0px 3.5pt; width: 67pt; height: 15pt; border-right-color: windowtext; border-bottom-color: windowtext; border-right-width: 1pt; border-bottom-width: 1pt; white-space: normal !important; background-color: rgb(231, 230, 230);"&gt;&lt;p align="center" style="margin: 0px; text-align: center; font-family: Calibri, sans-serif; font-size: 11pt;"&gt;&lt;span style="font: inherit; margin: 0px; padding: 0px; border: 0px currentColor; border-image: none; color: black; vertical-align: baseline; font-size-adjust: inherit; font-stretch: inherit;"&gt;$26.68 USD&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;If the customer does not agree with the spot buy, the %artcode% has to be rescheduled to December 2023. 
+Please contact ISS  if you have any further questions.
+&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>340</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=%AccManMail%%semicolon%%CreatorMail%%semicolon%m.velthoven@orlaco.com;emailcc=;emailbcc=;emailsub=Order 10" HLED 0224000 without spotbuy;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;emailsplitcolumn=ordernr;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>Quantity</name><type>Double</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>AccMan</name><type>String</type></datacolumn><datacolumn><name>OrdSoort</name><type>String</type></datacolumn><datacolumn><name>AccManMail</name><type>String</type></datacolumn><datacolumn><name>Creator</name><type>String</type></datacolumn><datacolumn><name>CreatorMail</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for order without spotbuy 26.07</stepname></step><step><id>3965</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>350</seqno><settings></settings><settingsxml /><stepname>==== Van Reenen</stepname></step><step><id>3967</id><entity>-none-</entity><action>create</action><source>107</source><target>6</target><datasource>
+select k.ordernr, k.refer, k.docnumber, k.selcode, r.magcode
+,k.debnr, k.ord_debtor_name
+,r.regel as Rownr
+,i.Itemcode
+,i.Description
+,ia.ItemCodeAccount
+,i.isSerialNumberItem
+,r.afldat as DeliveryDate
+,r.esr_aantal as Qty
+,r.gewicht_bi as PcsWeight
+,r.gewicht_bi * r.esr_aantal as NetWeight
+
+ 
+from [%abeisourcedb%]..orkrg k with (NOLOCK) 
+inner join [%abeisourcedb%]..orsrg r with (NOLOCK) ON k.ordernr = r.ordernr
+inner join [%abeisourcedb%]..items i with (NOLOCK) ON i.itemcode = r.artcode
+inner join [%abeisourcedb%]..itemaccounts ia with (NOLOCK) on ia.itemcode = i.itemcode and ia.accountcode = 'D026F37D-3D37-4031-A626-117DB7D67EE5' -- 974605
+WHERE k.ord_soort = 'V' and k.afgehandld = 0 -- Select Open orders
+and r.pakbon_afg = 0 and r.ar_soort != 'T' AND r.ar_soort != 'P' -- With Item rows
+AND k.debnr = '974605' -- DAF ME2 
+--AND r.magcode = '30'
+--AND k.selcode = '1' 
+AND r.afldat &lt;= DATEADD(DAY, 4, GETDATE()) -- Released orders within 4 days
+AND r.id not IN (SELECT rowid from [ABSC_data].dbo._AB_tb_VRSalesOrders)</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi,&lt;/p&gt;&lt;p&gt;the following orders will be send to Van Reenen (only with Warehouse 30 and selection code 1).&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;Ordernr&lt;/td&gt;&lt;td&gt;Refer&lt;/td&gt;&lt;td&gt;Docnumber&lt;/td&gt;&lt;td&gt;Selectioncode&lt;/td&gt;&lt;td&gt;Warehouse&lt;/td&gt;&lt;td&gt;Debnr&lt;/td&gt;&lt;td&gt;Debtor_name&lt;/td&gt;&lt;td&gt;Rownr&lt;/td&gt;&lt;td&gt;Itemcode&lt;/td&gt;&lt;td&gt;Description&lt;/td&gt;&lt;td&gt;ItemCodeAccount&lt;/td&gt;&lt;td&gt;isSerial&lt;/td&gt;&lt;td&gt;DeliveryDate&lt;/td&gt;&lt;td&gt;Qty&lt;/td&gt;&lt;td&gt;PcsWeight&lt;/td&gt;&lt;td&gt;NetWeight&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%ordernr%&lt;/td&gt;&lt;td&gt;%refer%&lt;/td&gt;&lt;td&gt;%docnumber%&lt;/td&gt;&lt;td&gt;%selcode%&lt;/td&gt;&lt;td&gt;%magcode%&lt;/td&gt;&lt;td&gt;%debnr%&lt;/td&gt;&lt;td&gt;%ord_debtor_name%&lt;/td&gt;&lt;td&gt;%Rownr%&lt;/td&gt;&lt;td&gt;%Itemcode%&lt;/td&gt;&lt;td&gt;%Description%&lt;/td&gt;&lt;td&gt;%ItemCodeAccount%&lt;/td&gt;&lt;td&gt;%isSerialNumberItem%&lt;/td&gt;&lt;td&gt;%DeliveryDate%&lt;/td&gt;&lt;td&gt;%Qty%&lt;/td&gt;&lt;td&gt;%PcsWeight%&lt;/td&gt;&lt;td&gt;%NetWeight%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="16"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>400</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=jelle.ruiter@stoneridge.com%semicolon%martien.bakkenes@stoneridge.com;emailcc=;emailbcc=;emailsub=Orders to be send to Van Reenen on Tuesday 11.30;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=ordernr,refer,docnumber,selcode,magcode,debnr,ord_debtor_name,Rownr,Itemcode,Description,ItemCodeAccount,isSerialNumberItem,DeliveryDate,Qty,PcsWeight,NetWeight;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>refer</name><type>String</type></datacolumn><datacolumn><name>docnumber</name><type>String</type></datacolumn><datacolumn><name>selcode</name><type>String</type></datacolumn><datacolumn><name>magcode</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>String</type></datacolumn><datacolumn><name>ord_debtor_name</name><type>String</type></datacolumn><datacolumn><name>Rownr</name><type>String</type></datacolumn><datacolumn><name>Itemcode</name><type>String</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>ItemCodeAccount</name><type>String</type></datacolumn><datacolumn><name>isSerialNumberItem</name><type>Boolean</type></datacolumn><datacolumn><name>DeliveryDate</name><type>DateTime</type></datacolumn><datacolumn><name>Qty</name><type>Double</type></datacolumn><datacolumn><name>PcsWeight</name><type>Double</type></datacolumn><datacolumn><name>NetWeight</name><type>Double</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail for order entry for DAF VR orders</stepname></step><step><id>4014</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>490</seqno><settings></settings><settingsxml /><stepname>==== Packingslips next day delivery orders</stepname></step><step><id>4012</id><entity>-none-</entity><action>create</action><source>107</source><target>7</target><datasource>SELECT DISTINCT
+    BD.FileName, 
+    BD.Document
+FROM 
+    BacoDiscussions AS BD 
+INNER JOIN 
+    orkrg AS ORK 
+ON 
+    BD.OrderNumber = ORK.ordernr 
+WHERE 
+    ORK.afldat = DATEADD(day, 1, GETDATE()) AND 
+    ORK.selcode IN ('1', '83') 
+    AND BD.FileName LIKE '%.pdf%'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>500</seqno><settings>retryunique=0;uniquekey=;filetype=11;filename=%Filename%;fileoverwrite=False;filedelimiter=%semicolon%;fileaddheader=False;createfileifnoresults=False;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>TransferID</name><type>Int32</type></datacolumn><datacolumn><name>FileName</name><type>String</type></datacolumn><datacolumn><name>OrderNumber</name><type>String</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>selcode</name><type>String</type></datacolumn><datacolumn><name>Document</name><type>Byte[]</type></datacolumn></datacolumns></general><xmloutbound><xmlout_splitcolumn /><documentnodes /></xmloutbound><filetarget><filetargetencoding>0</filetargetencoding><filetargeteolchar>0</filetargeteolchar><filetargetcontentcolumn>Document</filetargetcontentcolumn></filetarget></settings></settingsxml><stepname>Create packingslip PDF orders selcode 1+83 , print</stepname></step></steps></job></jobs>

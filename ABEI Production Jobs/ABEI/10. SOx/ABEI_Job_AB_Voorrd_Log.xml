@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>422</id><jobname>AB_Voorrd_Log</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=10:59:07;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2190</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>TRUNCATE TABLE [%abeitargetdb%].dbo._AB_tb_voorrd
+
+INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd 
+(ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid 
+FROM [%abeisourcedb%].dbo.voorrd WITH (NOLOCK)
+WHERE magcode = '1'
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Nulmeting</stepname></step><step><id>3825</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>==== 400 log stock differences ====</stepname></step><step><id>2184</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO [%abeitargetdb%].dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, runid)
+SELECT 
+      'voorrd' AS ComponentName
+    , 'CycleCount' AS PropName
+    , v.ID AS DataKey
+    , a.CountingCycle AS OldValue
+    , ISNULL(v.CountingCycle, 0) AS NewValue
+    , '999' AS Creator
+    , '%runid%' AS runid
+FROM dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+INNER JOIN dbo.Items AS i WITH (NOLOCK) ON v.artcode=i.ItemCode
+WHERE 1=1
+    AND v.magcode = '1'
+    AND i.Class_10 = '10.00'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        --OR a.CountingCycle IS NULL
+        OR v.CountingCycle IS NULL
+    )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Check Differences &amp; store in SOx_log</stepname></step><step><id>2200</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd_Log
+    (ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid)
+SELECT 
+    v.ID, v.magcode, v.artcode, v.maglok, v.minvrd, v.maxvrd, v.veilvrd, v.bestniv, v.blokkeer, v.DeliveryTimeInDays, v.res_id, v.CostPrice, v.CountingCycle, v.OrderPolicyCode, v.PeriodOrderDays, v.DateLastCounted, v.Division, v.syscreated, v.syscreator, v.sysmodified, v.sysmodifier, v.sysguid, '%runid%' AS runid
+FROM dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+INNER JOIN dbo.Items AS i WITH (NOLOCK) ON v.artcode=i.ItemCode
+WHERE 1=1
+    AND v.magcode = '1'
+    AND Class_10 = '10.00'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        --OR a.CountingCycle IS NULL
+        OR v.CountingCycle IS NULL
+    )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Save into voorrd_log</stepname></step><step><id>2185</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>107</target><datasource>-- Update artikel our shadow table
+UPDATE [%abeitargetdb%].dbo._AB_tb_voorrd SET CountingCycle=v.CountingCycle
+--SELECT v.ID, a.artcode, v.countingcycle, a.artcode, a.countingcycle
+FROM [%abeisourcedb%].dbo.voorrd AS v WITH (NOLOCK)
+INNER JOIN [%abeisourcedb%].dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+AND v.magcode='1'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        OR a.CountingCycle IS NULL
+        AND v.CountingCycle IS NULL
+    )
+
+-- Insert new artikel our shadow table
+INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd (ID, artcode, CountingCycle, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT v.ID, v.artcode, v.CountingCycle, v.syscreated, v.syscreator, v.sysmodified, v.sysmodifier, v.sysguid
+FROM [%abeisourcedb%].dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN [%abeisourcedb%].dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+    AND v.magcode='1'
+    AND a.ID IS NULL
+
+-- Delete removed artikel from our shadow table
+DELETE dbo._AB_tb_voorrd
+--SELECT *
+FROM dbo._AB_tb_voorrd AS a WITH (NOLOCK)
+FULL OUTER JOIN dbo.voorrd AS v WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+    AND v.ID IS NULL</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>Sync AB Table</stepname></step><step><id>2911</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>TRUNCATE TABLE [%abeitargetdb%].dbo._AB_tb_voorrd
+
+INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd 
+(ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid 
+FROM [%abeisourcedb%].dbo.voorrd WITH (NOLOCK)
+WHERE magcode = '1'
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>Nulmeting</stepname></step><step><id>3826</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings></settings><settingsxml /><stepname>==== 484 log stock differences ====</stepname></step><step><id>2912</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO [%abeitargetdb%].dbo._AB_tb_SOx_Log
+(ComponentName, PropName, DataKey, OldValue, NewValue, Creator, runid)
+SELECT 
+      'voorrd' AS ComponentName
+    , 'CycleCount' AS PropName
+    , v.ID AS DataKey
+    , a.CountingCycle AS OldValue
+    , ISNULL(v.CountingCycle, 0) AS NewValue
+    , '999' AS Creator
+    , '%runid%' AS runid
+FROM dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+INNER JOIN dbo.Items AS i WITH (NOLOCK) ON v.artcode=i.ItemCode
+WHERE 1=1
+    AND v.magcode = '1'
+    AND i.Class_10 = '10.00'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        --OR a.CountingCycle IS NULL
+        OR v.CountingCycle IS NULL
+    )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>Check Differences &amp; store in SOx_log</stepname></step><step><id>2913</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd_Log
+    (ID, magcode, artcode, maglok, minvrd, maxvrd, veilvrd, bestniv, blokkeer, DeliveryTimeInDays, res_id, CostPrice, CountingCycle, OrderPolicyCode, PeriodOrderDays, DateLastCounted, Division, syscreated, syscreator, sysmodified, sysmodifier, sysguid, runid)
+SELECT 
+    v.ID, v.magcode, v.artcode, v.maglok, v.minvrd, v.maxvrd, v.veilvrd, v.bestniv, v.blokkeer, v.DeliveryTimeInDays, v.res_id, v.CostPrice, v.CountingCycle, v.OrderPolicyCode, v.PeriodOrderDays, v.DateLastCounted, v.Division, v.syscreated, v.syscreator, v.sysmodified, v.sysmodifier, v.sysguid, '%runid%' AS runid
+FROM dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+INNER JOIN dbo.Items AS i WITH (NOLOCK) ON v.artcode=i.ItemCode
+WHERE 1=1
+    AND v.magcode = '1'
+    AND Class_10 = '10.00'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        --OR a.CountingCycle IS NULL
+        OR v.CountingCycle IS NULL
+    )</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>130</seqno><settings /><settingsxml /><stepname>Save into voorrd_log</stepname></step><step><id>2914</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>-- Update artikel our shadow table
+UPDATE [%abeitargetdb%].dbo._AB_tb_voorrd SET CountingCycle=v.CountingCycle
+--SELECT v.ID, a.artcode, v.countingcycle, a.artcode, a.countingcycle
+FROM [%abeisourcedb%].dbo.voorrd AS v WITH (NOLOCK)
+INNER JOIN [%abeisourcedb%].dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+AND v.magcode='1'
+    AND (v.CountingCycle &lt;&gt; a.CountingCycle
+        OR a.CountingCycle IS NULL
+        AND v.CountingCycle IS NULL
+    )
+
+-- Insert new artikel our shadow table
+INSERT INTO [%abeitargetdb%].dbo._AB_tb_voorrd (ID, artcode, CountingCycle, syscreated, syscreator, sysmodified, sysmodifier, sysguid)
+SELECT v.ID, v.artcode, v.CountingCycle, v.syscreated, v.syscreator, v.sysmodified, v.sysmodifier, v.sysguid
+FROM [%abeisourcedb%].dbo.voorrd AS v WITH (NOLOCK)
+FULL OUTER JOIN [%abeisourcedb%].dbo._AB_tb_voorrd AS a WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+    AND v.magcode='1'
+    AND a.ID IS NULL
+
+-- Delete removed artikel from our shadow table
+DELETE dbo._AB_tb_voorrd
+--SELECT *
+FROM dbo._AB_tb_voorrd AS a WITH (NOLOCK)
+FULL OUTER JOIN dbo.voorrd AS v WITH (NOLOCK) ON v.ID=a.ID
+WHERE 1=1
+    AND v.ID IS NULL</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>140</seqno><settings /><settingsxml /><stepname>Sync AB Table</stepname></step></steps></job></jobs>

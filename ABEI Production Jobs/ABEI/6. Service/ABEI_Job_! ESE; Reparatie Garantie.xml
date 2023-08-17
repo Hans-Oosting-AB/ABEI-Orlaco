@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>344</id><jobname>! ESE: Reparatie Garantie</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=15;timescale=minutes;startat=12:08:01;beginat=05:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1608</id><entity>Request</entity><action>update</action><source>107</source><target>1</target><datasource>select distinct 1 as freeboolfield_04
+        , os.oms45 as freetextfield_08
+        , ab.id
+       -- ,  ab.freetextfield_11, ab.*
+from 
+    dbo.orsrg os with(NOLOCK) inner join
+    [orlaco].dbo.absences ab with (NOLOCK) on os.ordernr = ab.freetextfield_11
+where
+    os.artcode IN ('S0999920','S0999910') and
+    ab.type = 640 and
+    freeboolfield_04 &lt;&gt; 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Verzoek bijwerken met reparatie regels</stepname></step><step><id>1618</id><entity>-none-</entity><action>update</action><source>105</source><target>1</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Weghalen vinkje als garantie artikel is verwijderd</stepname></step></steps></job></jobs>

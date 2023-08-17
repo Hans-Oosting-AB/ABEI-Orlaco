@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>506</id><jobname>EG: UPS - POD</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>LVE 2021-06-15
+Create new empty document with UPS Track and Trace no
+Or
+Create POD PDF from SSRS
+Update existing POD document with POD PDF file
+Create new document with POD PDF file</remarks><schedulename /><schedulesettings>freq=5;timescale=minutes;startat=12:12:25;beginat=05:00:00;endat=23:00:00;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3565</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>==== ADD Data for UPS Requests ====</stepname></step><step><id>3172</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource> INSERT INTO [ExactData].[dbo].[_ST_UPS_POD]
+      ([EOrhkrgId]
+      ,[EOrderNumber]
+      ,[EShippingNumber]
+      ,[EShipmentDate]
+      ,[EDebtor]
+      ,[EShippingDebtor]
+      ,[EShippingType]
+      ,[EShippingDescription])
+
+  select o.ID, o.ordernr, o.pakbon_nr, o.pakbon_dat, o.debnr, o.verzdebnr, l.levwijze, l.oms40_0
+  from [400]..orhkrg o with (NOLOCK) 
+  inner join [400]..ordlev l with (NOLOCK) on o.levwijze = l.levwijze 
+  where  
+  o.pakbon_dat between  DATEADD(DAY,-115,GETDATE()) AND DATEADD(DAY,-1,GETDATE()) AND
+  ord_soort = 'V' AND   
+  o.levwijze IN ('149', '150','249', '250') AND 
+  o.ID NOT IN (SELECT [EOrhkrgId]  FROM [ExactData].[dbo].[_ST_UPS_POD]) 
+  ORDER by  o.pakbon_nr</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Add Request to UPS table</stepname></step><step><id>3171</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>
+UPDATE [ExactData].[dbo].[_ST_UPS_POD] SET UPODReady = 1 WHERE EShipmentDate &lt; DATEADD(DAY,-5,GETDATE()) and UPODReady = 0</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>12</seqno><settings /><settingsxml /><stepname>Set PODReady Status after 5 days</stepname></step><step><id>3568</id><entity>-none-</entity><action>exec SQL</action><source>133</source><target>133</target><datasource>
+UPDATE [ExactData].[dbo].[_ST_UPS_POD] 
+SET UPSPODChecked = 0, sysmodified = GETDATE(), URetry += 1
+WHERE
+UPSstatus = 'Error' and UPODReady = 1 and UPSPODChecked = 1 and URetry &lt;= 3 and 
+sysmodified &lt; DATEADD(day,-2,getdate()) and EShipmentDate &gt; DATEADD(day,-120,getdate())</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>13</seqno><settings /><settingsxml /><stepname>Retry POD on error</stepname></step><step><id>3566</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings></settings><settingsxml /><stepname>==== ADD Document with Request ID ====</stepname></step><step><id>3131</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource>UPDATE TOP (10) p WITH (ROWLOCK, NOWAIT) SET
+    abei_runid = '%runid%'
+    , abei_rowstatus = 1
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_ST_UPS_POD] p 
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK)
+    ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+WHERE 1=1
+    AND NOT EXISTS (
+        SELECT 1 
+        FROM [%abeisourcedb%].dbo.BacoDiscussions b WITH (NOLOCK)
+        WHERE 1=1
+            AND b.Type = 222 -- UPS POD (custom)
+            AND b.OrderNumber = p.EOrderNumber
+            AND b.CmpWwn = c.cmp_wwn
+            AND b.OurRef = p.EShippingNumber -- per delivery 1 POD
+            )
+    
+    AND ISNULL(p.abei_rowstatus, 0) = 0
+    AND p.UTracking IS NOT NULL -- Track and Trace code available</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>21</seqno><settings /><settingsxml /><stepname>Assign runid to new lines</stepname></step><step><id>3128</id><entity>Document</entity><action>create</action><source>133</source><target>107</target><datasource>SELECT 
+    c.cmp_wwn as cmpwwn
+    , p.EOrderNumber as OrderNumber    
+    , 222 as Type
+    , CONCAT('POD ', p.EShippingNumber, ' ', p.UTracking) as Subject
+    , p.UTracking as Note
+    , p.EShippingNumber as Ourref
+FROM [dbo].[_ST_UPS_POD] p WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy c WITH (NOLOCK)
+    ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor  COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+WHERE 1=1
+    AND p.abei_runid = '%runid%' </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>22</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cmpwwn</name><type>Guid</type></datacolumn><datacolumn><name>OrderNumber</name><type>Int32</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>Subject</name><type>String</type></datacolumn><datacolumn><name>Note</name><type>String</type></datacolumn><datacolumn><name>Ourref</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create new document for order</stepname></step><step><id>3129</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource>UPDATE p WITH (ROWLOCK, NOWAIT) SET
+    abei_rowstatus = CASE WHEN doc.ID IS NULL THEN 0 ELSE 2 END -- not found = retry next time
+    , abei_PODID = doc.ID
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_ST_UPS_POD] p 
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK)
+        ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+    OUTER APPLY (
+        SELECT TOP (1) b.ID 
+        FROM [%abeisourcedb%].dbo.BacoDiscussions b WITH (NOLOCK)
+        WHERE 1=1
+            AND b.Type = 222 -- UPS POD (custom)
+            AND b.OrderNumber = p.EOrderNumber
+            AND b.CmpWwn = c.cmp_wwn
+            AND b.OurRef = p.EShippingNumber -- per delivery 1 POD
+    ) doc
+    
+WHERE 1=1
+    AND p.abei_runid = '%runid%'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>23</seqno><settings /><settingsxml /><stepname>Check if document exists and update status</stepname></step><step><id>3567</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings></settings><settingsxml /><stepname>==== Create POD ====</stepname></step><step><id>3132</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource>UPDATE TOP (10) p WITH (ROWLOCK, NOWAIT) SET
+    abei_runid = '%runid%'
+    , abei_PODstatus = 1
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [%abeitargetdb%].[dbo].[_ST_UPS_POD] p 
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK)
+        ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+WHERE 1=1
+    AND ISNULL(p.abei_PODstatus, 0) = 0</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>31</seqno><settings /><settingsxml /><stepname>Check if there are new lines with complete POD info</stepname></step><step><id>3133</id><entity>-none-</entity><action>create</action><source>133</source><target>7</target><datasource>SELECT p.EShippingNumber
+FROM [dbo].[_ST_UPS_POD] p WITH (NOLOCK)
+WHERE 1=1
+    AND p.abei_runid = '%runid%'
+    AND p.abei_PODstatus = 1</datasource><contentbody></contentbody><mapping>rpShipment=%EShippingNumber%</mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>32</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/UPSPOD;ssrsformat=PDF;ssrsfile=C:\APPS\ABEI\Temp\UPSPOD\%RUNID%\%EShippingNumber%.pdf;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>EShippingNumber</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Create SSRS PDF</stepname></step><step><id>3134</id><entity>Document</entity><action>update</action><source>133</source><target>107</target><datasource>SELECT CONCAT('C:\APPS\ABEI\Temp\UPSPOD\%RUNID%\', p.EShippingNumber, '.pdf') as FileName
+    , p.abei_PODID as ID
+FROM [dbo].[_ST_UPS_POD] p WITH (NOLOCK)
+WHERE 1=1
+    AND p.abei_runid = '%runid%' 
+    AND p.abei_PODstatus = 1
+    AND p.abei_PODID IS NOT NULL -- POD already exists</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>33</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>FileName</name><type>String</type></datacolumn><datacolumn><name>cmpwwn</name><type>Guid</type></datacolumn><datacolumn><name>OrderNumber</name><type>Int32</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update the existing POD document</stepname></step><step><id>3137</id><entity>Document</entity><action>create</action><source>133</source><target>107</target><datasource>SELECT CONCAT('C:\APPS\ABEI\Temp\UPSPOD\%RUNID%\', p.EShippingNumber, '.pdf') as FileName
+    , c.cmp_wwn as cmpwwn
+    , p.EOrderNumber as OrderNumber    
+    , 222 as Type
+    , CONCAT('POD ', p.EShippingNumber, ' ', p.UTracking) as Subject
+    , p.UTracking as Note
+    , p.EShippingNumber as Ourref
+FROM [dbo].[_ST_UPS_POD] p WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy c WITH (NOLOCK)
+        ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+WHERE 1=1
+    AND p.abei_runid = '%runid%'
+    AND p.abei_PODstatus = 1
+    AND p.abei_PODID IS NULL -- POD does not exist </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>34</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>FileName</name><type>String</type></datacolumn><datacolumn><name>cmpwwn</name><type>Guid</type></datacolumn><datacolumn><name>OrderNumber</name><type>Int32</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create a new POD document</stepname></step><step><id>3135</id><entity>-none-</entity><action>exec SQL</action><source>107</source><target>133</target><datasource>UPDATE p WITH (ROWLOCK, NOWAIT) SET
+    abei_PODstatus = CASE WHEN b.Document IS NULL THEN 0 ELSE 2 END -- not found = retry next time
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_ST_UPS_POD] p 
+    INNER JOIN [%abeisourcedb%].dbo.BacoDiscussions b WITH (NOLOCK)
+        ON b.ID = p.abei_PODID
+WHERE 1=1
+    AND p.abei_runid = '%runid%'
+    AND p.abei_PODstatus = 1
+    AND p.abei_PODID IS NOT NULL
+
+UPDATE p WITH (ROWLOCK, NOWAIT) SET
+    abei_PODstatus = ISNULL(doc.s, 0)
+    , abei_rowstatus = ISNULL(doc.s, 0)
+    , abei_PODID = doc.ID
+    , sysmodified = CURRENT_TIMESTAMP
+FROM [dbo].[_ST_UPS_POD] p 
+    INNER JOIN [%abeisourcedb%].dbo.cicmpy c WITH (NOLOCK)
+        ON c.debnr = RIGHT(SPACE(6) + LTRIM(RTRIM(p.EDebtor COLLATE DATABASE_DEFAULT)), 6) -- indexed with space, speeds up query
+    OUTER APPLY (
+        SELECT TOP (1) b.ID, CASE WHEN b.Document IS NULL THEN 0 ELSE 2 END as s
+        FROM [%abeisourcedb%].dbo.BacoDiscussions b WITH (NOLOCK)
+        WHERE 1=1
+            AND b.Type = 222 -- UPS POD (custom)
+            AND b.OrderNumber = p.EOrderNumber
+            AND b.CmpWwn = c.cmp_wwn
+            AND b.OurRef = p.EShippingNumber -- per delivery 1 POD
+    ) doc
+    
+WHERE 1=1
+    AND p.abei_runid = '%runid%'
+    AND p.abei_PODstatus = 1
+    AND p.abei_PODID IS NULL</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>35</seqno><settings /><settingsxml /><stepname>Check if document exists and update status</stepname></step><step><id>3136</id><entity>-none-</entity><action>process</action><source>0</source><target>80</target><datasource>SELECT 1 as TMP</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>36</seqno><settings>uniquekey=;retryunique=0;sysaction=3;sysfilefolder=C:\APPS\ABEI\Temp\UPSPOD\%RUNID%;sysparams=;syswait=True;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>TMP</name><type>Int32</type></datacolumn></datacolumns></general><systemtarget><systemtarget_param2 /><systemtarget_param3 /><systemtarget_skiptoseqno /><systemtarget_sleep>0</systemtarget_sleep><systemtarget_user /><systemtarget_pwd>TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%</systemtarget_pwd></systemtarget></settings></settingsxml><stepname>Remove runid folder</stepname></step><step><id>3170</id><entity>Document</entity><action>delete</action><source>0</source><target>105</target><datasource>SELECT abei_PODID AS ID
+  FROM [ExactData].[dbo].[_ST_UPS_POD] where abei_PODID is NOT NULL</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname>= TEST Remove documents = </stepname></step></steps></job></jobs>

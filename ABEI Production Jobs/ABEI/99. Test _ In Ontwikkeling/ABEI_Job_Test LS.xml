@@ -1,0 +1,1890 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>498</id><jobname>Test LS</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=09:54:05;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3029</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select distinct TOP 100 PERCENT k.ordernr as headerid, k.ordernr
+from orkrg k with (nolock) 
+inner join orsrg  r with (nolock) on r.ordernr = k.ordernr
+where k.ord_soort = 'V' AND
+k.afgehandld = 0 and r.pakbon_afg = 0  
+and r.artcode = 'TXT-HAND' 
+order by ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>0</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Replace TXT h</stepname></step><step><id>3030</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>select TOP 100 PERCENT k.ordernr as headerid,  k.ordernr, r.ID,  'TXT-PROJECT' AS artcode 
+from orkrg k with (nolock) 
+inner join orsrg  r with (nolock) on r.ordernr = k.ordernr
+where k.ord_soort = 'V' AND
+k.afgehandld = 0 and r.pakbon_afg = 0  
+and r.artcode = 'TXT-HAND' 
+order by ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>5</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Replace TXT r</stepname></step><step><id>3051</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select DISTINCT TOP 100 PERCENT r.OrderNr as headerid, r.OrderNr
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where NewDeliveryDate &lt;&gt; EGPlannedDate and message = 'Order contains set items, change manual'
+and state = 2 and i.Syscreated &lt; '2021-04-09'
+ORDER BY r.ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>FreeField01</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3052</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>select TOP 100 PERCENT r.OrderNr as HeaderId, r.OrderNr, r.ID, i.RowNr as regel,
+i.EGPlannedDate AS afldat
+from [ExactData].[dbo].[_ST_EG_Import_SODeliveryDate] i
+inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+where NewDeliveryDate &lt;&gt; EGPlannedDate and message = 'Order contains set items, change manual'
+and state = 2 and i.Syscreated &lt; '2021-04-09'
+ORDER BY r.Ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>OrderNr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>Int32</type></datacolumn><datacolumn><name>PlannedDate</name><type>DateTime</type></datacolumn><datacolumn><name>afldat</name><type>DateTime</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Planned Date</stepname></step><step><id>3053</id><entity>SalesOrderHeader</entity><action>update</action><source>112</source><target>112</target><datasource>select ordernr as headerid, ordernr 
+from orkrg with (NOLOCK) where ordernr IN (
+'62300315',
+'62300409',
+'62300548',
+'62300549',
+'62300557',
+'62300780',
+'62300786',
+'62301050',
+'62301062',
+'62301070',
+'62301161',
+'62301163',
+'62301164',
+'62301165',
+'62301166',
+'62301167',
+'62301168',
+'62301171',
+'62301173',
+'62301174',
+'62301178',
+'62301179',
+'62301180',
+'62301181',
+'62301183',
+'62301184',
+'62301186',
+'62301192',
+'62301504',
+'62301546',
+'62301547',
+'62301548',
+'62301549',
+'62301774',
+'62301779',
+'62301780',
+'62301781',
+'62301782',
+'62301839',
+'62301945',
+'62301946',
+'62301947',
+'62301948',
+'62301949',
+'62301950',
+'62301951',
+'62301954',
+'62301955',
+'62301956',
+'62301957',
+'62301958',
+'62301959',
+'62301960',
+'62301961',
+'62302276',
+'62302277',
+'62302278',
+'62302279',
+'62302280',
+'62302281',
+'62302282',
+'62302283',
+'62302284',
+'62302285',
+'62302479',
+'62302480'
+)</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Header price</stepname></step><step><id>3054</id><entity>SalesOrderLine</entity><action>update</action><source>112</source><target>112</target><datasource>SELECT 
+    ordernr as headerid, 
+    ordernr, 
+    id, 
+    regel, 
+    artcode, 
+    prijslijst as Prijslijst_old,
+    'VCE NA' as Prijslijst,
+    prijs83 as old_prijs83, 
+    prijs_n as old_prijs_n,
+    (SELECT top 1
+        (CASE 
+            WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+            ELSE staffl.prijs83 
+         END)
+     FROM staffl
+     JOIN items ON items.ItemCode = staffl.artcode 
+     WHERE staffl.prijslijst = 'VCE NA'
+     AND items.condition = 'A'
+     AND '2023-07-17' &gt;= staffl.validfrom 
+     AND '2023-07-17' &lt; staffl.validto
+     AND items.ItemCode = r.artcode) as prijs83,
+    (SELECT top 1
+        (CASE 
+            WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+            ELSE staffl.prijs83 
+         END)
+     FROM staffl
+     JOIN items ON items.ItemCode = staffl.artcode 
+     WHERE staffl.prijslijst = 'VCE NA'
+     AND items.condition = 'A'
+     AND '2023-07-17' &gt;= staffl.validfrom 
+     AND '2023-07-17' &lt; staffl.validto
+     AND items.ItemCode = r.artcode) as prijs_n
+FROM 
+    orsrg r WITH (NOLOCK)
+    WHERE 1=1
+    AND    r.ordernr IN (
+'62300315',
+'62300409',
+'62300548',
+'62300549',
+'62300557',
+'62300780',
+'62300786',
+'62301050',
+'62301062',
+'62301070',
+'62301161',
+'62301163',
+'62301164',
+'62301165',
+'62301166',
+'62301167',
+'62301168',
+'62301171',
+'62301173',
+'62301174',
+'62301178',
+'62301179',
+'62301180',
+'62301181',
+'62301183',
+'62301184',
+'62301186',
+'62301192',
+'62301504',
+'62301546',
+'62301547',
+'62301548',
+'62301549',
+'62301774',
+'62301779',
+'62301780',
+'62301781',
+'62301782',
+'62301839',
+'62301945',
+'62301946',
+'62301947',
+'62301948',
+'62301949',
+'62301950',
+'62301951',
+'62301954',
+'62301955',
+'62301956',
+'62301957',
+'62301958',
+'62301959',
+'62301960',
+'62301961',
+'62302276',
+'62302277',
+'62302278',
+'62302279',
+'62302280',
+'62302281',
+'62302282',
+'62302283',
+'62302284',
+'62302285',
+'62302479',
+'62302480'
+)
+    AND (ar_soort &lt;&gt; 'P') 
+    AND artcode NOT LIKE '%TXT%' 
+    AND prijs_n &gt; .1 
+    AND r.uitgifte = 0 
+    AND r.afldat &gt; '2023-07-17'
+    AND prijslijst = 'VCE NA'
+    AND prijs83 &lt;&gt; (SELECT top 1
+                    (CASE 
+                        WHEN staffl.kort_pbn = 'M' THEN ((items.CostPriceStandard * ISNULL(staffl.unitfactor, 1)) * ( 1 + staffl.bedr1/100))
+                        ELSE staffl.prijs83 
+                     END)
+                 FROM staffl
+                 JOIN items ON items.ItemCode = staffl.artcode 
+                 WHERE staffl.prijslijst = 'VCE NA'
+                 AND items.condition = 'A'
+                 AND '2023-07-17' &gt;= staffl.validfrom 
+                 AND '2023-07-17' &lt; staffl.validto
+                 AND items.ItemCode = r.artcode)
+
+
+                     
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>11</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>old_prijs83</name><type>Double</type></datacolumn><datacolumn><name>old_prijs_n</name><type>Double</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update row price</stepname></step><step><id>3031</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select k.ordernr as HeaderId, k.ordernr, k.afldat as orderdate, MIN (r.afldat) as afldat 
+from [100]..orkrg k with (NOLOCK)
+inner join [100]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where k.ordernr = 12100102 and k.ord_soort = 'V' AND k.afgehandld = 0 and r.pakbon_afg = 0 and r.ar_soort IN ('T', 'V') 
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3032</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>WITH deldates AS( 
+select k.ordernr, k.afldat as orderdate, MIN (r.afldat) as afldat 
+from [100]..orkrg k with (NOLOCK)
+inner join [100]..orsrg r with (NOLOCK) on k.ordernr = r.ordernr
+where k.ordernr = 12100102 and k.ord_soort = 'V' AND k.afgehandld = 0 and r.pakbon_afg = 0 and r.ar_soort IN ('T', 'V') 
+group by k.ordernr, k.afldat 
+having  MIN (r.afldat) &lt;&gt; k.afldat
+)
+
+SELECT r.id, r.ordernr as HeaderID, r.ordernr, r.regel
+FROM [100]..orsrg r with (NOLOCK) 
+INNER JOIN deldates d on d.ordernr = r.ordernr</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname>Update Header Date</stepname></step><step><id>3037</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select TOP 100 PERCENT ordernr as headerid, ordernr, debnr, 
+CASE WHEN refer1 IS NOT NULL AND refer2 IS NOT NULL 
+    THEN refer1 + ' | ' + refer2 
+    ELSE  ISNULL(refer1,'') + ISNULL(refer2,'') END AS refer
+from orkrg  with (NOLOCK) 
+where afgehandld = 0 and debnr in ('040447','040448', '974605') 
+and refer is null and (refer1 IS NOT NULL OR refer2 IS NOT NULL)
+order by ordernr</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Update refer</stepname></step><step><id>3038</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>select TOP 100 PERCENT o.ordernr as headerid, o.ordernr, MIN(r.id) as id
+from orkrg o with (NOLOCK) 
+inner join orsrg r with (NOLOCK) on o.ordernr = r.ordernr
+where o.afgehandld = 0 and o.debnr in ('040447','040448', '974605') 
+and o.refer is null and (o.refer1 IS NOT NULL OR o.refer2 IS NOT NULL)
+group by o.ordernr
+order by o.ordernr</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>Update refer</stepname></step><step><id>3968</id><entity>Document</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT DISTINCT top 10
+    b.document as Document, 
+    (b.filename) as New_filename
+
+FROM [ABSC_Data].._AB_tb_VanReenen_WarehouseShipment t 
+INNER JOIN [400]..BacoDiscussions b ON B.OrderNumber = t.order_reference COLLATE DATABASE_DEFAULT AND B.TYPE = 12
+Where 1 = 1
+    --AND t.runid = '%runid%' 
+    AND t.rowstatus = 1
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi, hierbij een voorbeeld&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;%runid%&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>New_filename</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%New_filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>Pakbonnen Vanreenen</stepname></step><step><id>4001</id><entity>Document</entity><action>create</action><source>107</source><target>6</target><datasource>SELECT DISTINCT
+    b.document as Document, 
+    (b.filename) as New_filename
+
+FROM [ABSC_Data].._AB_tb_VanReenen_WarehouseShipment t 
+INNER JOIN [400]..BacoDiscussions b ON B.OrderNumber = t.order_reference COLLATE DATABASE_DEFAULT AND B.TYPE = 12
+Where 1 = 1
+    AND t.runid = '%runid%' </datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;font color="black"&gt;&lt;font color="black"&gt;&lt;font color="black"&gt;&lt;font size="1"&gt;&lt;/font&gt;&lt;p&gt;&lt;br&gt;We are pleased to inform you that the attached orders have been processed at Orlaco. &lt;/p&gt;&lt;p&gt;For your convenience, we have included the packing list and corresponding PDFs. Please ensure that the delivery notes are incorporated into the paperwork for the weekly shipment.&lt;/p&gt;&lt;p&gt;If you have any questions or concerns, please feel free to reach out to us at &lt;a href="mailto:Order.Netherlands@Stoneridge.com" target="_new"&gt;Order.Netherlands@Stoneridge.com&lt;/a&gt;. &lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;&lt;font face="Calibri"&gt;&lt;b&gt;&lt;span style='color: rgb(2, 0, 0); font-family: "Arial",sans-serif; font-size: 10.5pt; mso-fareast-font-family: "Times New Roman"; mso-fareast-theme-font: minor-fareast; mso-ansi-language: NL; mso-fareast-language: ZH-CN; mso-bidi-language: AR-SA;'&gt;Stoneridge | &lt;/span&gt;&lt;span style='color: rgb(192, 0, 0); font-family: "Arial",sans-serif; font-size: 10.5pt; mso-fareast-font-family: "Times New Roman"; mso-fareast-theme-font: minor-fareast; mso-ansi-language: NL; mso-fareast-language: ZH-CN; mso-bidi-language: AR-SA;'&gt;ORLACO – Vision is our mission&lt;/span&gt;&lt;/b&gt;&lt;span style='color: rgb(192, 0, 0); font-family: "Calibri",sans-serif; font-size: 16pt; mso-fareast-font-family: "Times New Roman"; mso-fareast-theme-font: minor-fareast; mso-ansi-language: NL; mso-fareast-language: ZH-CN; mso-bidi-language: AR-SA;'&gt;®&lt;/span&gt;&lt;/font&gt;&lt;/p&gt;&lt;/font&gt;&lt;/font&gt;&lt;/font&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>110</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=order.netherlands@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Lennart.meeuse@stoneridge.com;emailcc=jelle.ruiter@stoneridge.com;emailbcc=lennart.meeuse@stoneridge.com;emailsub=Order Processed - Packing List(s) Attached - TEST MAIL;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Document</name><type>Byte[]</type></datacolumn><datacolumn><name>New_filename</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments><attachment><filename>%New_filename%</filename><filepath /><filetype /><contentcolumn>Document</contentcolumn><isbinary>True</isbinary></attachment></attachments></email></settings></settingsxml><stepname>Pakbonnen Vanreenen - In Testing Phase</stepname></step><step><id>3049</id><entity>-none-</entity><action>create</action><source>105</source><target>6</target><datasource>
+SELECT TOP 100 PERCENT ed.created AS LogDate
+        , c.cmp_name AS Relatie
+        , CASE WHEN c.cmp_type = 'C' THEN 'Debtor'
+            ELSE 'Creditor'
+          END AS Customer_Type
+        , CASE WHEN c.cmp_type = 'C' THEN RTRIM(LTRIM(c.debcode))
+            ELSE RTRIM(LTRIM(c.crdcode))
+          END AS Number
+        , ec.ComponentName AS Entity
+        , ep.PropName AS Field
+        , ed.oldvalue AS OldValue
+        , ed.newvalue AS NewValue
+        , h.fullname AS FullName
+     FROM ebcdatalog ed WITH (NOLOCK)
+         INNER JOIN ebcprops ep WITH (NOLOCK) ON ed.property = ep.propid
+         LEFT OUTER JOIN EbcComponents ec WITH (NOLOCK) ON ed.Component = ec.CompId
+         LEFT OUTER JOIN humres h WITH (NOLOCK) ON ed.creator = h.res_id
+         LEFT OUTER JOIN cicmpy c WITH (NOLOCK) ON ed.DataKey = c.cmp_wwn
+    WHERE 1=1  
+        AND (c.debcode IS NOT NULL OR c.crdcode IS NOT NULL)
+        AND ec.CompId = 'DF2C80E9-0A2C-11D4-9DDF-0004AC25BEFA' -- Associates
+        AND ep.PropId IN (
+            --  '10C509D3-0C5B-4430-BBA5-951092208900' -- cnt_FirstName         - Voornaam
+            -- '7B674000-4848-4B53-94EE-93F3C87BA7B1' -- cnt_Initials           - Voorletters
+            --, 'FAED2986-2EC7-4986-B07E-F37DE1028CE6' -- cnt_MiddleName            - Tussenvoegsel
+            --, '7B78A7A7-2291-4C76-B609-C89E7EF714C3' -- cnt_LastName          - Achternaam
+             '89F55AC6-6960-4A61-B51C-50492732BEDB' -- VatCode                  - BTW-Code
+            , '7127B87C-A1CF-4B83-B34B-7FDB414A4590' -- VatNumber               - BTW-Nummer
+            , 'EE062E39-0723-471C-B46A-AE450A90695D' -- BankAccount             - Bankrekening
+            , 'D9F6A9B3-38D0-4BF2-8382-996AE7B9159E' -- CentralizationAccount   - Crediteurenrekening
+            , '22A5FC09-18E8-454E-97DE-B57282DB1E40' -- OffSetAccount           - Tegenrekening
+            , 'DF2C80FE-0A2C-11D4-9DDF-0004AC25BEFA' -- CustomerStatus          - Status
+            , '664C1176-F7A1-4E68-9172-7C9757F80C93' -- PosCountry              - Country of the postal address
+            , 'D9FD6371-F0F5-48B8-93AD-38A7F4913227' -- VisCountry              - Country of the visit address
+            , '3D559504-957D-4180-8E89-EE3A48E41522' -- PaymentCondition        - Betalingsconditie
+            , '6F433F4A-7C8E-4C32-BF08-F54E32D257C8' -- Creditline              - Kredietlimiet
+            , '2D5166CE-039A-4AEE-9B5A-652FC99AA642' -- PriceList
+            , 'DF2C80F1-0A2C-11D4-9DDF-0004AC25BEFA' -- MailAddress                             
+            , 'DF2C80F2-0A2C-11D4-9DDF-0004AC25BEFA' -- MailAddress2                            
+            , '8EFD7A01-E615-4A9C-A553-1B420C2D4DC6' -- MailAddress3                            
+            , 'D1EC3D8E-FC1F-47EA-BBBA-A3EC29404318' -- MailCity                                
+            , '09B03CFE-D48D-46D7-923C-DC7D03DD8CA2' -- MailCounty                              
+            , 'DF2C80F5-0A2C-11D4-9DDF-0004AC25BEFA' -- MailPostcode                            
+            , 'DF2C8123-0A2C-11D4-9DDF-0004AC25BEFA' -- MailState                               
+            , '7772D6D3-685D-4C5A-AF92-E87352EA7F1D' -- DelAddress                              
+            , '76759C2B-807A-407D-8782-4824D2726A91' -- DelAddress2                             
+            , '3ABCCA7E-2ED6-4ED8-AFE6-AED231E635FC' -- DelAddress3                             
+            , '79A12735-E745-422F-B59A-B0A50FCC5B2A' -- DelCity                                 
+            , '4D18F830-7513-4E33-9E6D-8272FD33EA3A' -- DelCounty                               
+            , '2E9E5391-F65A-494B-8545-5B7C09E4CE98' -- DelPostCode                             
+            , '7C5B4A38-2701-45FD-9D64-BDF7CE96B0A2' -- DelState                     
+            , '345E334F-2E81-41E1-9E9E-0086895B0634' -- InvAddress                              
+            , '025CE17E-CFA4-4C00-B925-5817144450ED' -- InvAddress2                             
+            , '87DF35E8-2765-4E7D-B348-3FD0C524C099' -- InvAddress3                             
+            , '0D99F37C-47E4-40D4-BFA5-CBAE682475B2' -- InvCity                                 
+            , '61592D99-46A9-4289-9671-D810252F5A2C' -- InvCounty                               
+            , '07A61FF4-7FC3-40E8-A3F4-63E445E58CB0' -- InvPostCode                             
+            , 'D32A44C7-FEB7-4BFC-828E-8CEFDE8A7E4D' -- InvState
+            , '6A287D4A-13FF-4FF8-B7A3-D809BDF7472F' --IncoTermCode
+            , '3BB63337-A0C2-4792-8633-89407FC6838C' -- IncoTermProperty                                           
+
+            )
+            AND ed.Created BETWEEN DATEADD(DAY, -1, getdate()) AND getdate()
+
+UNION ALL (
+
+SELECT TOP 100 PERCENT ed.created AS LogDate
+        , c.cmp_name AS Relatie
+        , CASE WHEN c.cmp_type = 'C' THEN 'Debtor'
+            ELSE 'Creditor'
+          END AS Customer_Type
+        , CASE WHEN c.cmp_type = 'C' THEN RTRIM(LTRIM(c.debcode))
+            ELSE RTRIM(LTRIM(c.crdcode))
+          END 
+        , ec.ComponentName AS Entity
+        , ep.PropName AS Field
+        , ed.oldvalue AS OldValue
+        , ed.newvalue AS NewValue
+        , h.fullname AS FullName
+     FROM ebcdatalog ed WITH (NOLOCK)
+         INNER JOIN ebcprops ep WITH (NOLOCK) ON ed.property = ep.propid
+         LEFT OUTER JOIN EbcComponents ec WITH (NOLOCK) ON ed.Component = ec.CompId
+         LEFT OUTER JOIN humres h WITH (NOLOCK) ON ed.creator = h.res_id
+    CROSS APPLY (
+        SELECT c.cmp_name, c.debcode, c.crdcode, c.cmp_type
+        FROM   bnkacc as ba WITH (NOLOCK)
+               INNER JOIN bnkkop as bk WITH (NOLOCK) ON bk.bank_rek = ba.banknr 
+               LEFT OUTER JOIN cicmpy as c WITH (NOLOCK)
+                            ON ( ( c.debnr = bk.debnr 
+                                   AND c.debnr IS NOT NULL 
+                                   AND bk.debnr IS NOT NULL ) 
+                                  OR ( c.crdnr = bk.crdnr 
+                                       AND c.crdnr IS NOT NULL 
+                                       AND bk.crdnr IS NOT NULL ) ) 
+        WHERE  ba.id = ed.datakey
+    ) AS c
+    WHERE  
+        ec.CompId = '46948FFE-98C5-4BF7-9B9F-3D008E8F268B' -- CRMBankAccount
+        AND ep.PropId IN (
+              'DBA372AB-AE9A-4C00-9E3E-2C4F111AAB4E' -- AccountNumberBank       - Rekeningnummer bank 
+            , '17099E47-ED85-4825-BDC3-62C5C78A1351' -- BankAccountCode         - Bankcode
+            , 'B60ADD34-4EAD-4CCE-A000-0F23CE89FBF5' -- BICCode                 - BIC-Code
+            , '2E125751-97A0-472C-A6AB-8BE5949DFB6A' -- BranchCode              - Filiaalcode
+            , '4D3B47E9-B8AB-40AD-84C2-316878287E2C' -- ClearanceIdentification - Clearing identificatie
+            , '4984B4BF-0208-493D-83A4-F695EAA064FE' -- Currency                - Valuta
+            , '0D927DA1-B86F-41B6-A18B-D9302C20246D' -- SwiftAddress            - SWIFT-adres
+            , '1DEB49CB-EF77-4124-B404-EEE37B7F50AC' -- BankAccountAndMask      - Nummer
+            , 'FB3AF41A-ABED-48E7-871B-786CD7DDBED2' -- BankAccountNumber       - Bankrekening (niet in scherm)
+            , '49CB39C3-5B29-4474-A9E2-963D415552DD' -- BankName                - Banknaam
+            , 'F86A9A0F-B520-4A33-8B7F-3446BE33ED43' -- IBAN                    - IBAN Nummer
+            )
+            AND ed.Created BETWEEN DATEADD(DAY,-1, getdate()) AND getdate()
+)
+ORDER BY c.cmp_name, ed.created, ep.PropName</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;&lt;font face="Tahoma"&gt;&lt;strong&gt;Account changes %abeitoday%&lt;font face="Tahoma"&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 0px; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="silver"&gt;&lt;td&gt;LogDate&lt;/td&gt;&lt;td&gt;Relatie&lt;/td&gt;&lt;td&gt;Customer_Type&lt;/td&gt;&lt;td&gt;Number&lt;/td&gt;&lt;td&gt;Entity&lt;/td&gt;&lt;td&gt;Field&lt;/td&gt;&lt;td&gt;OldValue&lt;/td&gt;&lt;td&gt;NewValue&lt;/td&gt;&lt;td&gt;FullName&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%LogDate%&lt;/td&gt;&lt;td&gt;%Relatie%&lt;/td&gt;&lt;td&gt;%Customer_Type%&lt;/td&gt;&lt;td&gt;%Number%&lt;/td&gt;&lt;td&gt;%Entity%&lt;/td&gt;&lt;td&gt;%Field%&lt;/td&gt;&lt;td&gt;%OldValue%&lt;/td&gt;&lt;td&gt;%NewValue%&lt;/td&gt;&lt;td&gt;%FullName%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="9"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/font&gt;&lt;/strong&gt;&lt;/font&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=AP1 - changed accounts;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=LogDate,Relatie,Customer_Type,Number,Entity,Field,OldValue,NewValue,FullName;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>LogDate</name><type>DateTime</type></datacolumn><datacolumn><name>Relatie</name><type>String</type></datacolumn><datacolumn><name>Customer_Type</name><type>String</type></datacolumn><datacolumn><name>Number</name><type>String</type></datacolumn><datacolumn><name>Entity</name><type>String</type></datacolumn><datacolumn><name>Field</name><type>String</type></datacolumn><datacolumn><name>OldValue</name><type>String</type></datacolumn><datacolumn><name>NewValue</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send AP01 changes on accounts</stepname></step><step><id>3055</id><entity>BOMHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select top 10 rh.id as headerid, rh.ID, rh.itemprod, convert(varchar,quantity) as drawingno 
+from [100]..recipe rh with (NOLOCK)
+INNER JOIN [100]..items i with (NOLOCK) ON i.itemcode = rh.itemprod
+where i.Condition = 'A' and rh.itemreq is null and rh.sequenceno = 0
+and isnull(rh.drawingno,'') &lt;&gt; convert(varchar,rh.quantity)
+order by rh.itemprod
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>itemprod</name><type>String</type></datacolumn><datacolumn><name>drawingno</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update BOM drawing no</stepname></step><step><id>3056</id><entity>BOMLine</entity><action>update</action><source>105</source><target>105</target><datasource>with reciperows as 
+(SELECT MIN(sr.ID) AS Id, itemprod
+FROM [100]..recipe sr with (NOLOCK) 
+INNER JOIN [100]..items si with (NOLOCK) ON si.itemcode = sr.itemprod
+WHERE si.Condition = 'A' and sr.sequenceno &gt; 0 and sr.itemreq is not null
+GROUP BY sr.itemprod)
+
+select top 10  rh.id as headerid, r.ID, r.itemprod, r.sequenceno, r.itemreq
+from reciperows rr
+inner join [100]..recipe r with (NOLOCK) on r.ID = rr.ID
+inner join [100]..recipe rh with (NOLOCK) ON r.itemprod = rh.itemprod and rh.itemreq is null and rh.sequenceno = 0
+INNER JOIN [100]..items i with (NOLOCK) ON I.itemcode = r.itemprod
+where i.Condition = 'A' and r.sequenceno &gt; 0 and r.itemreq is not null
+and isnull(rh.drawingno,'') &lt;&gt; convert(varchar,rh.quantity)
+order by rh.itemprod, r.sequenceno</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Action</name><type>String</type></datacolumn><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>itemprod</name><type>String</type></datacolumn><datacolumn><name>sequenceno</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update BOM drawing lines</stepname></step><step><id>3103</id><entity>ProductionHeader</entity><action>update</action><source>105</source><target>105</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>150</seqno><settings /><settingsxml /><stepname>Update PO</stepname></step><step><id>3104</id><entity>ProductionLine</entity><action>update</action><source>105</source><target>105</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>150</seqno><settings /><settingsxml /><stepname>Update PO line</stepname></step><step><id>3110</id><entity>-none-</entity><action>create</action><source>105</source><target>7</target><datasource>select TOP 1 *
+ from [ExactData].dbo._ST_UPS_POD where UPSChecked = 1 and UPSStatus != 'Error'
+ order by EOrderNumber</datasource><contentbody></contentbody><mapping>rpShipment=%EShippingNumber%</mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>160</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/UPSPOD;ssrsformat=PDF;ssrsfile=C:\APPS\UPSPOD\POD_%EShippingNumber%.pdf;emailfrom=;emailname=;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=;emailport=;emailssl=False;emailto=;emailcc=;emailbcc=;emailsub=;emailbodyusesource=0;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Id</name><type>Int32</type></datacolumn><datacolumn><name>EOrhkrgId</name><type>Int32</type></datacolumn><datacolumn><name>EOrderNumber</name><type>Int32</type></datacolumn><datacolumn><name>EShippingNumber</name><type>Int32</type></datacolumn><datacolumn><name>EShipmentDate</name><type>DateTime</type></datacolumn><datacolumn><name>EDebtor</name><type>Int32</type></datacolumn><datacolumn><name>EShippingDebtor</name><type>Int32</type></datacolumn><datacolumn><name>EShippingType</name><type>String</type></datacolumn><datacolumn><name>EShippingDescription</name><type>String</type></datacolumn><datacolumn><name>UTracking</name><type>String</type></datacolumn><datacolumn><name>UReference</name><type>String</type></datacolumn><datacolumn><name>UWeight</name><type>String</type></datacolumn><datacolumn><name>UService</name><type>String</type></datacolumn><datacolumn><name>USendOn</name><type>String</type></datacolumn><datacolumn><name>UDeliverdOn</name><type>String</type></datacolumn><datacolumn><name>USenderAddress</name><type>String</type></datacolumn><datacolumn><name>UDeliveryAddress</name><type>String</type></datacolumn><datacolumn><name>UNPackages</name><type>Int32</type></datacolumn><datacolumn><name>UReceivedBy</name><type>String</type></datacolumn><datacolumn><name>ULeftAt</name><type>String</type></datacolumn><datacolumn><name>UNDocuments</name><type>Int32</type></datacolumn><datacolumn><name>UMessage</name><type>String</type></datacolumn><datacolumn><name>UPSChecked</name><type>Int32</type></datacolumn><datacolumn><name>UPSStatus</name><type>String</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>sysmodified</name><type>DateTime</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray /><printerpapername /><printercopies>1</printercopies><printerpaperheight>0</printerpaperheight><printerpaperwidth>0</printerpaperwidth><printerpaperkind>0</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><attachments /></email></settings></settingsxml><stepname>Create UPS POD</stepname></step><step><id>3113</id><entity>Document</entity><action>create</action><source>1</source><target>105</target><datasource>SELECT      er.newkeyvalue as Ordernumber,
+            at.AttachmentFileName as BinaryFileName,
+            at.Attachment as BinaryDocument,
+            at.AttachmentFileName as subject,
+            221 as type,
+                        1 as status
+from    [abei].dbo._AB_Entity_results as er with (nolock)
+        inner join [400].dbo.orkrg as ok with (nolock) on er.newkeyvalue collate Latin1_General_CI_AS = ok.ordernr
+        inner join dbo.absences as ab with (nolock) on ab.hid = er.headerid collate Latin1_General_CI_AS
+        inner join dbo.Attachments at on ab.ID = at.Entity
+where   1=1
+    and er.jobid = '%jobid%'
+    and er.runid = '%runid%'
+    and er.entity = 'SalesOrderHeader'
+    and er.rowstatus = 2
+    AND (ab.Type = 600) 
+          AND (ab.FreeBoolField_01 = 1)     
+          AND (ab.FreeBoolField_05 = 0)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>165</seqno><settings /><settingsxml /><stepname>Voeg document toe aan order</stepname></step><step><id>3111</id><entity>Document</entity><action>create</action><source>105</source><target>105</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>170</seqno><settings /><settingsxml /><stepname>Create document</stepname></step><step><id>3457</id><entity>-none-</entity><action>create</action><source>133</source><target>6</target><datasource>select EBC_messageID, SupplierNumber, InvoiceNumberSupplier, GlobeEntryNumber, CurrentStatus, ExactError, InvoiceReveived, MessageTranformed, GlobeCreated, MessageStatus, MessageError
+from [EBC].[EDI].[PurchaseInvoiceLog]
+WHERE InvoiceReveived &gt; DATEADD(DAY,-1,CONVERT(DATE,GETDATE()))</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Dear colleques,&lt;/p&gt;&lt;p&gt;The following invoices are yesterday received and booked in Globe.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;InvoiceNumberSupplier&lt;/td&gt;&lt;td&gt;GlobeEntryNumber&lt;/td&gt;&lt;td&gt;CurrentStatus&lt;/td&gt;&lt;td&gt;ExactError&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%InvoiceNumberSupplier%&lt;/td&gt;&lt;td&gt;%GlobeEntryNumber%&lt;/td&gt;&lt;td&gt;%CurrentStatus%&lt;/td&gt;&lt;td&gt;%ExactError%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="11"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>170</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=ap@orlaco.com%semicolon%lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=New Invoices from 2Connect;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=InvoiceNumberSupplier,GlobeEntryNumber,CurrentStatus,ExactError;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>EBC_messageID</name><type>String</type></datacolumn><datacolumn><name>SupplierNumber</name><type>String</type></datacolumn><datacolumn><name>InvoiceNumberSupplier</name><type>String</type></datacolumn><datacolumn><name>GlobeEntryNumber</name><type>String</type></datacolumn><datacolumn><name>CurrentStatus</name><type>String</type></datacolumn><datacolumn><name>ExactError</name><type>String</type></datacolumn><datacolumn><name>InvoiceReveived</name><type>DateTime</type></datacolumn><datacolumn><name>MessageTranformed</name><type>DateTime</type></datacolumn><datacolumn><name>GlobeCreated</name><type>DateTime</type></datacolumn><datacolumn><name>MessageStatus</name><type>String</type></datacolumn><datacolumn><name>MessageError</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send mail to AP for 2Connect</stepname></step><step><id>3114</id><entity>QuotationHeader</entity><action>delete</action><source>105</source><target>105</target><datasource>select o.ordernr as HeaderID,o.ID, o.ordernr, 1 as afgehandld, a.FreeTextfield_03 AS DeletionReason
+from [orlaco]..absences a
+INNER JOIN [100]..orkrg o with (NOLOCK) on a.FreeIntField_01 = o.ordernr
+where a.Type = 213 and a.syscreator = 999999 and
+a.Status in(2, 4) and a.FreeGUIDField_06 IS NOT NULL and 
+o.ord_soort = 'Q' and o.sysmodified &lt; DATEADD(MONTH,-3,GETDATE())
+and o.afgehandld = 0 and FreeTextField_03 like '1%'  and o.ordernr  = 11708200</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>180</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>Int32</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>afgehandld</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Delete missed quotes &gt; 3 months</stepname></step><step><id>3262</id><entity>QuotationLine</entity><action>delete</action><source>105</source><target>105</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>180</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update</stepname></step><step><id>3263</id><entity>SalesOrderHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select ordernr as headerid, ordernr, 997310 as debnr from [400]..orkrg with (nolock) where ordernr = 12113695</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>190</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerid</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>debnr</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Repair order</stepname></step><step><id>3264</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>
+select top 1 ordernr as headerid, id, ordernr, regel from [400]..orsrg with (NOLOCK) where ordernr = 12113695</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>190</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Repair order line</stepname></step><step><id>3265</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>SELECT ID, HID, Type, 1 as Status from [orlaco]..absences with (NOLOCK) where type = 6035 and status = 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>200</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update RMA</stepname></step><step><id>3409</id><entity>WarehouseStock</entity><action>create</action><source>105</source><target>105</target><datasource>SELECT i.itemcode AS artcode, '30' as magcode
+FROM [%abeitargetdb%].dbo.Items i with (NOLOCK) 
+WHERE i.itemcode in (
+    select distinct r.artcode
+    from [400]..orhkrg k with (NOLOCK)
+    inner join [400]..orhsrg r with (NOLOCK) on k.ordernr = r.ordernr
+    where k.debnr = 974605 and r.ar_soort = 'V' )
+    AND NOT EXISTS ( SELECT magcode FROM [%abeitargetdb%].dbo.voorrd WITH (NOLOCK) WHERE magcode = '30' AND artcode = i.itemcode)
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><gen_usevb6processor>false</gen_usevb6processor><referencekey /></general></settings></settingsxml><stepname>Create item warehouse</stepname></step><step><id>3447</id><entity>Account</entity><action>update</action><source>1</source><target>1</target><datasource>SELECT cmp_code, cmp_wwn,1 as yesnofield4 , 1 as yesnofield5
+from [orlaco]..cicmpy c with (NOLOCK) where  LTRIM(RTRIM(textfield5)) in ( 'X7123Z0' ,'D3539K0' ) and (yesnofield4 = 0 OR yesnofield5 = 0)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>310</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update accounts</stepname></step><step><id>3458</id><entity>Request</entity><action>create</action><source>1</source><target>1</target><datasource>select r.HID, r.Type, 
+CASE WHEN r.empid = 0 then r.syscreator else r.empid end as empid,
+r.StartDate, r.Enddate, r.CustomerId, r.Description, 
+CONCAT(r.RequestComments collate database_default , '
+
+[', system_user, ' ', CONVERT(varchar,GETDATE(),120), '] 
+Request restored from accidentialy deletion. 
+Org created: ', CONVERT(varchar,r.syscreated,120), ' by ', r.syscreator, ' - ', ISNULL(hc.Fullname collate database_default,'') , ' 
+Last modified: ', CONVERT(varchar,r.sysmodified,120), ' by ', r.sysmodifier, ' - ', ISNULL(hm.Fullname collate database_default,''), '
+Org status: ',  r.statusdescription collate database_default, ' on ', CONVERT(varchar,r.StatusChanged,120) , ' 
+', case when status = 1 or status = 4 then  CONCAT( ' Approved on: ', CONVERT(varchar,Approved,120) , ' by ', Approver , ' - ', ISNULL(ha.Fullname collate database_default,''),  '
+') END, case when status = 4 then  CONCAT( ' Realized on: ', CONVERT(varchar,Realized,120), ' by ', Realizer, ' - ', ISNULL(hr.Fullname collate database_default,''), ' 
+') END, case when status = 2 then  CONCAT( ' Rejected on: ', CONVERT(varchar,Rejected,120), ' by ', RejectedBy, ' - ', ISNULL(hd.Fullname collate database_default,''), ' 
+') END 
+) as RequestComments, WorkflowComments, 
+RelatedRequestID,ParentRequest, 
+FreeTextField_01, FreeTextField_02, FreeTextField_03, FreeTextField_04, FreeTextField_05, FreeBoolField_01
+from [ExactData].dbo._ST_Restore_ITRequests r
+left join [orlaco]..humres hc (nolock) on hc.res_id = r.syscreator
+left join [orlaco]..humres hm (nolock) on hm.res_id = r.sysmodifier
+left join [orlaco]..humres ha (nolock) on ha.res_id = r.Approver
+left join [orlaco]..humres hr (nolock) on hr.res_id = r.Realizer
+left join [orlaco]..humres hd (nolock) on hd.res_id = r.RejectedBy
+WHERE HID NOT IN (SELECT HID from [orlaco]..absences a2 with (NOLOCK))
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>320</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>EmpID</name><type>Int32</type></datacolumn><datacolumn><name>StartDate</name><type>DateTime</type></datacolumn><datacolumn><name>Enddate</name><type>DateTime</type></datacolumn><datacolumn><name>CustomerId</name><type>Guid</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>RequestComments</name><type>String</type></datacolumn><datacolumn><name>WorkflowComments</name><type>String</type></datacolumn><datacolumn><name>Status</name><type>Int32</type></datacolumn><datacolumn><name>StatusChanged</name><type>DateTime</type></datacolumn><datacolumn><name>Approver</name><type>Int32</type></datacolumn><datacolumn><name>Approved</name><type>DateTime</type></datacolumn><datacolumn><name>Processor</name><type>Int32</type></datacolumn><datacolumn><name>Processed</name><type>DateTime</type></datacolumn><datacolumn><name>Realizer</name><type>Int32</type></datacolumn><datacolumn><name>Realized</name><type>DateTime</type></datacolumn><datacolumn><name>RejectedBy</name><type>Int32</type></datacolumn><datacolumn><name>Rejected</name><type>DateTime</type></datacolumn><datacolumn><name>syscreated</name><type>DateTime</type></datacolumn><datacolumn><name>syscreator</name><type>Int32</type></datacolumn><datacolumn><name>sysmodified</name><type>DateTime</type></datacolumn><datacolumn><name>sysmodifier</name><type>Int32</type></datacolumn><datacolumn><name>ParentRequest</name><type>Guid</type></datacolumn><datacolumn><name>RelatedRequestID</name><type>Guid</type></datacolumn><datacolumn><name>FreeTextField_01</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_02</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_03</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_04</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_05</name><type>String</type></datacolumn><datacolumn><name>FreeBoolField_01</name><type>Byte</type></datacolumn></datacolumns></general></settings></settingsxml><stepname></stepname></step><step><id>3459</id><entity>Request</entity><action>update</action><source>1</source><target>1</target><datasource>select newid as id, hid, syscreator from [ExactData].[dbo].[_ST_Restore_ITRequests]
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>330</seqno><settings /><settingsxml /><stepname /></step><step><id>3460</id><entity>DocumentAttachment</entity><action>create</action><source>1</source><target>1</target><datasource>select r.newid as DocumentId,EntityType,Attachment AS BinaryAttachment,AttachmentFileName AS BinaryFileName,AttachmentFileExtension,AttachmentSize,AttachmentType , 400 as Division
+FROM [ExactData].dbo.[_ST_Restore_ITRequestAttachments] a
+Inner join [ExactData].[dbo].[_ST_Restore_ITRequests] r on a.entity = r.id 
+where r.hid != 4722033</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>340</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>DocumentId</name><type>Guid</type></datacolumn><datacolumn><name>EntityType</name><type>Int32</type></datacolumn><datacolumn><name>BinaryAttachment</name><type>Byte[]</type></datacolumn><datacolumn><name>AttachmentFileName</name><type>String</type></datacolumn><datacolumn><name>BinaryFileName</name><type>String</type></datacolumn><datacolumn><name>AttachmentFileExtension</name><type>String</type></datacolumn><datacolumn><name>AttachmentSize</name><type>Int32</type></datacolumn><datacolumn><name>AttachmentType</name><type>Int32</type></datacolumn><datacolumn><name>Division</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname></stepname></step><step><id>3491</id><entity>Item</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT i1.itemcode, i4.isassembled 
+from [100]..items i1 with (NOLOCK)
+inner join [400]..items i4 with (NOLOCK) on i1.itemcode = i4.itemcode 
+where i1.isassembled &lt;&gt; i4.isassembled</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>350</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update item</stepname></step><step><id>3550</id><entity>Address</entity><action>update</action><source>129</source><target>105</target><datasource>--select ID, 'Het Schakelplein 28' as addressline1, 0 as keepsameasvisit from addresses
+--where account = 'fd15ab15-ddee-4d8d-b7b4-628ee4e0af96'
+--and type &lt;&gt; 'VIS' and keepsameasvisit = 1 and id = 'cfad2b24-1a33-44fc-b86f-91569100ffad'
+
+--select * from addresses
+--where account = 'fd15ab15-ddee-4d8d-b7b4-628ee4e0af96'
+--and type = 'VIS' 
+
+--11193   fd15ab15-ddee-4d8d-b7b4-628ee4e0af96                De Burgh Acht B.V.
+--select * from cicmpy with (NOLOCK) where cmp_type = 'C' and cmp_status = 'A'
+
+SELECT TOP 100 ag.ID, cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, ag.ID AS AddressID
+       ,a.[Type]
+       ,a.[AddressLine1]
+       --,ag.[AddressLine1]
+       ,a.[AddressLine2]
+       ,a.[AddressLine3]
+       ,a.[PostCode]
+       ,a.[City]
+       ,a.[StateCode]
+       ,a.[County]
+       ,a.[Country]
+       ,a.[Phone]
+       ,a.[Fax]
+       ,a.[Notes]
+       ,a.[KeepSameAsVisit]
+       ,CONVERT(int, a.[IsTaxable]) AS IsTaxable
+       ,CONVERT(bit, a.[Main]) AS Main
+FROM dbo._AB_vw_ESE_Sync_Addresses a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type
+WHERE 1=1
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only 
+    
+    --AND (a.ESE_sysmodified &gt; ag.sysmodified -- modified
+     --OR (ag.syscreated = ag.sysmodified ) )
+     --)
+     --and ag.[AddressLine1] != a.[AddressLine1] COLLATE DATABASE_DEFAULT -- new, maybe we have to update the adresses too
+     -- ag.ID = '538c2fc6-d340-4567-a263-28cb7b6c3812'
+    ORDER BY account, ag.ID</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>360</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update address</stepname></step><step><id>3563</id><entity>SalesOrderHeader</entity><action>create</action><source>107</source><target>105</target><datasource>select distinct k.ordernr as headerid
+      ,k.[ordernr]
+      ,k.[debnr]
+      ,k.[fakdebnr]
+      ,k.[verzdebnr]
+      ,k.[naldebnr]
+      ,k.[einddebnr]
+      ,k.[refer]
+      ,k.[refer1]
+      ,k.[refer2]
+      ,k.[refer3]
+      ,k.[orddat]
+      ,k.[afldat]
+      ,k.[afl_week]
+      ,k.[ordbv_afdr]
+      ,k.[magcode]
+      ,k.[selcode]
+      ,k.[ex_artcode]
+      ,k.[kstplcode]
+      ,k.[fiattering]
+      ,k.[ordbv_afgd]
+      ,k.[btw_code]
+      ,k.[btw_cd_ord]
+      ,k.[valcode]
+      ,k.[betcond]
+      ,k.[levwijze]
+      ,k.[stat_code]
+      ,k.[pakbon_afg]
+      ,k.[paklst_afg]
+      ,k.[vrachtkost]
+      ,k.[orderkost]
+      ,k.[order_kort]
+      ,k.[colli]
+      ,k.[bruto_gew]
+      ,k.[netto_gew]
+      ,k.[fakt_code]
+      ,k.[docnumber]
+      ,k.[paymentmethod]
+      ,k.[Approver]
+      ,k.[Approved]
+      ,k.[invoice_method]
+      ,k.[IncoTermConfirmPrices]
+      ,k.[IncoTermAcknowledgeOrder]
+      ,k.[IncoTermCode]
+      ,k.[IncoTermProperty]
+      ,k.[ConfirmedBy]
+      ,k.[Confirmed]
+      ,k.[DueDate]
+      
+from [%abeisourcedb%].dbo.orkrg k with (NOLOCK)
+inner join [%abeisourcedb%].dbo.orsrg r with (NOLOCK) on r.ordernr = k.ordernr
+ where  k.debnr = '974605' -- DAF ME2 
+ and k.afgehandld = 0 
+ and r.pakbon_afg = 0
+ and k.ordernr not in (select kx.ordernr from [%abeitargetdb%].dbo.orkrg kx with (NOLOCK))</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>370</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Create SO header</stepname></step><step><id>3564</id><entity>SalesOrderLine</entity><action>create</action><source>107</source><target>105</target><datasource>select k.ordernr as headerid
+      ,r.[ordernr]
+      ,r.[regel]
+      ,r.[afldat]
+      ,r.[artcode]
+      ,r.[ar_soort]
+      ,r.[oms45]
+      ,r.[oms45_f]
+      ,r.[magcode]
+      ,r.[afl_week]
+      ,r.[uitgifte]
+      ,r.[aant_back]
+      ,r.[esr_aantal]
+      ,r.[aant_gelev]
+      ,r.[aant_fakt]
+      ,r.[reeds_fakt]
+      ,r.[pakbon_afg]
+      ,r.[btw_code]
+      ,r.[prijslijst]
+      ,r.[korting]
+      ,r.[prijs83]
+      ,r.[prijs_n]
+      ,r.[lengte]
+      ,r.[breedte]
+      ,r.[hoogte]
+      ,r.[dimensie]
+      ,r.[kstplcode]
+      ,r.[serie_num]
+      ,r.[aantal_ser]
+      ,r.[unit]
+      ,r.[koers]
+      ,r.[instruction]
+      ,r.[unitcode]
+      ,r.[unitfactor]
+      ,r.[PlannedDate]
+      ,r.[Requesteddate]
+      ,r.[Originalplanneddate]
+      ,r.[reasoncode]
+from [%abeisourcedb%].dbo.orkrg k with (NOLOCK)
+inner join [%abeisourcedb%].dbo.orsrg r with (NOLOCK) on r.ordernr = k.ordernr
+ where  k.debnr = '974605' -- DAF ME2 
+ and k.afgehandld = 0 
+ and r.pakbon_afg = 0 and r.ar_soort &lt;&gt; 'T'
+ and k.ordernr not in (select kx.ordernr from [%abeitargetdb%].dbo.orkrg kx with (NOLOCK))</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>370</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Create SO line</stepname></step><step><id>3574</id><entity>Account</entity><action>update</action><source>105</source><target>105</target><datasource>select top 10 c.cmp_wwn, c.cmp_code, c.PaymentCondition, '2' as DefaultSelCode 
+from  cicmpy c with (NOLOCK)
+where c.PaymentCondition = '22' and ISNULL(DefaultSelCode,'') != '2'
+order by c.cmp_code</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>380</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>cmp_code</name><type>String</type></datacolumn><datacolumn><name>PaymentCondition</name><type>String</type></datacolumn><datacolumn><name>DefaultSelCode</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update default selection code</stepname></step><step><id>3576</id><entity>Item</entity><action>update</action><source>1</source><target>105</target><datasource>select  itemcode, convert(int,UserNumber_01) as UserNumber_13
+from items i with (nolock)
+where  usernumber_01 &lt;&gt; 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>390</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Import leadtime Globe</stepname></step><step><id>3577</id><entity>Item</entity><action>update</action><source>1</source><target>105</target><datasource>select  itemcode, convert(int,UserNumber_02) as UserNumber_13
+from items i with (nolock)
+where  usernumber_02 &lt;&gt; 0</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>400</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Import leadtime Globe 484</stepname></step><step><id>3600</id><entity>QuotationHeader</entity><action>update</action><source>133</source><target>105</target><datasource>select distinct a.ordernr as headerID, a.ordernr from ExactData.dbo._Update_Liebherr_20220330 A
+where ord_soort = 'Q' and afldat &gt;= '2022-04-01' </datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Header</stepname></step><step><id>3601</id><entity>QuotationLine</entity><action>update</action><source>133</source><target>105</target><datasource>select 
+a.ordernr as HeaderID,
+a.id,
+0 as korting,
+a.bedr1 as prijs83,
+a.bedr1 as prijs_n
+from  ExactData.dbo._Update_Liebherr_20220330 A
+where ord_soort = 'Q' and afldat &gt;= '2022-04-01' 
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>410</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>korting</name><type>Int32</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Lines</stepname></step><step><id>3602</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>420</seqno><settings></settings><settingsxml /><stepname>Update WIRTGEN ORDERS</stepname></step><step><id>3603</id><entity>SalesOrderHeader</entity><action>update</action><source>133</source><target>105</target><datasource>select distinct a.ordernr as headerID, a.ordernr from ExactData.dbo._Update_WIRTGEN_20220330 A
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>430</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Header</stepname></step><step><id>3604</id><entity>SalesOrderLine</entity><action>update</action><source>133</source><target>105</target><datasource>select 
+a.ordernr as HeaderID,
+a.id,
+a.bedr1 as prijs83,
+a.bedr1 as prijs_n
+from ExactData.dbo._Update_WIRTGEN_20220330 A
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>430</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Lines</stepname></step><step><id>3605</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>450</seqno><settings></settings><settingsxml /><stepname>Update SCANIA ORDERS</stepname></step><step><id>3606</id><entity>SalesOrderHeader</entity><action>update</action><source>133</source><target>105</target><datasource>select distinct a.ordernr as headerID, a.ordernr from ExactData.dbo._Update_SCANIA_010_20220330 A
+where ord_soort = 'V' </datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>460</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Header</stepname></step><step><id>3607</id><entity>SalesOrderLine</entity><action>update</action><source>133</source><target>105</target><datasource>select 
+a.ordernr as HeaderID,
+a.id,
+a.bedr1 as prijs83,
+a.bedr1 as prijs_n
+from  ExactData.dbo._Update_SCANIA_010_20220330 A
+where ord_soort = 'V' </datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>460</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update Salesorder - Lines</stepname></step><step><id>3608</id><entity>Account</entity><action>update</action><source>105</source><target>105</target><datasource>select c2.cmp_wwn, c2.cmp_code, c.PriceList as Pricelist --,c2.cmp_name, c2.pricelist as pricelist_483, c.pricelist as pricelist_400 
+from      [400]..cicmpy c with (NOLOCK)
+left join [483]..cicmpy c2 with (NOLOCK) on c2.cmp_code = c.cmp_code
+where c2.cmp_status = 'A' and ISNULL(c2.PriceList,'') &lt;&gt; ISNULL(c.pricelist,'') 
+and c2.cmp_code = '              999149'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>470</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>cmp_code</name><type>String</type></datacolumn><datacolumn><name>Pricelist</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Sync debtor pricelists 400-483</stepname></step><step><id>3627</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>480</seqno><settings></settings><settingsxml /><stepname>Move stock 04-07-2022</stepname></step><step><id>3628</id><entity>FinancialLine</entity><action>create</action><source>105</source><target>105</target><datasource>select       '%runid%' as HeaderID
+             ,'G' as TransSubType
+             ,'B' as Regelcode
+             ,'100' as TransType
+             ,Getdate() As 'Datum'
+             ,reknr
+             ,'Invalid stock' As oms25
+             ,'600' As kstplcode
+             ,artcode
+             ,facode
+             ,'1' As warehouse
+             , aantal
+             , bdr_hfl
+             ,GETDATE() As 'docdate'
+              from [400]..gbkmut g with (nolock)
+            inner Join [400]..items I with (nolock) on i.itemcode = g.artcode
+            where artcode = '0103641' and oms25 like '%PROD00202614.002%'
+and reknr = '     3300' and aantal = -19
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>490</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>TransSubType</name><type>String</type></datacolumn><datacolumn><name>Regelcode</name><type>String</type></datacolumn><datacolumn><name>TransType</name><type>String</type></datacolumn><datacolumn><name>Datum</name><type>DateTime</type></datacolumn><datacolumn><name>reknr</name><type>String</type></datacolumn><datacolumn><name>oms25</name><type>String</type></datacolumn><datacolumn><name>oms251</name><type>String</type></datacolumn><datacolumn><name>kstplcode</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>facode</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>aantal</name><type>Int32</type></datacolumn><datacolumn><name>bdr_hfl</name><type>Double</type></datacolumn><datacolumn><name>docdate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Financiële boeking credit</stepname></step><step><id>3629</id><entity>FinancialLine</entity><action>create</action><source>105</source><target>105</target><datasource>select       '%runid%' as HeaderID
+             ,'G' as TransSubType
+             ,'B' as Regelcode
+             ,'100' as TransType
+             ,Getdate() As 'Datum'
+             ,reknr
+             ,'Invalid stock' As oms25
+             ,'600' As kstplcode
+             ,artcode
+             ,facode
+             ,'95' As warehouse
+             , aantal
+             ,bdr_hfl
+             ,GETDATE() As 'docdate'
+               from [400]..gbkmut g with (nolock)
+            inner Join [400]..items I with (nolock) on i.itemcode = g.artcode
+            where artcode = '0103641' and oms25 like '%PROD00202614.002%'
+and reknr = '     3300' and aantal = 19</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>490</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>TransSubType</name><type>String</type></datacolumn><datacolumn><name>Regelcode</name><type>String</type></datacolumn><datacolumn><name>TransType</name><type>String</type></datacolumn><datacolumn><name>Datum</name><type>DateTime</type></datacolumn><datacolumn><name>reknr</name><type>String</type></datacolumn><datacolumn><name>oms25</name><type>String</type></datacolumn><datacolumn><name>oms251</name><type>String</type></datacolumn><datacolumn><name>kstplcode</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>facode</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>aantal</name><type>Int32</type></datacolumn><datacolumn><name>bdr_hfl</name><type>Double</type></datacolumn><datacolumn><name>docdate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Financiële boeking debit</stepname></step><step><id>3630</id><entity>FinancialHeader</entity><action>create</action><source>105</source><target>105</target><datasource>select     '%runid%' as HeaderID, '70' as dagbknr </datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>490</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>dagbknr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Financiële boeking header</stepname></step><step><id>3637</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>500</seqno><settings></settings><settingsxml /><stepname>Update 483 orderprices 974048</stepname></step><step><id>3638</id><entity>SalesOrderHeader</entity><action>update</action><source>133</source><target>105</target><datasource>select 52200927 as headerID, 52200927 as ordernr</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>510</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update Salesorder - Header</stepname></step><step><id>3639</id><entity>SalesOrderLine</entity><action>update</action><source>133</source><target>105</target><datasource>select 
+ordernr as HeaderID,
+id,
+prijs83,
+0 as prijs_n
+from [483]..orsrg with (NOLOCK) where ordernr = 52200927 and regel in (117)
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>510</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Update Salesorder- Lines</stepname></step><step><id>3640</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>520</seqno><settings></settings><settingsxml /><stepname>Update DAF orderprices</stepname></step><step><id>3743</id><entity>SalesOrderHeader</entity><action>update</action><source>133</source><target>105</target><datasource>select distinct a.ordernr as headerID, a.ordernr from ExactData.._ST_Update_DAFPrices_230202 a
+inner join [%abeitargetdb%]..orkrg o with (NOLOCK) on o.ordernr = a.ordernr
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>530</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>headerID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Header</stepname></step><step><id>3780</id><entity>SalesOrderLine</entity><action>update</action><source>133</source><target>105</target><datasource>select 
+a.ordernr as HeaderID,
+a.id,
+a.prijs83,
+a.prijs_n
+from ExactData.._ST_Update_DAFPrices_230202 a
+inner join [%abeitargetdb%]..orkrg o with (NOLOCK) on o.ordernr = a.ordernr
+inner join [%abeitargetdb%]..orsrg r with (NOLOCK) on o.ordernr = r.ordernr and r.id = a.id
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>530</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>prijs83</name><type>Double</type></datacolumn><datacolumn><name>prijs_n</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Salesorder - Lines</stepname></step><step><id>3844</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>550</seqno><settings></settings><settingsxml /><stepname>==== Update account status</stepname></step><step><id>3845</id><entity>Account</entity><action>update</action><source>1</source><target>1</target><datasource>select top 1 cmp_wwn, cmp_code, 'B' as cmp_status, cmp_type   from cicmpy with (NOLOCK)
+where cmp_type &lt;&gt; 'C' and cmp_status = 'E' 
+order by cmp_code</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>560</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>cmp_status</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update account status</stepname></step><step><id>3580</id><entity>ProductionHeader</entity><action>update</action><source>105</source><target>105</target><datasource>select gbk.project as headerid,gbk.ID, '32  ' as warehouse, gbk.artcode
+from gbkmut gbk with (nolock)
+inner join prproject pr with (nolock) on gbk.project = pr.projectnr
+inner join items it with (nolock) on gbk.artcode = it.itemcode and gbk.reknr = it.GLAccountDistribution
+inner join voorrd vrd on it.itemcode = vrd.artcode
+--inner join magaz m on gbk.warehouse = m.magcode
+where 1=1
+and  pr.type = 'p'
+and transtype = 'B'
+and gbk.transsubtype = 'A'
+and gbk.bud_vers = 'MRP'
+and gbk.blockitem = '0'
+and gbk.freefield1 = 'P'
+and gbk.warehouse = '1   '
+and vrd.magcode = '32  '
+and gbk.project = 'prod00192027'
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>610</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>wijzig magazijn in productieorder header (kopregel)</stepname></step><step><id>3846</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>610</seqno><settings></settings><settingsxml /><stepname>==== Change warehouse</stepname></step><step><id>3581</id><entity>ProductionLine</entity><action>update</action><source>105</source><target>105</target><datasource>select  
+gbka.project as headerid,gbkb.ID
+from gbkmut gbka with (nolock)
+inner join prproject pr with (nolock) on gbka.project = pr.projectnr
+inner join items it with (nolock) on gbka.artcode = it.itemcode and gbka.reknr = it.GLAccountDistribution
+inner join voorrd vrd on it.itemcode = vrd.artcode
+inner join gbkmut gbkb with (nolock) on gbka.project = gbkb.project 
+inner join items itb with (nolock) on gbkb.artcode = itb.itemcode and gbkb.reknr = itb.GLAccountDistribution
+--inner join magaz m on gbk.warehouse = m.magcode
+where 1=1
+and  pr.type = 'p'
+and gbka.transtype = 'B'
+and gbka.transsubtype = 'B'
+and gbka.bud_vers = 'MRP'
+and gbka.blockitem = '0'
+and gbka.freefield1 = 'P'
+and gbka.warehouse = '1   '
+
+and gbkb.transtype = 'B'
+and gbkb.transsubtype = 'B'
+and gbkb.bud_vers = 'MRP'
+and gbkb.blockitem = '0'
+and gbkb.freefield1 = 'P'
+and gbkb.warehouse = '1   '
+and gbka.project = gbkb.project 
+and gbkb.project = 'prod00192027'
+group by gbka.project,gbkb.ID</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>620</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>wijzig magazijn in productieorder header (regels)</stepname></step><step><id>3969</id><entity>Item</entity><action>create</action><source>133</source><target>6</target><datasource>SELECT top 100 PERCENT  a.itemcode, a.Userfield_02 as Old_value, b.Userfield_02  FROM [484]..items  a
+Inner join [ExactData].[dbo].[Import_Item_location] b on a.itemcode = b.itemcode Collate Database_default
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;Hi Jelle,&lt;br&gt;&lt;br&gt;See below the changes that were made to the items in the 484 database.&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;br&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;itemcode&lt;/td&gt;&lt;td&gt;Old_value&lt;/td&gt;&lt;td&gt;Userfield_02&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%itemcode%&lt;/td&gt;&lt;td&gt;%Old_value%&lt;/td&gt;&lt;td&gt;%Userfield_02%&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="3"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;br&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;br&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>670</seqno><settings>uniquekey=itemcode;retryunique=0;emailfrom=Abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Jelle.ruiter@stoneridge.com;emailcc=lennart.meeuse@stoneridge.com;emailbcc=;emailsub=Item Locations Updated 484;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=itemcode,Old_value,Userfield_02;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>itemcode</name><type>String</type></datacolumn><datacolumn><name>Old_value</name><type>String</type></datacolumn><datacolumn><name>Userfield_02</name><type>String</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Update Item</stepname></step><step><id>3998</id><entity>Item</entity><action>update</action><source>133</source><target>112</target><datasource>SELECT top 100 PERCENT  a.itemcode, a.Userfield_02 as Old_value, b.Userfield_02  FROM [484]..items  a
+Inner join [ExactData].[dbo].[Import_Item_location] b on a.itemcode = b.itemcode Collate Database_default
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>670</seqno><settings>uniquekey=itemcode;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>itemcode</name><type>String</type></datacolumn><datacolumn><name>Old_value</name><type>String</type></datacolumn><datacolumn><name>Userfield_02</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Item</stepname></step><step><id>3970</id><entity>FinancialLine</entity><action>create</action><source>0</source><target>105</target><datasource>select 
+     bkstnr as HeaderID
+     ,'A' as TransSubType
+     ,'B' as Regelcode
+     ,'N' as TransType
+     ,'151' as Type
+     -- ,'100' as TransactionType
+     ,GETDATE() As 'Datum'
+     ,i.GLAccountDistribution as Reknr
+     ,'Restore VR stock' as oms25
+     ,'600' as kstplcode
+     , artcode
+     , facode
+     ,'32' As warehouse
+     ,ISNULL(aantal,1) as aantal
+     ,cast(ISNULL(aantal,1) * i.CostPriceStandard as numeric (18,3)) as bdr_hfl
+     ,GETDATE() As 'docdate'
+     from [exactdata].dbo._st_restore_wh30_stock r with (nolock) 
+     inner join [%abeitargetdb%].dbo.items i with (NOLOCK) on r.artcode = i.itemcode collate database_default
+     where facode NOT IN( 'PPB05FA', 'PPB05F8')</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>900</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>TransSubType</name><type>String</type></datacolumn><datacolumn><name>Regelcode</name><type>String</type></datacolumn><datacolumn><name>TransType</name><type>String</type></datacolumn><datacolumn><name>Type</name><type>String</type></datacolumn><datacolumn><name>TransactionType</name><type>String</type></datacolumn><datacolumn><name>Datum</name><type>DateTime</type></datacolumn><datacolumn><name>Reknr</name><type>String</type></datacolumn><datacolumn><name>oms25</name><type>String</type></datacolumn><datacolumn><name>kstplcode</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>facode</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>aantal</name><type>Double</type></datacolumn><datacolumn><name>bdr_hfl</name><type>Decimal</type></datacolumn><datacolumn><name>docdate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>IBT Financial line warehouse 32 Debit</stepname></step><step><id>3971</id><entity>FinancialLine</entity><action>create</action><source>0</source><target>105</target><datasource> select 
+ bkstnr as HeaderID
+     ,'B' as TransSubType
+     ,'B' as Regelcode
+     ,'N' as TransType
+     ,'150' as Type
+     -- ,'100' as TransactionType
+     ,GETDATE() As 'Datum'
+     ,i.GLAccountDistribution as Reknr
+     ,'Restore VR stock' as oms25
+     ,'600' as kstplcode
+     , artcode
+     , facode
+     ,'30' As warehouse
+     ,-ISNULL(aantal,1) as aantal
+     ,cast(-ISNULL(aantal,1) * i.CostPriceStandard as numeric (18,3)) as bdr_hfl
+     ,GETDATE() As 'docdate'
+     from [exactdata].dbo._st_restore_wh30_stock r with (nolock) 
+     inner join [%abeitargetdb%].dbo.items i with (NOLOCK) on r.artcode = i.itemcode collate database_default
+     where facode NOT IN ( 'PPB05FA', 'PPB05F8')</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>900</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>Int32</type></datacolumn><datacolumn><name>TransSubType</name><type>String</type></datacolumn><datacolumn><name>Regelcode</name><type>String</type></datacolumn><datacolumn><name>TransType</name><type>String</type></datacolumn><datacolumn><name>Type</name><type>String</type></datacolumn><datacolumn><name>Datum</name><type>DateTime</type></datacolumn><datacolumn><name>Reknr</name><type>String</type></datacolumn><datacolumn><name>Column1</name><type>String</type></datacolumn><datacolumn><name>kstplcode</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>facode</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>aantal</name><type>Double</type></datacolumn><datacolumn><name>bdr_hfl</name><type>Decimal</type></datacolumn><datacolumn><name>docdate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>IBT Financial line warehouse 30 Credit</stepname></step><step><id>3972</id><entity>FinancialHeader</entity><action>create</action><source>0</source><target>105</target><datasource>select distinct bkstnr as HeaderId
+, 70 as dagbknr
+     from [exactdata].dbo._st_restore_wh30_stock r with (nolock) 
+     inner join [%abeitargetdb%].dbo.items i with (NOLOCK) on r.artcode = i.itemcode collate database_default
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>900</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderId</name><type>Int32</type></datacolumn><datacolumn><name>dagbknr</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>IBT Financial line Header</stepname></step><step><id>3981</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+-- Filter rows that has been changed    
+INSERT INTO [ExactData].._ST_EG_Import_SORequestedDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 10 AS new_state, 'Itemcode or quantity changed' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i  with (NOLOCK)
+inner join [400]..orsrg r with (NOLOCK) on r.ordernr = i.ordernr and r.regel = i.RowNr
+WHERE State = 0 and ( i.Itemcode collate database_default &lt;&gt; r.artcode or i.Quantity &lt;&gt; r.esr_aantal )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SORequestedDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+
+-- Filter rows with the correct date
+--INSERT INTO [ExactData].._ST_EG_Import_SORequestedDate_States (Import_id, new_state, new_message, syscreated)
+--SELECT i.ID as Import_id, 11 AS new_state, 'Date already set' as new_message, GETDATE() as syscreated
+--FROM [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i  with (NOLOCK)
+--INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+--INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+--WHERE State = 0 and r.afldat = i.NewRequestedDate
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SORequestedDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+    
+-- Filter rows already delivered
+INSERT INTO [ExactData].._ST_EG_Import_SORequestedDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 12 AS new_state, 'Already delivered' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i  with (NOLOCK)
+INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel
+WHERE State = 0 and ( r.aant_gelev &gt; 0 or k.ord_soort &lt;&gt; 'V' or k.afgehandld = 1 or r.pakbon_afg = 1 )
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SORequestedDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+
+-- Filter rows in orders with sets
+INSERT INTO [ExactData].._ST_EG_Import_SORequestedDate_States (Import_id, new_state, new_message, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, 'Order contains set items, change manual' as new_message, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i  with (NOLOCK)
+WHERE State = 0 and ordernr in (
+    SELECT distinct ordernr FROM [400]..orsrg with (NOLOCK) 
+    where pakbon_afg = 0 and artcode in (
+        select distinct itemcode from [400]..ItemRelations with (NOLOCK)))
+
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] 
+SET [State] = new_state, [Message] = new_Message, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SORequestedDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+-- Update rows to be processed
+INSERT INTO [ExactData].._ST_EG_Import_SORequestedDate_States (Import_id, new_state, new_message, old_PlannedDate, syscreated)
+SELECT i.ID as Import_id, 1 AS new_state, '' as new_message,  r.PlannedDate, GETDATE() as syscreated
+FROM [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i  with (NOLOCK)
+INNER JOIN [400]..[orkrg] k WITH (NOLOCK) ON i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+INNER JOIN [400]..[orsrg] r WITH (NOLOCK) ON i.OrderNr = r.ordernr and i.RowNr = r.regel and r.artcode = i.itemcode collate database_default
+where State = 0 
+
+UPDATE [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] 
+SET [State] = new_state, [Message] = new_Message, EGPlannedDate = old_PlannedDate, Sysmodified = GETDATE(), RunId = '%runid%' 
+FROM [ExactData].._ST_EG_Import_SORequestedDate_States  
+WHERE ID = Import_id
+
+DELETE FROM [ExactData].._ST_EG_Import_SORequestedDate_States
+
+
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>910</seqno><settings /><settingsxml /><stepname>Set RunID and state</stepname></step><step><id>4000</id><entity>SalesOrderHeader</entity><action>create</action><source>129</source><target>6</target><datasource>SELECT TOP 100 PERCENT
+         k.ordernr, selcode as old_selcode, 99 as selcode
+         From [400]..orkrg k WITH (NOLOCK) 
+         WHERE k.ordernr IN 
+(
+'12208821',
+'12212496',
+'12212757',
+'12213221',
+'12213314',
+'12216347',
+'12216798',
+'12216913',
+'12217183',
+'12217553',
+'12217733',
+'12217983',
+'12218043',
+'12218044',
+'12218280',
+'12218675',
+'12219016',
+'12219158',
+'12219351',
+'12219318',
+'12219794',
+'12219636',
+'12219806',
+'12219814',
+'12219819',
+'12219823',
+'12219916',
+'12219918',
+'12220210',
+'12220418',
+'12220420',
+'12220427',
+'12220466',
+'12220480',
+'12220840',
+'12220849',
+'12220907',
+'12221095',
+'12221102',
+'12221177',
+'12221530',
+'12221579',
+'12221743',
+'12221581',
+'12222019',
+'12300084',
+'12300161',
+'12300248',
+'12300385',
+'12300546',
+'12300694',
+'12301042',
+'12301048',
+'12301289',
+'12302000',
+'12301998',
+'12301859',
+'12302002',
+'12302014',
+'12301948',
+'12302075',
+'12302222',
+'12302318',
+'12302489',
+'12302803',
+'12303107',
+'12303317',
+'12303475',
+'12303487',
+'12303776',
+'12304092',
+'12304120',
+'12304126',
+'12304379',
+'12304568',
+'12304876',
+'12304936',
+'12305149',
+'12305278',
+'12305373',
+'12305683',
+'12305693',
+'12305840',
+'12305781',
+'12305856',
+'12305787',
+'12306077',
+'12306013',
+'12306363',
+'12306964',
+'12307059',
+'12307231'
+)
+        
+order by k.ordernr</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi Monique,&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Hierbij een kolom met alle&amp;nbsp;selectioncodes die nu worden geupdate.&lt;/p&gt;&lt;p&gt;Naar verwachting duurt dit tussen de 30 en 90 minuten.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;table style="border-width: 1px; border-collapse: collapse;" border="1" cellspacing="0" cellpadding="1"&gt;&lt;tbody&gt;&lt;tr bgcolor="skyblue"&gt;&lt;td&gt;ordernr&lt;/td&gt;&lt;td&gt;old_selcode&lt;/td&gt;&lt;td&gt;selcode&lt;/td&gt;&lt;/tr&gt;&lt;tr class="abei_dynamic_row"&gt;&lt;td&gt;%ordernr%&lt;/td&gt;&lt;td&gt;%old_selcode%&lt;/td&gt;&lt;td&gt;%selcode%&lt;/td&gt;&lt;/tr&gt;&lt;tr bgcolor="silver" color="black"&gt;&lt;td colspan="3"&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>910</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=Monique.velthoven@stoneridge.com;emailcc=lennart.meeuse@stoneridge.com;emailbcc=;emailsub=SelectionCode Update;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=ordernr,old_selcode,selcode;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>old_selcode</name><type>String</type></datacolumn><datacolumn><name>selcode</name><type>Int32</type></datacolumn></datacolumns></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>mail old and new selectioncode for orders</stepname></step><step><id>3979</id><entity>SalesOrderHeader</entity><action>update</action><source>107</source><target>107</target><datasource>--Header query for importing new requestedDates:
+
+--select DISTINCT TOP 100 PERCENT r.OrderNr as headerid, r.OrderNr
+--from [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i
+--inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+--inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+--where i.State = 1 and i.RunId = '%runid%'
+--ORDER BY r.ordernr
+
+SELECT DISTINCT TOP 100 PERCENT
+        s.ordernr as HeaderID, s.ordernr, selcode as old_selcode, '99' as selcode
+        From [400]..orkrg k WITH (NOLOCK) 
+        inner join [400]..[orsrg] s with (NOLOCK) on s.OrderNr = k.ordernr
+        WHERE k.ordernr IN 
+(
+'12208821',
+'12212496',
+'12212757',
+'12213221',
+'12213314',
+'12216347',
+'12216798',
+'12216913',
+'12217183',
+'12217553',
+'12217733',
+'12217983',
+'12218043',
+'12218044',
+'12218280',
+'12218675',
+'12219016',
+'12219158',
+'12219351',
+'12219318',
+'12219794',
+'12219636',
+'12219806',
+'12219814',
+'12219819',
+'12219823',
+'12219916',
+'12219918',
+'12220210',
+'12220418',
+'12220420',
+'12220427',
+'12220466',
+'12220480',
+'12220840',
+'12220849',
+'12220907',
+'12221095',
+'12221102',
+'12221177',
+'12221530',
+'12221579',
+'12221743',
+'12221581',
+'12222019',
+'12300084',
+'12300161',
+'12300248',
+'12300385',
+'12300546',
+'12300694',
+'12301042',
+'12301048',
+'12301289',
+'12302000',
+'12301998',
+'12301859',
+'12302002',
+'12302014',
+'12301948',
+'12302075',
+'12302222',
+'12302318',
+'12302489',
+'12302803',
+'12303107',
+'12303317',
+'12303475',
+'12303487',
+'12303776',
+'12304092',
+'12304120',
+'12304126',
+'12304379',
+'12304568',
+'12304876',
+'12304936',
+'12305149',
+'12305278',
+'12305373',
+'12305683',
+'12305693',
+'12305840',
+'12305781',
+'12305856',
+'12305787',
+'12306077',
+'12306013',
+'12306363',
+'12306964',
+'12307059',
+'12307231'
+)
+        
+order by s.ordernr
+</datasource><contentbody></contentbody><mapping>HeaderID=HeaderID;ordernr=ordernr;selcode=selcode;</mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>920</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>old_selcode</name><type>String</type></datacolumn><datacolumn><name>selcode</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Requested Date</stepname></step><step><id>3980</id><entity>SalesOrderLine</entity><action>update</action><source>107</source><target>107</target><datasource>--OrderLine query to update new requesteddates:
+
+--select TOP 100 PERCENT r.OrderNr as HeaderId, r.OrderNr, r.ID, i.RowNr as regel,
+--i.NewRequestedDate AS Requesteddate
+--from [ExactData].[dbo].[_ST_EG_Import_SORequestedDate] i
+--inner join [400]..[orkrg] k with (NOLOCK) on i.OrderNr = k.ordernr and i.DebtorNr collate database_default = k.debnr
+--inner join [400]..[orsrg] r with (NOLOCK) on i.OrderNr = r.ordernr and i.RowNr = r.regel and i.itemcode collate database_default = r.artcode
+--where i.State = 1 and i.RunId = '%runid%'
+--ORDER BY r.Ordernr
+
+
+SELECT DISTINCT TOP 100 PERCENT
+        s.ordernr as HeaderID, s.ordernr, s.id
+        From [100]..orkrg k WITH (NOLOCK) 
+        inner join [400]..[orsrg] s with (NOLOCK) on s.OrderNr = k.ordernr
+        WHERE k.ordernr IN
+(
+'12208821',
+'12212496',
+'12212757',
+'12213221',
+'12213314',
+'12216347',
+'12216798',
+'12216913',
+'12217183',
+'12217553',
+'12217733',
+'12217983',
+'12218043',
+'12218044',
+'12218280',
+'12218675',
+'12219016',
+'12219158',
+'12219351',
+'12219318',
+'12219794',
+'12219636',
+'12219806',
+'12219814',
+'12219819',
+'12219823',
+'12219916',
+'12219918',
+'12220210',
+'12220418',
+'12220420',
+'12220427',
+'12220466',
+'12220480',
+'12220840',
+'12220849',
+'12220907',
+'12221095',
+'12221102',
+'12221177',
+'12221530',
+'12221579',
+'12221743',
+'12221581',
+'12222019',
+'12300084',
+'12300161',
+'12300248',
+'12300385',
+'12300546',
+'12300694',
+'12301042',
+'12301048',
+'12301289',
+'12302000',
+'12301998',
+'12301859',
+'12302002',
+'12302014',
+'12301948',
+'12302075',
+'12302222',
+'12302318',
+'12302489',
+'12302803',
+'12303107',
+'12303317',
+'12303475',
+'12303487',
+'12303776',
+'12304092',
+'12304120',
+'12304126',
+'12304379',
+'12304568',
+'12304876',
+'12304936',
+'12305149',
+'12305278',
+'12305373',
+'12305683',
+'12305693',
+'12305840',
+'12305781',
+'12305856',
+'12305787',
+'12306077',
+'12306013',
+'12306363',
+'12306964',
+'12307059',
+'12307231'
+)
+        
+order by s.ordernr
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>920</seqno><settings>uniquekey=;retryunique=1;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>id</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Import SO Requested Date</stepname></step><step><id>3982</id><entity>-none-</entity><action>create</action><source>107</source><target>7</target><datasource>SELECT 1
+
+--SELECT '400 - Orlaco Products' AS DBName , 
+--    SettingGroup collate database_default AS SettingGroup, 
+--    SettingName collate database_default AS SettingName, 
+--    OldValue collate database_default AS OldValue, 
+--    NewValue collate database_default AS NewValue, 
+--    FullName collate database_default AS UserName, 
+--    Created 
+--FROM [400].dbo._AB_VW_SETTINGS WHERE DATEDIFF(d, created, CURRENT_TIMESTAMP) &lt;= 7
+--AND OldValue &lt;&gt; NewValue
+
+--UNION
+--SELECT '483 - Orlaco GmbH' AS DBName , 
+--    SettingGroup collate database_default AS SettingGroup, 
+--    SettingName collate database_default AS SettingName, 
+--    OldValue collate database_default AS OldValue, 
+--    NewValue collate database_default AS NewValue, 
+--    FullName collate database_default AS UserName, 
+--    Created 
+--FROM [483].dbo._AB_VW_SETTINGS WHERE DATEDIFF(d, created, CURRENT_TIMESTAMP) &lt;= 7
+
+
+--UNION
+--SELECT '484 - Orlaco Inc' AS DBName , 
+--    SettingGroup collate database_default AS SettingGroup, 
+--   SettingName collate database_default AS SettingName, 
+--    OldValue collate database_default AS OldValue, 
+--    NewValue collate database_default AS NewValue, 
+--    FullName collate database_default AS UserName, 
+--    Created 
+--FROM [484].dbo._AB_VW_SETTINGS WHERE DATEDIFF(d, created, CURRENT_TIMESTAMP) &lt;= 7
+
+
+--UNION
+--SELECT 'Synergy' AS DBName , 
+--    SettingGroup collate database_default AS SettingGroup, 
+--    SettingName collate database_default AS SettingName, 
+--    OldValue collate database_default AS OldValue, 
+--    NewValue collate database_default AS NewValue, 
+--    FullName collate database_default AS UserName, 
+--    Created 
+--FROM [orlaco].dbo._AB_VW_SETTINGS WHERE DATEDIFF(d, created, CURRENT_TIMESTAMP) &lt;= 7
+
+--ORDER BY DBName, created 
+</datasource><contentbody>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"&gt;
+&lt;HTML&gt;
+&lt;HEAD&gt;&lt;META content="text/html; charset=UTF-8" http-equiv=Content-Type /&gt;&lt;META name=GENERATOR content="MSHTML 11.00.9600.18036" /&gt;&lt;/HEAD&gt;&lt;body &gt;&lt;p&gt;Hi,&lt;/p&gt;
+&lt;p&gt;This are the Exact configuration changes of last week. &lt;/p&gt;
+
+&lt;p&gt;This email is automaticly created by ABEI on&amp;nbsp; %abeinow%&lt;/p&gt;&lt;/body&gt;&lt;/HTML&gt;</contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>999</seqno><settings>uniquekey=;retryunique=0;ssrsserver=;ssrsreport=;ssrsformat=HTML4.0;ssrsfile=;emailfrom=abei@orlaco.com;emailname=ABEI @ EWS01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=TEST MC-4  Log report of Exact configuration changes;emailbodyusesource=-1;emailsendifnoresults=-1;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Column1</name><type>Int32</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>-1</xmlin_sqlconn><xmlin_sqltype>0</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>A4</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Update ProductionOrder to include Missing Quantity</stepname></step><step><id>3995</id><entity>SalesOrderLine</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT TOP 100 PERCENT 
+
+        o.id,
+        o.Ordernr as HeaderId, 
+        CAST(o.Regel AS int) as Regel, 
+        o.Artcode,
+        o.oms45 as Omschrijving,
+        RD.New_RequestedDate as Requesteddate
+        
+FROM [ExactData].._ST_EG_Import_RequestedDate RD WITH (NOLOCK) 
+
+INNER JOIN  [100]..orsrg o WITH (NOLOCK) 
+    ON RD.Ordernr  COLLATE database_default = o.ordernr 
+    AND rd.regel   COLLATE database_default = o.regel   
+    AND rd.artcode COLLATE database_default = o.artcode 
+INNER JOIN  [100]..humres ha WITH (NOLOCK) 
+    ON o.syscreator = ha.res_id
+INNER JOIN  [100]..humres hm WITH (NOLOCK) 
+    ON o.sysmodifier = hm.res_id
+    
+WHERE rd.Status = 1
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>1010</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>HeaderId</name><type>String</type></datacolumn><datacolumn><name>Regel</name><type>Int32</type></datacolumn><datacolumn><name>Artcode</name><type>String</type></datacolumn><datacolumn><name>Omschrijving</name><type>String</type></datacolumn><datacolumn><name>Requesteddate</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update order</stepname></step><step><id>4006</id><entity>SalesOrderHeader</entity><action>delete</action><source>108</source><target>108</target><datasource>select distinct ordernr as headerID, ordernr from [420]..orkrg
+WHERE ordernr IN (
+'21612537',
+'21612538',
+'21612539',
+'21612577',
+'21613787',
+'21700118',
+'21700119',
+'21700120',
+'21700121',
+'21700149',
+'21700150',
+'21700202',
+'21700262',
+'21700264',
+'21700265',
+'21700382',
+'21700383',
+'21700384',
+'21700523',
+'21700524',
+'21700525',
+'21700574',
+'21700689',
+'21700690',
+'21700691',
+'21700789',
+'21700797',
+'21700798',
+'21700823',
+'21700824',
+'21700843',
+'21700844',
+'21700845',
+'21700846',
+'21700847',
+'21700848',
+'21701011',
+'21701012',
+'21701191',
+'21701194',
+'21701195',
+'21701196',
+'21701197',
+'21701198',
+'21701199',
+'21701200',
+'21701201',
+'21701202',
+'21701203',
+'21701204',
+'21701205',
+'21701206',
+'21701215',
+'21701297',
+'21701416',
+'21701417',
+'21701418',
+'21701419',
+'21701420',
+'21701421',
+'21701422',
+'21701423',
+'21701424',
+'21701425',
+'21701426',
+'21701427',
+'21701592',
+'21701593',
+'21701594',
+'21701669',
+'21701670',
+'21701671',
+'21701806',
+'21701887',
+'21701900',
+'21701901',
+'21701902',
+'21701984',
+'21701985',
+'21701986',
+'21701988',
+'21702102',
+'21702157',
+'21702158',
+'21702159',
+'21702160',
+'21702161',
+'21702162',
+'21702163',
+'21702164',
+'21702165',
+'21702193',
+'21702230',
+'21702231',
+'21702232',
+'21702433',
+'21702434',
+'21702435',
+'21702456',
+'21702467',
+'21702468',
+'21702469',
+'21702470',
+'21702509',
+'21702510',
+'21702511',
+'21702512',
+'21702513',
+'21702514',
+'21702515',
+'21702516',
+'21702517',
+'21702518',
+'21702519',
+'21702520',
+'21702568',
+'21702569',
+'21702570',
+'21702596',
+'21702597',
+'21702598',
+'21702599',
+'21702600',
+'21702601',
+'21702602',
+'21702603',
+'21702604',
+'21702605',
+'21702606',
+'21702607',
+'21702608',
+'21702609',
+'21702610',
+'21702611',
+'21702612',
+'21702613',
+'21702614',
+'21702615',
+'21702616',
+'21702617',
+'21702618',
+'21702619',
+'21702620',
+'21702621',
+'21702622',
+'21702710',
+'21702711',
+'21702712',
+'21702713',
+'21702714',
+'21702715',
+'21702716',
+'21702717',
+'21702718',
+'21702719',
+'21702720',
+'21702721',
+'21702722',
+'21702723',
+'21702724',
+'21702725',
+'21702726',
+'21702727',
+'21702728',
+'21702729',
+'21702730',
+'21702731',
+'21702732',
+'21702733',
+'21702756',
+'21702764',
+'21702765',
+'21702948',
+'21702949',
+'21702950',
+'21702951',
+'21702952',
+'21702953',
+'21702995',
+'21702996',
+'21702997',
+'21703013',
+'21703014',
+'21703050',
+'21703052',
+'21703059',
+'21703060',
+'21703061',
+'21703062',
+'21703063',
+'21703064',
+'21703065',
+'21703139',
+'21703140',
+'21703141',
+'21703142',
+'21703143',
+'21703144',
+'21703145',
+'21703147',
+'21703148',
+'21703149',
+'21703150',
+'21703151',
+'21703152',
+'21703153',
+'21703155',
+'21703156',
+'21703157',
+'21703158',
+'21703159',
+'21703160',
+'21703161',
+'21703179',
+'21703222',
+'21703230',
+'21703231',
+'21703232',
+'21703257',
+'21703258',
+'21703270',
+'21703334',
+'21703345',
+'21703410',
+'21703412',
+'21703448',
+'21703449',
+'21703469',
+'21703503',
+'21703532',
+'21703533',
+'21703534',
+'21703535',
+'21703536',
+'21703537',
+'21703538',
+'21703539',
+'21703544',
+'21703546',
+'21703555',
+'21703556',
+'21703557',
+'21703558',
+'21703559',
+'21703560',
+'21703561',
+'21703562',
+'21703563',
+'21703564',
+'21703565',
+'21703566',
+'21703567',
+'21703568',
+'21703569',
+'21703570',
+'21703595',
+'21703596',
+'21703599',
+'21703600',
+'21703601',
+'21703602',
+'21703603',
+'21703604',
+'21703605',
+'21703606',
+'21703617',
+'21703633',
+'21703660',
+'21703661',
+'21703662',
+'21703663',
+'21703664',
+'21703665',
+'21703666',
+'21703667',
+'21703673',
+'21703677',
+'21703678',
+'21703679',
+'21703691',
+'21703698',
+'21703699',
+'21703703',
+'21703705',
+'21703753',
+'21703754',
+'21703757',
+'21703796',
+'21703802',
+'21703803',
+'21703804',
+'21703806',
+'21703809',
+'21703810',
+'21703819',
+'21703820',
+'21703831',
+'21703832',
+'21703833',
+'21703835',
+'21703838',
+'21703839',
+'21703840',
+'21703841',
+'21703842',
+'21703850'
+)
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>1010</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Complete open salesorders in 420</stepname></step><step><id>4007</id><entity>SalesOrderLine</entity><action>create</action><source>108</source><target>108</target><datasource>select distinct id, ordernr as headerID, ordernr, regel from [420]..orsrg
+WHERE ordernr IN (
+'21612537',
+'21612538',
+'21612539',
+'21612577',
+'21613787',
+'21700118',
+'21700119',
+'21700120',
+'21700121',
+'21700149',
+'21700150',
+'21700202',
+'21700262',
+'21700264',
+'21700265',
+'21700382',
+'21700383',
+'21700384',
+'21700523',
+'21700524',
+'21700525',
+'21700574',
+'21700689',
+'21700690',
+'21700691',
+'21700789',
+'21700797',
+'21700798',
+'21700823',
+'21700824',
+'21700843',
+'21700844',
+'21700845',
+'21700846',
+'21700847',
+'21700848',
+'21701011',
+'21701012',
+'21701191',
+'21701194',
+'21701195',
+'21701196',
+'21701197',
+'21701198',
+'21701199',
+'21701200',
+'21701201',
+'21701202',
+'21701203',
+'21701204',
+'21701205',
+'21701206',
+'21701215',
+'21701297',
+'21701416',
+'21701417',
+'21701418',
+'21701419',
+'21701420',
+'21701421',
+'21701422',
+'21701423',
+'21701424',
+'21701425',
+'21701426',
+'21701427',
+'21701592',
+'21701593',
+'21701594',
+'21701669',
+'21701670',
+'21701671',
+'21701806',
+'21701887',
+'21701900',
+'21701901',
+'21701902',
+'21701984',
+'21701985',
+'21701986',
+'21701988',
+'21702102',
+'21702157',
+'21702158',
+'21702159',
+'21702160',
+'21702161',
+'21702162',
+'21702163',
+'21702164',
+'21702165',
+'21702193',
+'21702230',
+'21702231',
+'21702232',
+'21702433',
+'21702434',
+'21702435',
+'21702456',
+'21702467',
+'21702468',
+'21702469',
+'21702470',
+'21702509',
+'21702510',
+'21702511',
+'21702512',
+'21702513',
+'21702514',
+'21702515',
+'21702516',
+'21702517',
+'21702518',
+'21702519',
+'21702520',
+'21702568',
+'21702569',
+'21702570',
+'21702596',
+'21702597',
+'21702598',
+'21702599',
+'21702600',
+'21702601',
+'21702602',
+'21702603',
+'21702604',
+'21702605',
+'21702606',
+'21702607',
+'21702608',
+'21702609',
+'21702610',
+'21702611',
+'21702612',
+'21702613',
+'21702614',
+'21702615',
+'21702616',
+'21702617',
+'21702618',
+'21702619',
+'21702620',
+'21702621',
+'21702622',
+'21702710',
+'21702711',
+'21702712',
+'21702713',
+'21702714',
+'21702715',
+'21702716',
+'21702717',
+'21702718',
+'21702719',
+'21702720',
+'21702721',
+'21702722',
+'21702723',
+'21702724',
+'21702725',
+'21702726',
+'21702727',
+'21702728',
+'21702729',
+'21702730',
+'21702731',
+'21702732',
+'21702733',
+'21702756',
+'21702764',
+'21702765',
+'21702948',
+'21702949',
+'21702950',
+'21702951',
+'21702952',
+'21702953',
+'21702995',
+'21702996',
+'21702997',
+'21703013',
+'21703014',
+'21703050',
+'21703052',
+'21703059',
+'21703060',
+'21703061',
+'21703062',
+'21703063',
+'21703064',
+'21703065',
+'21703139',
+'21703140',
+'21703141',
+'21703142',
+'21703143',
+'21703144',
+'21703145',
+'21703147',
+'21703148',
+'21703149',
+'21703150',
+'21703151',
+'21703152',
+'21703153',
+'21703155',
+'21703156',
+'21703157',
+'21703158',
+'21703159',
+'21703160',
+'21703161',
+'21703179',
+'21703222',
+'21703230',
+'21703231',
+'21703232',
+'21703257',
+'21703258',
+'21703270',
+'21703334',
+'21703345',
+'21703410',
+'21703412',
+'21703448',
+'21703449',
+'21703469',
+'21703503',
+'21703532',
+'21703533',
+'21703534',
+'21703535',
+'21703536',
+'21703537',
+'21703538',
+'21703539',
+'21703544',
+'21703546',
+'21703555',
+'21703556',
+'21703557',
+'21703558',
+'21703559',
+'21703560',
+'21703561',
+'21703562',
+'21703563',
+'21703564',
+'21703565',
+'21703566',
+'21703567',
+'21703568',
+'21703569',
+'21703570',
+'21703595',
+'21703596',
+'21703599',
+'21703600',
+'21703601',
+'21703602',
+'21703603',
+'21703604',
+'21703605',
+'21703606',
+'21703617',
+'21703633',
+'21703660',
+'21703661',
+'21703662',
+'21703663',
+'21703664',
+'21703665',
+'21703666',
+'21703667',
+'21703673',
+'21703677',
+'21703678',
+'21703679',
+'21703691',
+'21703698',
+'21703699',
+'21703703',
+'21703705',
+'21703753',
+'21703754',
+'21703757',
+'21703796',
+'21703802',
+'21703803',
+'21703804',
+'21703806',
+'21703809',
+'21703810',
+'21703819',
+'21703820',
+'21703831',
+'21703832',
+'21703833',
+'21703835',
+'21703838',
+'21703839',
+'21703840',
+'21703841',
+'21703842',
+'21703850'
+)
+order by ordernr, regel</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>1010</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>headerID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Complete open salesorders in 420</stepname></step></steps></job></jobs>

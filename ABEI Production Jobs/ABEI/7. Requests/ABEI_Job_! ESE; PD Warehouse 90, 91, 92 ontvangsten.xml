@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>219</id><jobname>! ESE: PD Warehouse 90, 91, 92 ontvangsten</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>LVE 211019 uitgezet, loopt al een tijd niet meer en de queries zijn traag</remarks><schedulename /><schedulesettings>freq=10;timescale=minutes;startat=00:00:00;beginat=06:00:00;endat=23:59:59;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=-1;day7=-1;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>1046</id><entity>Request</entity><action>create</action><source>107</source><target>1</target><datasource>SELECT ID as gbkmutid
+, 1207 as type, 11760 as empid, 
+'Products' as freetextfield_10,
+
+dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.aantal AS itemcount, 
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.artikelcode AS artikelcode,
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.artikelcode2 AS itemcode,   
+ dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.reden AS Description, 
+   cast(dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.costpricestandard as varchar) AS freetextfield_01, 
+   dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.Serienummer AS freetextfield_05, ID as freetextfield_07
+FROM dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91 
+WHERE  1=1
+and dbo.Orlaco_RPT_PD_Quarantaine_magazijn_91.Warehousecode  =  '91' 
+
+ 
+</datasource><contentbody></contentbody><mapping></mapping><disable /><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=gbkmutid;retryunique=1;</settings><settingsxml /><stepname>Magazijn 91</stepname></step><step><id>1049</id><entity>Request</entity><action>create</action><source>107</source><target>1</target><datasource>SELECT  ID as gbkmutid, 1206 as type, 11760 as empid, 
+'Products' as freetextfield_10,
+
+dbo.Orlaco_RPT_PD_Quarantaine_magazijn.aantal AS itemcount, 
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.artikelcode AS artikelcode,
+     dbo.Orlaco_RPT_PD_Quarantaine_magazijn.artikelcode2 AS itemcode,   
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.reden AS Description, 
+    cast(dbo.Orlaco_RPT_PD_Quarantaine_magazijn.costpricestandard as varchar) AS freetextfield_01, 
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.Serienummer AS freetextfield_05 
+FROM dbo.Orlaco_RPT_PD_Quarantaine_magazijn 
+WHERE  1=1
+AND dbo.Orlaco_RPT_PD_Quarantaine_magazijn.Warehousecode  =  ('92') 
+</datasource><contentbody></contentbody><mapping></mapping><disable /><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=gbkmutid;retryunique=1;</settings><settingsxml /><stepname>Magazijn 92</stepname></step><step><id>1050</id><entity>Request</entity><action>create</action><source>107</source><target>1</target><datasource>SELECT ID as gbkmutid, 540 as type, 11760 as empid, 
+'Products' as freetextfield_10,
+
+dbo.Orlaco_RPT_PD_Quarantaine_magazijn.aantal AS itemcount, 
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.artikelcode AS artikelcode,
+     dbo.Orlaco_RPT_PD_Quarantaine_magazijn.artikelcode2 AS itemcode,   
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.reden AS Description, 
+    cast(dbo.Orlaco_RPT_PD_Quarantaine_magazijn.costpricestandard as varchar) AS freetextfield_01, 
+    dbo.Orlaco_RPT_PD_Quarantaine_magazijn.Serienummer AS freetextfield_05, ID as freetextfield_06
+FROM dbo.Orlaco_RPT_PD_Quarantaine_magazijn
+WHERE  1=1
+AND dbo.Orlaco_RPT_PD_Quarantaine_magazijn.Warehousecode  =  '90' 
+
+
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>30</seqno><settings>uniquekey=gbkmutid;retryunique=1;</settings><settingsxml /><stepname>Magazijn 90</stepname></step></steps></job></jobs>

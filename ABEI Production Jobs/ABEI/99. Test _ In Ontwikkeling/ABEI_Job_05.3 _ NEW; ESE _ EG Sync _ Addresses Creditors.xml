@@ -1,0 +1,270 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>512</id><jobname>05.3 - NEW: ESE &gt; EG Sync - Addresses Creditors</jobname><disable>True</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=16:55:30;beginat=04:30:53;endat=23:30:53;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3307</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>105</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>0</seqno><settings /><settingsxml /><stepname>-- Sync 400 ------------------------------------------</stepname></step><step><id>3319</id><entity>Address</entity><action>update</action><source>129</source><target>105</target><datasource>SELECT TOP (1000) ag.ID, ctg.cnt_id as ContactPerson, ag.ContactPerson as contactOld
+     --, cg.debnr, cg.cmp_name
+     --, ctg.FullName as newContact, ctg2.FullName as oldContact
+     --, ctg.cnt_email as newContactEmail, ctg2.cnt_email as oldContactEmail
+     FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    -- Select the first created for the criteria, to eliminate duplicates (for main account)
+    CROSS APPLY (SELECT TOP 1 * 
+        FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+        ORDER BY ctg.syscreated ASC) as ctg
+    -- Invoice address
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.Type = a.Type --AND ag.ContactPerson = ctg.cnt_id
+    --INNER JOIN [%abeitargetdb%].dbo.cicntp ctg2 WITH (NOLOCK) 
+    --    ON ctg2.cmp_wwn = cg.cmp_wwn AND ctg2.cnt_id = ag.ContactPerson
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    AND a.Type = 'INV'
+
+    -- Difference between contact person ID
+    AND ag.ContactPerson &lt;&gt; ctg.cnt_id    
+    
+    AND ctg.cnt_email IS NOT NULL -- extra check, don't overwrite when new one is empty
+
+    AND a.ESE_sysmodified &gt; ag.sysmodified
+ORDER BY cmp_name</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update INV Contact</stepname></step><step><id>3308</id><entity>Address</entity><action>update</action><source>129</source><target>105</target><datasource>SELECT TOP 100 ag.ID, cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, ag.ID AS AddressID
+      ,a.[Type]
+      ,a.[AddressLine1]
+      ,a.[AddressLine2]
+      ,a.[AddressLine3]
+      ,a.[PostCode]
+      ,a.[City]
+      ,a.[StateCode]
+      ,a.[County]
+      ,a.[Country]
+      ,a.[Phone]
+      ,a.[Fax]
+      ,a.[Notes]
+      ,a.[KeepSameAsVisit]
+      ,CONVERT(int, a.[IsTaxable]) AS IsTaxable
+      ,CONVERT(bit, a.[Main]) AS Main
+      FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    
+    AND (a.ESE_sysmodified &gt; ag.sysmodified -- modified
+        OR (ag.syscreated = ag.sysmodified)-- AND ag.[AddressLine1] != a.[AddressLine1] COLLATE DATABASE_DEFAULT) -- new, maybe we have to update the adresses too
+        )
+ORDER BY ag.ID</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>20</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>Account</name><type>Guid</type></datacolumn><datacolumn><name>ContactPerson</name><type>Guid</type></datacolumn><datacolumn><name>AddressID</name><type>Guid</type></datacolumn><datacolumn><name>Type</name><type>String</type></datacolumn><datacolumn><name>AddressLine1</name><type>String</type></datacolumn><datacolumn><name>AddressLine2</name><type>String</type></datacolumn><datacolumn><name>AddressLine3</name><type>String</type></datacolumn><datacolumn><name>PostCode</name><type>String</type></datacolumn><datacolumn><name>City</name><type>String</type></datacolumn><datacolumn><name>StateCode</name><type>String</type></datacolumn><datacolumn><name>County</name><type>String</type></datacolumn><datacolumn><name>Country</name><type>String</type></datacolumn><datacolumn><name>Phone</name><type>String</type></datacolumn><datacolumn><name>Fax</name><type>String</type></datacolumn><datacolumn><name>Notes</name><type>String</type></datacolumn><datacolumn><name>KeepSameAsVisit</name><type>Boolean</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>CustomerReq</name><type>Boolean</type></datacolumn><datacolumn><name>PoNumber</name><type>String</type></datacolumn><datacolumn><name>InvoiceType</name><type>Int32</type></datacolumn><datacolumn><name>DamageWaiver</name><type>Double</type></datacolumn><datacolumn><name>InvoiceFrequency</name><type>Int32</type></datacolumn><datacolumn><name>AddressCode</name><type>String</type></datacolumn><datacolumn><name>SalesPersonNumber</name><type>Int32</type></datacolumn><datacolumn><name>ShipVia</name><type>String</type></datacolumn><datacolumn><name>UPSZone</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>IsTaxable</name><type>Boolean</type></datacolumn><datacolumn><name>Main</name><type>Boolean</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Update</stepname></step><step><id>3309</id><entity>Address</entity><action>create</action><source>129</source><target>105</target><datasource>SELECT cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, a.*
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only 
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)
+    -- Only one INV address per customer
+    AND (a.Type != 'INV' OR NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag2 WITH (NOLOCK) WHERE ag2.Account = cg.cmp_wwn AND ag2.Type = a.Type))
+    -- Only one type of address per contact
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>3310</id><entity>Address</entity><action>update</action><source>129</source><target>105</target><datasource>SELECT ag.ID, ag.Account, ag.ContactPerson
+    ,a.Type
+    ,CAST(a.AddressLine1 as varchar(100)) AddressLine1,CAST(a.AddressLine2 as varchar(100)) AddressLine2,a.AddressLine3
+    ,a.PostCode,a.City,a.StateCode,a.County,a.Country,a.Phone,a.Fax
+    ,a.Notes--,a.KeepSameAsVisit
+    ,a.datefield1,a.datefield2,a.datefield3,a.datefield4,a.datefield5
+    ,a.numberfield1,a.numberfield2,a.numberfield3,a.numberfield4,a.numberfield5
+    ,a.YesNofield1,a.YesNofield2,a.YesNofield3,a.YesNofield4,a.YesNofield5
+    ,a.textfield1,a.textfield2,a.textfield3,a.textfield4,a.textfield5
+    ,a.CustomerReq,a.PoNumber,a.InvoiceType,a.DamageWaiver,a.InvoiceFrequency
+    --,a.Main
+    ,a.AddressCode,a.SalesPersonNumber,a.ShipVia,a.UPSZone,a.warehouse
+    ,a.IsTaxable
+    ,CURRENT_TIMESTAMP as datemodified -- update modified date
+FROM dbo._AB_vw_ESE_Sync_Addresses a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [400].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [400].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+    INNER JOIN [400].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type
+WHERE 1=1
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only 
+    --AND ag.ID = '5DE34D3A-281C-4617-92CD-00081058B460'
+--UNION ALL
+EXCEPT
+SELECT a.ESE_address_id, cg.cmp_wwn,a.ESE_cnt_id,a.Type
+    ,a.AddressLine1 COLLATE DATABASE_DEFAULT,a.AddressLine2 COLLATE DATABASE_DEFAULT,a.AddressLine3 COLLATE DATABASE_DEFAULT
+    ,a.PostCode COLLATE DATABASE_DEFAULT,a.City COLLATE DATABASE_DEFAULT,a.StateCode COLLATE DATABASE_DEFAULT,a.County COLLATE DATABASE_DEFAULT,a.Country COLLATE DATABASE_DEFAULT,a.Phone COLLATE DATABASE_DEFAULT,a.Fax COLLATE DATABASE_DEFAULT
+    ,a.Notes COLLATE DATABASE_DEFAULT--,a.KeepSameAsVisit
+    ,a.datefield1,a.datefield2,a.datefield3,a.datefield4,a.datefield5
+    ,a.numberfield1,a.numberfield2,a.numberfield3,a.numberfield4,a.numberfield5
+    ,a.YesNofield1,a.YesNofield2,a.YesNofield3,a.YesNofield4,a.YesNofield5
+    ,a.textfield1 COLLATE DATABASE_DEFAULT,a.textfield2 COLLATE DATABASE_DEFAULT,a.textfield3 COLLATE DATABASE_DEFAULT,a.textfield4 COLLATE DATABASE_DEFAULT,a.textfield5 COLLATE DATABASE_DEFAULT
+    ,a.CustomerReq,a.PoNumber COLLATE DATABASE_DEFAULT,a.InvoiceType,a.DamageWaiver,a.InvoiceFrequency
+    --,a.Main
+    ,a.AddressCode,a.SalesPersonNumber,a.ShipVia COLLATE DATABASE_DEFAULT,a.UPSZone COLLATE DATABASE_DEFAULT,a.warehouse
+    ,a.IsTaxable    
+    ,CURRENT_TIMESTAMP as datemodified -- update modified date
+FROM dbo._AB_vw_ESE_Sync_Addresses_400 a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [400].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+WHERE 1=1
+    AND cg.cmp_type = 'C' -- Debtors only, it is possible we are accidentally joining a creditor with cmp_code so use this as filter
+    AND cg.cmp_status = 'A' -- Active only 
+    --AND a.ESE_Address_id = '5DE34D3A-281C-4617-92CD-00081058B460'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>40</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff (Disabled)</stepname></step><step><id>3311</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>126</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>100</seqno><settings /><settingsxml /><stepname>-- Sync 483 ------------------------------------------</stepname></step><step><id>3320</id><entity>Address</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT TOP (1000) ag.ID, ctg.cnt_id as ContactPerson, ag.ContactPerson as contactOld
+     --, cg.debnr, cg.cmp_name
+     --, ctg.FullName as newContact, ctg2.FullName as oldContact
+     --, ctg.cnt_email as newContactEmail, ctg2.cnt_email as oldContactEmail
+     FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    -- Select the first created for the criteria, to eliminate duplicates (for main account)
+    CROSS APPLY (SELECT TOP 1 * 
+        FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+        ORDER BY ctg.syscreated ASC) as ctg
+    -- Invoice address
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.Type = a.Type --AND ag.ContactPerson = ctg.cnt_id
+    --INNER JOIN [%abeitargetdb%].dbo.cicntp ctg2 WITH (NOLOCK) 
+    --    ON ctg2.cmp_wwn = cg.cmp_wwn AND ctg2.cnt_id = ag.ContactPerson
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+
+    AND a.Type = 'INV'
+
+    -- Difference between contact person ID
+    AND ag.ContactPerson &lt;&gt; ctg.cnt_id    
+    
+    AND ctg.cnt_email IS NOT NULL -- extra check, don't overwrite when new one is empty
+
+    AND a.ESE_sysmodified &gt; ag.sysmodified
+ORDER BY cmp_name</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update INV Contact</stepname></step><step><id>3312</id><entity>Address</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT TOP 100 ag.ID, cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, ag.ID AS AddressID
+      ,a.[Type]
+      ,a.[AddressLine1]
+      ,a.[AddressLine2]
+      ,a.[AddressLine3]
+      ,a.[PostCode]
+      ,a.[City]
+      ,a.[StateCode]
+      ,a.[County]
+      ,a.[Country]
+      ,a.[Phone]
+      ,a.[Fax]
+      ,a.[Notes]
+      ,a.[KeepSameAsVisit]
+      ,CONVERT(int, a.[IsTaxable]) AS IsTaxable
+      ,CONVERT(bit, a.[Main]) AS Main
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    AND (a.ESE_sysmodified &gt; ag.sysmodified -- modified
+        OR (ag.syscreated = ag.sysmodified)-- AND ag.[AddressLine1] != a.[AddressLine1] COLLATE DATABASE_DEFAULT) -- new, maybe we have to update the adresses too
+        )</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>120</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>Account</name><type>Guid</type></datacolumn><datacolumn><name>ContactPerson</name><type>Guid</type></datacolumn><datacolumn><name>AddressID</name><type>Guid</type></datacolumn><datacolumn><name>Type</name><type>String</type></datacolumn><datacolumn><name>AddressLine1</name><type>String</type></datacolumn><datacolumn><name>AddressLine2</name><type>String</type></datacolumn><datacolumn><name>AddressLine3</name><type>String</type></datacolumn><datacolumn><name>PostCode</name><type>String</type></datacolumn><datacolumn><name>City</name><type>String</type></datacolumn><datacolumn><name>StateCode</name><type>String</type></datacolumn><datacolumn><name>County</name><type>String</type></datacolumn><datacolumn><name>Country</name><type>String</type></datacolumn><datacolumn><name>Phone</name><type>String</type></datacolumn><datacolumn><name>Fax</name><type>String</type></datacolumn><datacolumn><name>Notes</name><type>String</type></datacolumn><datacolumn><name>KeepSameAsVisit</name><type>Boolean</type></datacolumn><datacolumn><name>IsTaxable</name><type>Int32</type></datacolumn><datacolumn><name>Main</name><type>Boolean</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Update</stepname></step><step><id>3313</id><entity>Address</entity><action>create</action><source>129</source><target>126</target><datasource>SELECT cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, a.*
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)
+    -- Only one INV address per customer
+    AND (a.Type != 'INV' OR NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag2 WITH (NOLOCK) WHERE ag2.Account = cg.cmp_wwn AND ag2.Type = a.Type))
+    -- Only one type of address per contact
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>130</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>3314</id><entity>Address</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT 1 as not availableyet</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>140</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff (Disabled)</stepname></step><step><id>3315</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>112</target><datasource>print '-- Sync %abeitargetdb% ------------------------------------------'</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>200</seqno><settings /><settingsxml /><stepname>-- Sync 484 ------------------------------------------</stepname></step><step><id>3321</id><entity>Address</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP (1000) ag.ID, ctg.cnt_id as ContactPerson, ag.ContactPerson as contactOld
+     --, cg.debnr, cg.cmp_name
+     --, ctg.FullName as newContact, ctg2.FullName as oldContact
+     --, ctg.cnt_email as newContactEmail, ctg2.cnt_email as oldContactEmail
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    -- Select the first created for the criteria, to eliminate duplicates (for main account)
+    CROSS APPLY (SELECT TOP 1 * 
+        FROM [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        WHERE ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+        ORDER BY ctg.syscreated ASC) as ctg
+    -- Invoice address
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.Type = a.Type --AND ag.ContactPerson = ctg.cnt_id
+    --INNER JOIN [%abeitargetdb%].dbo.cicntp ctg2 WITH (NOLOCK) 
+    --    ON ctg2.cmp_wwn = cg.cmp_wwn AND ctg2.cnt_id = ag.ContactPerson
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+
+    AND a.Type = 'INV'
+
+    -- Difference between contact person ID
+    AND ag.ContactPerson &lt;&gt; ctg.cnt_id    
+    
+    AND ctg.cnt_email IS NOT NULL -- extra check, don't overwrite when new one is empty
+
+    AND a.ESE_sysmodified &gt; ag.sysmodified
+ORDER BY cmp_name</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>210</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update INV Contact</stepname></step><step><id>3316</id><entity>Address</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP 100 ag.ID, cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, ag.ID AS AddressID
+      ,a.[Type]
+      ,a.[AddressLine1]
+      ,a.[AddressLine2]
+      ,a.[AddressLine3]
+      ,a.[PostCode]
+      ,a.[City]
+      ,a.[StateCode]
+      ,a.[County]
+      ,a.[Country]
+      ,a.[Phone]
+      ,a.[Fax]
+      ,a.[Notes]
+      ,a.[KeepSameAsVisit]
+      ,CONVERT(int, a.[IsTaxable]) AS IsTaxable
+      ,CONVERT(bit, a.[Main]) AS Main
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+    INNER JOIN [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) 
+        ON ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    AND (a.ESE_sysmodified &gt; ag.sysmodified -- modified
+        OR (ag.syscreated = ag.sysmodified)-- AND ag.[AddressLine1] != a.[AddressLine1] COLLATE DATABASE_DEFAULT) -- new, maybe we have to update the adresses too
+        )
+</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>Account</name><type>Guid</type></datacolumn><datacolumn><name>ContactPerson</name><type>Guid</type></datacolumn><datacolumn><name>ID</name><type>Guid</type></datacolumn><datacolumn><name>ESE_address_id</name><type>Guid</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>Type</name><type>String</type></datacolumn><datacolumn><name>AddressLine1</name><type>String</type></datacolumn><datacolumn><name>AddressLine2</name><type>String</type></datacolumn><datacolumn><name>AddressLine3</name><type>String</type></datacolumn><datacolumn><name>PostCode</name><type>String</type></datacolumn><datacolumn><name>City</name><type>String</type></datacolumn><datacolumn><name>StateCode</name><type>String</type></datacolumn><datacolumn><name>County</name><type>String</type></datacolumn><datacolumn><name>Country</name><type>String</type></datacolumn><datacolumn><name>Phone</name><type>String</type></datacolumn><datacolumn><name>Fax</name><type>String</type></datacolumn><datacolumn><name>Notes</name><type>String</type></datacolumn><datacolumn><name>KeepSameAsVisit</name><type>Boolean</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNofield1</name><type>Byte</type></datacolumn><datacolumn><name>YesNofield2</name><type>Byte</type></datacolumn><datacolumn><name>YesNofield3</name><type>Byte</type></datacolumn><datacolumn><name>YesNofield4</name><type>Byte</type></datacolumn><datacolumn><name>YesNofield5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>CustomerReq</name><type>Boolean</type></datacolumn><datacolumn><name>PoNumber</name><type>String</type></datacolumn><datacolumn><name>InvoiceType</name><type>Int32</type></datacolumn><datacolumn><name>DamageWaiver</name><type>Double</type></datacolumn><datacolumn><name>InvoiceFrequency</name><type>Int32</type></datacolumn><datacolumn><name>Main</name><type>Byte</type></datacolumn><datacolumn><name>AddressCode</name><type>String</type></datacolumn><datacolumn><name>SalesPersonNumber</name><type>Int32</type></datacolumn><datacolumn><name>ShipVia</name><type>String</type></datacolumn><datacolumn><name>UPSZone</name><type>String</type></datacolumn><datacolumn><name>warehouse</name><type>String</type></datacolumn><datacolumn><name>IsTaxable</name><type>Byte</type></datacolumn><datacolumn><name>ESE_sysmodified</name><type>DateTime</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Update</stepname></step><step><id>3317</id><entity>Address</entity><action>create</action><source>129</source><target>112</target><datasource>SELECT cg.cmp_wwn as Account, ctg.cnt_id as ContactPerson, a.*
+FROM dbo._AB_vw_ESE_Sync_Addresses_Creditors a WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.cmp_code = a.ESE_cmp_code
+    INNER JOIN [%abeitargetdb%].dbo.cicntp ctg WITH (NOLOCK) 
+        ON ctg.cmp_wwn = cg.cmp_wwn AND ctg.TextField5 = a.ESE_cnt_id
+WHERE 1=1
+    AND cg.cmp_type = 'S' -- Creditors only
+    AND cg.cmp_status = 'A' -- Active only 
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.Account = cg.cmp_wwn AND ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)
+    -- Only one INV address per customer
+    AND (a.Type != 'INV' OR NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag2 WITH (NOLOCK) WHERE ag2.Account = cg.cmp_wwn AND ag2.Type = a.Type))
+    -- Only one type of address per contact
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Addresses ag WITH (NOLOCK) WHERE ag.ContactPerson = ctg.cnt_id AND ag.Type = a.Type)</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>230</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>3318</id><entity>Address</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT 1 as not availableyet</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>240</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff (Disabled)</stepname></step></steps></job></jobs>

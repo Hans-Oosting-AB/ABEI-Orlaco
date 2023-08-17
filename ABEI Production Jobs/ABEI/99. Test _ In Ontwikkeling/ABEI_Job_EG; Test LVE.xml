@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>471</id><jobname>EG: Test LVE</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>startat=16:24:18;beginat=00:00:00;endat=23:59:59;day1=0;day2=0;day3=0;day4=0;day5=0;day6=0;day7=0;enabled=0</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>2773</id><entity>SDK-ProductionOrder-Finish</entity><action>process</action><source>105</source><target>105</target><datasource>SELECT p.ProjectNr as project, p.Status
+FROM dbo.PRProject p WITH (NOLOCK)
+WHERE 1=1
+    AND p.ProjectNr = 'PROD00173327'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>project</name><type>String</type></datacolumn><datacolumn><name>Status</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Set Status back</stepname></step><step><id>2815</id><entity>Item</entity><action>update</action><source>105</source><target>105</target><datasource>
+ SELECT datakey as Itemcode, oldvalue as GLAccountDistribution
+ FROM [484]..ebcdatalog ed WITH (NOLOCK)
+ INNER JOIN [484]..ebcprops ep  WITH (NOLOCK) ON ed.property = ep.propid
+ WHERE ep.propname = 'GLAccountDistribution' and created between '2020-05-20' and '2020-05-21' and creator = 10152</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>20</seqno><settings /><settingsxml /><stepname /></step><step><id>2817</id><entity>Item</entity><action>update</action><source>105</source><target>105</target><datasource>Select Itemcode, 'A' as Condition FROM [484]..Items where condition not in ('B', 'E', 'D', 'F', 'A')</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>30</seqno><settings /><settingsxml /><stepname /></step><step><id>2820</id><entity>Account</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT DISTINCT cmp_wwn, LTRIM(RTRIM(OldValue)) AS textfield3
+FROM [400]..EbcDataLog l WITH (NOLOCK)
+INNER JOIN [400]..cicmpy c WITH (NOLOCK) ON c.cmp_wwn = l.DataKey
+WHERE Component= 'DF2C80E9-0A2C-11D4-9DDF-0004AC25BEFA' 
+AND Property ='B79285CB-2802-11D4-A76E-00C04F9546C9' AND created &gt; '2016-01-01' AND NewValue IS NULL 
+AND textfield3 IS null</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>40</seqno><settings /><settingsxml /><stepname /></step><step><id>2822</id><entity>Item</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT datakey AS itemcode, oldvalue AS salesprice, oldvalue AS salespackageprice FROM [400]..EbcDataLog WITH (NOLOCK) WHERE Property = 'B1B59F31-6149-403A-93DD-34599C74594E'-- DataKey = '0403340'
+AND created between '2020-05-27' AND '2020-05-28' 
+</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>50</seqno><settings /><settingsxml /><stepname /></step><step><id>2824</id><entity>InvoiceHeader</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT TOP (1) 
+    fh.ID
+    , 'DE293308756' as VATNumber
+
+    , fh.faknr--, fh.VATNumber
+FROM dbo.frhkrg fh WITH (NOLOCK)
+    --INNER JOIN dbo.frhsrg fs WITH (NOLOCK)
+    --  ON fs.faknr = fh.faknr
+WHERE 1=1
+    AND fh.fakdebnr = '100044'
+    AND fh.VATNumber != 'DE293308756'
+    --AND fh.syscreated &gt; '2020-01-01'
+    --AND fh.syscreated &gt; DATEADD(DAY, -30, CURRENT_TIMESTAMP)
+ORDER BY sysmodified DESC</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>60</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>VATNumber</name><type>String</type></datacolumn><datacolumn><name>faknr</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update VAT Number</stepname></step><step><id>2825</id><entity>InvoiceLine</entity><action>update</action><source>105</source><target>105</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>60</seqno><settings /><settingsxml /><stepname>Update VAT Number</stepname></step><step><id>2862</id><entity>Item</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT i.ItemCode
+    , i.CSPickITScanCode
+    , i2.CSPickITScanCode as CSPickITScanCode_old
+FROM [400].dbo.Items i WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.Items i2 WITH (NOLOCK)
+        ON i2.ItemCode = i.ItemCode
+WHERE 1=1
+    AND ISNULL(i.CSPickITScanCode, '') != ISNULL(i2.CSPickITScanCode, '')</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>70</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>CSPickITScanCode</name><type>String</type></datacolumn><datacolumn><name>CSPickITScanCode_old</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update CSPickIt</stepname></step><step><id>2865</id><entity>QuotationHeader</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT k.ordernr as HeaderID
+    , k.ordernr
+    , k.docnumber
+    , k.refer
+    --, 1 as afgehandld
+    --, r.ID
+    --, 'Test LVE' as DeletionReason
+FROM dbo.orkrg k WITH (NOLOCK)
+    INNER JOIN dbo.orsrg r WITH (NOLOCK)
+        ON r.ordernr = k.ordernr AND r.regel = 1
+WHERE 1=1
+    AND k.ordernr = '11427010'
+    AND k.afgehandld = 0</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>80</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>afgehandld</name><type>Int32</type></datacolumn><datacolumn><name>DeletionReason</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Header</stepname></step><step><id>2866</id><entity>QuotationLine</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT k.ordernr as HeaderID
+    , k.ordernr
+    --, 1 as afgehandld
+    , r.ID
+    , r.regel
+    , r.artcode
+    , r.oms45
+    , 0 as UpdateDeliveryDate
+FROM dbo.orkrg k WITH (NOLOCK)
+    INNER JOIN dbo.orsrg r WITH (NOLOCK)
+        ON r.ordernr = k.ordernr AND r.regel = 1
+WHERE 1=1
+    AND k.ordernr = '11427010'
+    AND k.afgehandld = 0</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>80</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>HeaderID</name><type>String</type></datacolumn><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>ID</name><type>Int32</type></datacolumn><datacolumn><name>regel</name><type>String</type></datacolumn><datacolumn><name>artcode</name><type>String</type></datacolumn><datacolumn><name>oms45</name><type>String</type></datacolumn><datacolumn><name>UpdateDeliveryDate</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Line</stepname></step><step><id>2867</id><entity>SDK-PurchaseOrder-Complete</entity><action>process</action><source>105</source><target>105</target><datasource>SELECT '11427010'as ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>90</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Complete</stepname></step><step><id>2882</id><entity>SDK-PurchaseOrder-Complete</entity><action>process</action><source>105</source><target>105</target><datasource>SELECT '11427010'as ordernr</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>90</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>Complete</stepname></step><step><id>2928</id><entity>SDK-PurchaseOrder-PrintProcess</entity><action>process</action><source>105</source><target>105</target><datasource>SELECT k.ordernr
+    , 2 as PrintDestination --0=Printer, 1=Email , 2=Skip
+    , 1 as IsFinal
+    , 'INK_EN_5' as PrintLayout
+FROM dbo.orkrg k WITH (NOLOCK)
+WHERE 1=1
+    AND k.ord_soort = 'B'
+    AND k.afgehandld = 0
+    AND k.ordernr = '12050009'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>String</type></datacolumn><datacolumn><name>PrintDestination</name><type>Int32</type></datacolumn><datacolumn><name>IsFinal</name><type>Int32</type></datacolumn><datacolumn><name>PrintLayout</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname></stepname></step><step><id>2966</id><entity>Account</entity><action>update</action><source>105</source><target>105</target><datasource>SELECT * 
+FROM [400]..cicmpy c WITH (NOLOCK) 
+WHERE DEBNR = 972965</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>140</seqno><settings /><settingsxml /><stepname /></step><step><id>3006</id><entity>SalesOrderHeader</entity><action>delete</action><source>128</source><target>128</target><datasource>SELECT ordernr as [Transaction key], 'Order defect - empty debnr' as DeletionReason , ID, ordernr from orkrg where ordernr = 61612010 </datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>150</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>ordernr</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Remove order</stepname></step><step><id>3007</id><entity>SalesOrderLine</entity><action>delete</action><source>128</source><target>128</target><datasource>SELECT ordernr as [Transaction key], 'Order defect - empty debnr' as DeletionReason , ID, ordernr from orsrg where ordernr = 61612010 </datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>150</seqno><settings /><settingsxml /><stepname /></step><step><id>3260</id><entity>-none-</entity><action>create</action><source>1</source><target>7</target><datasource>select distinct E.employee, ISNULL(E.mail, 'iss@orlaco.com') as email from (
+
+select HID,
+A.status,
+c.cmp_name,
+LTRIM(CMP_CODE) as Customer,
+a.Description,
+a.FreeTextField_04 as Passrate,
+a.FreeDateField_03 as followupdate,
+freetextfield_02 as PMC,
+h.fullname as Employee,
+h.mail,
+a.syscreated
+,DATEDIFF(DAY,GETDATE(),Freedatefield_03) as DaysToLate
+From Absences A WITH (NOLOCK)
+INNER JOIN Cicmpy C on C.cmp_wwn = a.CustomerID
+INNER JOIN Humres H On H.res_id=A.EmpID
+where type = 213 and FreeDateField_03 &lt; GETDATE()+7 and a.status = 1 
+
+Union
+
+select HID,
+A.Status,
+c.cmp_name,
+LTRIM(CMP_CODE) as Customer,
+a.Description,
+a.FreeTextField_04 as Passrate,
+a.FreeDateField_03 as followupdate,
+freetextfield_02 as PMC,
+h.fullname as Employee,
+h.mail,
+a.syscreated
+,DATEDIFF(DAY,GETDATE(),Freedatefield_03) as DaysToLate
+From Absences A WITH (NOLOCK)
+INNER JOIN Cicmpy C on C.cmp_wwn = a.CustomerID
+INNER JOIN Humres H On H.res_id=A.EmpID
+where type = 213  and FreeTextField_04 is null  and a.Status = 1
+)E</datasource><contentbody></contentbody><mapping>Employee=%employee%</mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings>uniquekey=;retryunique=0;ssrsserver=http://SQL/reportserver/;ssrsreport=/213  SAL Information and Quotation;ssrsformat=HTML4.0;ssrsfile=;emailfrom=mailings@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=ISS %employee% %email%;emailbodyusesource=-1;emailsendifnoresults=0;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>employee</name><type>String</type></datacolumn><datacolumn><name>email</name><type>String</type></datacolumn></datacolumns></general><xmlinboud><xmlin_sqlobj /><xmlin_sqlconn>1</xmlin_sqlconn><xmlin_sqltype>1</xmlin_sqltype><xmlin_sqlgrouplevel /><xmlin_usebulkcopy>false</xmlin_usebulkcopy><sqlparents><sqlparent><name>default</name><type /><datatablename /><parseonerror>False</parseonerror><sqlobjects /></sqlparent></sqlparents><documentnodes><documentnode index="1" parent="-1"><name>Document (Binary)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbin</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Base64)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docbase64</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode><documentnode index="1" parent="-1"><name>Document (Text, UTF8)</name><groupvalue /><filter /><level>0</level><namespees /><type>0</type><value /><fullname>/docutf8</fullname><width>0</width><datatype /><emptyaction>0</emptyaction></documentnode></documentnodes></xmlinboud><ssrstarget /><print><printername /><printertray>Default</printertray><printerpapername>A4</printerpapername><printercopies>1</printercopies><printerpaperheight>1169</printerpaperheight><printerpaperwidth>827</printerpaperwidth><printerpaperkind>9</printerpaperkind><printerpapermargintop>0</printerpapermargintop><printerpapermarginbottom>0</printerpapermarginbottom><printerpapermarginleft>0</printerpapermarginleft><printerpapermarginright>0</printerpapermarginright><printerlandscape>false</printerlandscape></print><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname>Send SAL : I&amp;Q</stepname></step><step><id>3261</id><entity>-none-</entity><action>create</action><source>1</source><target>6</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>210</seqno><settings>retryunique=0;uniquekey=;emailfrom=abei@orlaco.com;emailname=ABEI @ ES01;emailreplyto=lennart.meeuse@stoneridge.com;emailuser=;emailpwd=TFEEY7QNB86Yzc1ll50jtg%equalchar%%equalchar%;emailserver=smtpinternal.stoneridge.com;emailport=25;emailssl=False;emailto=lennart.meeuse@stoneridge.com;emailcc=;emailbcc=;emailsub=Ready;emailbodyusesource=0;emailsendifnoresults=-1;emailcontentcolumns=;mex_connectionid=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general><email><emailattachment_allowduplicate>false</emailattachment_allowduplicate><emailimpersonation_account /><emailbodytype>html</emailbodytype><emailsaveasdraft>false</emailsaveasdraft><attachments /></email></settings></settingsxml><stepname></stepname></step><step><id>3380</id><entity>Request</entity><action>create</action><source>129</source><target>1</target><datasource>SELECT TOP (1) *
+FROM dbo._AB_vw_ABEI_BCA_Request_Create c WITH (NOLOCK)
+ORDER BY referencekey</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>Type</name><type>Int32</type></datacolumn><datacolumn><name>Description</name><type>String</type></datacolumn><datacolumn><name>FreeIntField_01</name><type>Int32</type></datacolumn><datacolumn><name>Startdate</name><type>DateTime</type></datacolumn><datacolumn><name>FreeTextField_01</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_02</name><type>String</type></datacolumn><datacolumn><name>RequestComments</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_03</name><type>String</type></datacolumn><datacolumn><name>FreeTextField_04</name><type>String</type></datacolumn><datacolumn><name>WorkflowComments</name><type>String</type></datacolumn><datacolumn><name>EmpID</name><type>Int32</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create BCA Request</stepname></step><step><id>3382</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>220</seqno><settings></settings><settingsxml /><stepname>==== BCA Requests</stepname></step><step><id>3383</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>UPDATE b WITH (ROWLOCK, NOWAIT) SET 
+    HID = a.HID
+    , DateChanged = CURRENT_TIMESTAMP
+FROM [ExactData].[dbo].[_ST_IC_BCAs] b 
+    INNER JOIN [ABEI].dbo._AB_Entity_results r WITH (NOLOCK)
+        ON r.runid = '%runid%'
+        AND r.Entity = 'Request'
+        AND r.ReferenceValue = CAST(b.ID as varchar(100))
+        AND r.jobid = %jobid%
+    INNER JOIN dbo._AB_sy_absences a WITH (NOLOCK) ON a.ID = r.NewKeyvalue
+WHERE 1=1
+    AND b.HID IS NULL -- No HID yet</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>230</seqno><settings /><settingsxml /><stepname>Save HID to Table</stepname></step><step><id>3385</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>INSERT INTO dbo._AB_tb_ABEI_BCA_Prospects (HID, BCAID, runid, rowstatus, seqno)
+SELECT a.HID
+    , a.FreeIntField_01
+    , '%runid%' as runid
+    , 1 as rowstatus
+    , 10 as seqno
+FROM dbo._AB_sy_absences a WITH (NOLOCK) 
+WHERE 1=1
+    AND a.[Type] = 6043
+    AND a.CustomerID IS NULL
+    --AND a.Status = 1 -- Approved
+</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>240</seqno><settings /><settingsxml /><stepname>Check for approved requests where the customer code is empty</stepname></step><step><id>3386</id><entity>Account</entity><action>create</action><source>129</source><target>1</target><datasource>SELECT *
+FROM dbo._AB_vw_ABEI_BCA_Prospect_Create c WITH (NOLOCK)
+WHERE 1=1
+    AND c.runid = '%runid%'</datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>250</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey>referencekey</referencekey><datacolumns><datacolumn><name>referencekey</name><type>Int32</type></datacolumn><datacolumn><name>runid</name><type>Guid</type></datacolumn><datacolumn><name>cmp_type</name><type>String</type></datacolumn><datacolumn><name>cmp_name</name><type>String</type></datacolumn><datacolumn><name>cmp_fctry</name><type>String</type></datacolumn><datacolumn><name>cmp_tel</name><type>String</type></datacolumn><datacolumn><name>cmp_fadd1</name><type>String</type></datacolumn><datacolumn><name>cmp_fcity</name><type>String</type></datacolumn><datacolumn><name>cmp_fcounty</name><type>String</type></datacolumn><datacolumn><name>cmp_fpc</name><type>String</type></datacolumn><datacolumn><name>cmp_web</name><type>String</type></datacolumn><datacolumn><name>VatNumber</name><type>String</type></datacolumn><datacolumn><name>DunsNumber</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>DelAddress</name><type>String</type></datacolumn><datacolumn><name>DelCity</name><type>String</type></datacolumn><datacolumn><name>DeliveryTerms</name><type>String</type></datacolumn><datacolumn><name>InvAddress</name><type>String</type></datacolumn><datacolumn><name>InvCity</name><type>String</type></datacolumn><datacolumn><name>InvCounty</name><type>String</type></datacolumn><datacolumn><name>InvPostCode</name><type>String</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Create a new prospect based on the BCA data</stepname></step><step><id>3405</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource></datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>300</seqno><settings /><settingsxml /><stepname>Save current order status</stepname></step><step><id>3406</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings></settings><settingsxml /><stepname>==== End-of-year Price update in orders</stepname></step></steps></job></jobs>

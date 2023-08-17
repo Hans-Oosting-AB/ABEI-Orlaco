@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>500</id><jobname>Creditors - Synchonise incotermcode</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>1</freq><timescale>hours</timescale><frequency>daily</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>12:03:21</startat><beginat>05:00:00</beginat><endat>23:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>-1</day6><day7>-1</day7><duration_start>2022-08-02</duration_start><duration_end>2073-08-02</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3045</id><entity>Account</entity><action>update</action><source>1</source><target>107</target><datasource>SELECT TOP 100 percent c1.cmp_wwn, c1.cmp_code, c1.cmp_name, c2.TextField13 as IncoTermCode
+from [%abeitargetdb%].dbo.cicmpy c1 with (NOLOCK)
+inner join [%abeisourcedb%].dbo.cicmpy c2 with (NOLOCK) on c1.cmp_code = c2.cmp_code
+where c1.cmp_type = 'S' and c1.cmp_status = 'A' 
+and c2.cmp_type = 'S' and c2.cmp_status = 'A' 
+and ISNULL(c2.TextField13,'') &lt;&gt; '' AND c2.TextField13 &lt;&gt; '-'
+and ISNULL(c2.TextField13,'') collate database_default &lt;&gt; ISNULL(c1.IncoTermCode,'')
+ORDER BY  c1.cmp_code</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Update creditors incotermcode 400</stepname></step><step><id>3046</id><entity>Account</entity><action>update</action><source>1</source><target>127</target><datasource>SELECT TOP 100 percent c1.cmp_wwn, c1.cmp_code, c1.cmp_name, c2.TextField13 as IncoTermCode
+from [%abeitargetdb%].dbo.cicmpy c1 with (NOLOCK)
+inner join [%abeisourcedb%].dbo.cicmpy c2 with (NOLOCK) on c1.cmp_code = c2.cmp_code
+where c1.cmp_type = 'S' and c1.cmp_status = 'A' 
+and c2.cmp_type = 'S' and c2.cmp_status = 'A' 
+and ISNULL(c2.TextField13,'') &lt;&gt; '' AND c2.TextField13 &lt;&gt; '-'
+and ISNULL(c2.TextField13,'') collate database_default &lt;&gt; ISNULL(c1.IncoTermCode,'')
+ORDER BY  c1.cmp_code</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>11</seqno><settings /><settingsxml /><stepname>Update creditors incotermcode 483</stepname></step><step><id>3047</id><entity>Account</entity><action>update</action><source>1</source><target>112</target><datasource>SELECT TOP 100 percent c1.cmp_wwn, c1.cmp_code, c1.cmp_name, c2.TextField13 as IncoTermCode
+from [%abeitargetdb%].dbo.cicmpy c1 with (NOLOCK)
+inner join [%abeisourcedb%].dbo.cicmpy c2 with (NOLOCK) on c1.cmp_code = c2.cmp_code
+where c1.cmp_type = 'S' and c1.cmp_status = 'A' 
+and c2.cmp_type = 'S' and c2.cmp_status = 'A' 
+and ISNULL(c2.TextField13,'') &lt;&gt; '' AND c2.TextField13 &lt;&gt; '-'
+and ISNULL(c2.TextField13,'') collate database_default &lt;&gt; ISNULL(c1.IncoTermCode,'')
+ORDER BY  c1.cmp_code</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>12</seqno><settings /><settingsxml /><stepname>Update creditors incotermcode 484</stepname></step></steps></job></jobs>

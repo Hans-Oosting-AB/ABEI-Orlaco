@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>473</id><jobname>05.4 - NEW: ESE &gt; EG Sync - Items</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks></remarks><schedulename /><schedulesettings>freq=20;timescale=minutes;startat=16:47:39;beginat=05:00:00;endat=23:40:52;day1=-1;day2=-1;day3=-1;day4=-1;day5=-1;day6=0;day7=0;enabled=-1</schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>3552</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>100</seqno><settings></settings><settingsxml /><stepname>==== Sync 483</stepname></step><step><id>2788</id><entity>Item</entity><action>update</action><source>129</source><target>126</target><datasource>SELECT TOP 50
+    CostPriceCurrency_DE as CostPriceCurrency
+    , CostPriceStandard_DE as CostPriceStandard
+    , SalesPackagePrice_DE as SalesPackagePrice
+    , SalesPrice_DE as SalesPrice
+    , Condition_ESE as Condition
+    , UserField_02_483 AS UserField_02
+    , UserField_03_483 AS UserField_03
+    , UserField_04_483 AS UserField_04
+    , UserNumber_13_483 AS UserNumber_13
+    , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK)
+        ON ig.ItemCode = i.ItemCode
+WHERE i.ESE_sysmodified &gt; ig.sysmodified -- modified
+OR (ig.Condition = 'A' and i.Condition_ESE &lt;&gt; 'A') 
+OR (ig.Condition = 'A' AND i.costpricestandard_DE IS NOT NULL AND
+    ABS(ROUND(ISNULL(ig.costpricestandard,0) - i.CostPriceStandard_DE,3)) &gt; 0.001 )
+OR (i.SalesPackagePrice_DE IS NOT NULL AND
+     ABS(ROUND(ISNULL(ig.SalesPackagePrice,0)- ISNULL(i.SalesPackagePrice_DE,0),2)) &gt; 0.01 )
+ORDER BY i.Itemcode</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>110</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update</stepname></step><step><id>2789</id><entity>Item</entity><action>create</action><source>129</source><target>126</target><datasource>SELECT top 100 percent
+      CostPriceCurrency_DE as CostPriceCurrency
+    , CostPriceStandard_DE as CostPriceStandard
+    , SalesPackagePrice_DE as SalesPackagePrice
+    , SalesPrice_DE as SalesPrice
+    , Condition_ESE as Condition
+    , GLAccountDistribution_NEW AS GLAccountDistribution
+    , UserField_02_483 AS UserField_02
+    , UserField_03_483 AS UserField_03
+    , UserField_04_483 AS UserField_04
+    , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+WHERE 1=1
+     AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) WHERE ig.ItemCode = i.ItemCode)
+     AND (i.Condition_ESE = 'A' OR i.Condition_ESE = 'F') --- Only create active or future items</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>120</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>2790</id><entity>Item</entity><action>update</action><source>129</source><target>127</target><datasource>SELECT ItemCode, 
+'B' AS Condition,
+CASE WHEN TextDescription IS NULL THEN '' ELSE TextDescription + ' 
+' END + '[' + CONVERT(VARCHAR,GETDATE(),105) + '] ' + 'Item blocked because it does not exists in Synergy' AS TextDescription
+FROM [%abeitargetdb%].dbo.items WITH (NOLOCK) 
+WHERE ItemCode NOT IN (SELECT ItemCode FROM [%abeisourcedb%].dbo._AB_vw_ESE_Sync_Items_Export) 
+and Condition &lt;&gt; 'B' AND (TYPE = 'S' OR Type = 'B')</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>130</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff</stepname></step><step><id>2796</id><entity>ItemAccount</entity><action>create</action><source>129</source><target>126</target><datasource>SELECT cg.cmp_wwn as AccountCode, cg.crdnr,  ig.ItemCode, i.PurchaseCurrency, i.PurchasePrice
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK)
+        ON ig.ItemCode = i.ItemCode
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.crdnr = i.lev_crdnr COLLATE DATABASE_DEFAULT
+WHERE 1=1
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.ItemAccounts iag WITH (NOLOCK) WHERE iag.crdnr = cg.crdnr AND iag.AccountCode = cg.cmp_wwn AND iag.ItemCode = ig.ItemCode)
+    AND ig.IsPurchaseItem = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>140</seqno><settings /><settingsxml /><stepname>Add Products as supplier</stepname></step><step><id>3255</id><entity>ItemAccount</entity><action>update</action><source>129</source><target>127</target><datasource>SELECT TOP 50 ia.id, ia.AccountCode, ia.crdnr, ia.ItemCode, 
+i.PurchaseCurrency, i.PurchasePrice
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.ItemAccounts ia WITH (NOLOCK) ON ia.ItemCode = i.ItemCode and ia.crdnr  = i.lev_crdnr collate database_default
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) ON ig.ItemCode = i.ItemCode
+WHERE ig.condition = 'A' AND i.PurchasePrice IS NOT NULL 
+AND (ia.PurchasePrice IS NULL 
+OR ia.PurchaseCurrency &lt;&gt; i.PurchaseCurrency collate database_default 
+  OR   ABS(ROUND(ISNULL(ia.PurchasePrice,0) - i.PurchasePrice,3)) &gt; 0.001 )
+ORDER BY ia.Itemcode</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>145</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>AccountCode</name><type>Guid</type></datacolumn><datacolumn><name>crdnr</name><type>String</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>PurchaseCurrency</name><type>String</type></datacolumn><datacolumn><name>PurchasePrice</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Supplier Purchase Price</stepname></step><step><id>3553</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>200</seqno><settings></settings><settingsxml /><stepname>==== Sync 484</stepname></step><step><id>3256</id><entity>Item</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP 1000
+         CostPriceCurrency_US as CostPriceCurrency
+       , CostPriceStandard_US as CostPriceStandard
+        , CONVERT(DECIMAL(8,2),CASE WHEN ISNULL(ig.UserNumber_12,0) &gt; 0 THEN ig.UserNumber_12 ELSE i.SalesPackagePrice_US END) as SalesPackagePrice -- USE default USD price
+        , CONVERT(DECIMAL(8,2),CASE WHEN ISNULL(ig.UserNumber_12,0) &gt; 0 THEN ig.UserNumber_12 ELSE i.SalesPrice_US END)  as SalesPrice
+       , CASE WHEN ig.Condition = 'B' THEN ig.Condition ELSE i.Condition_ESE END AS Condition
+       , UserNumber_13_484 as UserNumber_13 
+       , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) ON ig.ItemCode = i.ItemCode  -- Globe
+WHERE  i.ESE_sysmodified &gt; ig.sysmodified -- modified 
+OR (ig.Condition = 'A' and i.Condition_ESE &lt;&gt; 'A')
+OR (ig.Condition = 'A' AND i.CostPriceStandard_US IS NOT NULL AND 
+    ABS(ROUND(ISNULL(ig.costpricestandard,0) - i.CostPriceStandard_US,3)) &gt; 0.001 )
+OR (ABS (CASE WHEN ISNULL(ig.UserNumber_12,0) &gt; 0 THEN ig.UserNumber_12 ELSE ISNULL(i.SalesPackagePrice_US,0) END - ISNULL(ig.SalesPackagePrice,0)) &gt; 0.01 )
+
+ORDER BY i.Itemcode</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>210</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update</stepname></step><step><id>2793</id><entity>Item</entity><action>create</action><source>129</source><target>112</target><datasource>SELECT TOP 100 percent
+      CostPriceCurrency_US as CostPriceCurrency
+    , CostPriceStandard_US as CostPriceStandard
+    , SalesPackagePrice_US as SalesPackagePrice
+    , SalesPrice_US as SalesPrice
+    , Condition_US_NEW as Condition
+    , GLAccountDistribution_NEW AS GLAccountDistribution
+    , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+WHERE 1=1
+     AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) WHERE ig.ItemCode = i.ItemCode)
+     AND (i.Condition_ESE = 'A' OR i.Condition_ESE = 'F') --- Only create active or future items</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>220</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>2794</id><entity>Item</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT ItemCode, 'B' AS Condition, Condition,
+CASE WHEN TextDescription IS NULL THEN '' ELSE TextDescription + ' 
+' END + '[' + CONVERT(VARCHAR,GETDATE(),105) + '] ' + 'Item blocked because it does not exists in Synergy' AS TextDescription
+
+FROM [%abeitargetdb%].dbo.items WITH (NOLOCK) 
+WHERE ItemCode NOT IN (SELECT ItemCode FROM dbo._AB_vw_ESE_Sync_Items_Export) 
+and Condition &lt;&gt; 'B' and (Type = 'S' OR Type = 'B')
+</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>230</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>2</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>cnt_id</name><type>Guid</type></datacolumn><datacolumn><name>cmp_wwn</name><type>Guid</type></datacolumn><datacolumn><name>MainContact</name><type>Int32</type></datacolumn><datacolumn><name>cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>textfield5</name><type>String</type></datacolumn><datacolumn><name>ESE_cmp_code</name><type>String</type></datacolumn><datacolumn><name>cnt_f_name</name><type>String</type></datacolumn><datacolumn><name>cnt_l_name</name><type>String</type></datacolumn><datacolumn><name>cnt_m_name</name><type>String</type></datacolumn><datacolumn><name>FullName</name><type>String</type></datacolumn><datacolumn><name>Initials</name><type>String</type></datacolumn><datacolumn><name>Gender</name><type>String</type></datacolumn><datacolumn><name>predcode</name><type>String</type></datacolumn><datacolumn><name>cnt_job_desc</name><type>String</type></datacolumn><datacolumn><name>cnt_dept</name><type>String</type></datacolumn><datacolumn><name>taalcode</name><type>String</type></datacolumn><datacolumn><name>cnt_f_ext</name><type>String</type></datacolumn><datacolumn><name>cnt_f_fax</name><type>String</type></datacolumn><datacolumn><name>cnt_f_tel</name><type>String</type></datacolumn><datacolumn><name>cnt_f_mobile</name><type>String</type></datacolumn><datacolumn><name>cnt_email</name><type>String</type></datacolumn><datacolumn><name>ESE_cnt_acc_man</name><type>Int32</type></datacolumn><datacolumn><name>ESE_active</name><type>Byte</type></datacolumn><datacolumn><name>WebAccess</name><type>Byte</type></datacolumn><datacolumn><name>datefield1</name><type>DateTime</type></datacolumn><datacolumn><name>datefield2</name><type>DateTime</type></datacolumn><datacolumn><name>datefield3</name><type>DateTime</type></datacolumn><datacolumn><name>datefield4</name><type>DateTime</type></datacolumn><datacolumn><name>datefield5</name><type>DateTime</type></datacolumn><datacolumn><name>numberfield1</name><type>Double</type></datacolumn><datacolumn><name>numberfield2</name><type>Double</type></datacolumn><datacolumn><name>numberfield3</name><type>Double</type></datacolumn><datacolumn><name>numberfield4</name><type>Double</type></datacolumn><datacolumn><name>numberfield5</name><type>Double</type></datacolumn><datacolumn><name>YesNoField1</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField2</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField3</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField4</name><type>Byte</type></datacolumn><datacolumn><name>YesNoField5</name><type>Byte</type></datacolumn><datacolumn><name>textfield1</name><type>String</type></datacolumn><datacolumn><name>textfield2</name><type>String</type></datacolumn><datacolumn><name>textfield3</name><type>String</type></datacolumn><datacolumn><name>textfield4</name><type>String</type></datacolumn><datacolumn><name>cntp_Directory</name><type>String</type></datacolumn><datacolumn><name>ContactChange</name><type>Boolean</type></datacolumn><datacolumn><name>datemodified</name><type>DateTime</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>ESE -&gt; EG - Diff</stepname></step><step><id>2797</id><entity>ItemAccount</entity><action>create</action><source>129</source><target>112</target><datasource>SELECT cg.cmp_wwn as AccountCode, cg.crdnr, ig.ItemCode,i.PurchaseCurrency,i.PurchasePrice
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK)
+        ON ig.ItemCode = i.ItemCode
+    INNER JOIN [%abeitargetdb%].dbo.cicmpy cg WITH (NOLOCK)
+        ON cg.crdnr = i.lev_crdnr COLLATE DATABASE_DEFAULT
+WHERE 1=1
+    AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.ItemAccounts iag WITH (NOLOCK) WHERE iag.crdnr = cg.crdnr AND iag.AccountCode = cg.cmp_wwn AND iag.ItemCode = ig.ItemCode)
+    AND ig.IsPurchaseItem = 1</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>240</seqno><settings /><settingsxml /><stepname>Add Products as supplier</stepname></step><step><id>3257</id><entity>ItemAccount</entity><action>update</action><source>129</source><target>112</target><datasource>SELECT TOP 50 ia.id, ia.AccountCode, ia.crdnr, ia.ItemCode, 
+i.PurchaseCurrency, i.PurchasePrice
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    INNER JOIN [%abeitargetdb%].dbo.ItemAccounts ia WITH (NOLOCK) ON ia.ItemCode = i.ItemCode and ia.crdnr  = i.lev_crdnr collate database_default
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) ON ig.ItemCode = i.ItemCode
+WHERE ig.condition = 'A' AND i.PurchasePrice IS NOT NULL 
+AND (ia.PurchasePrice IS NULL 
+OR ia.PurchaseCurrency &lt;&gt; i.PurchaseCurrency collate database_default 
+  OR   ABS(ROUND(ISNULL(ia.PurchasePrice,0) - i.PurchasePrice,3)) &gt; 0.001 )
+ORDER BY ia.Itemcode</datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>245</seqno><settings>uniquekey=;retryunique=0;</settings><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns><datacolumn><name>id</name><type>Int32</type></datacolumn><datacolumn><name>AccountCode</name><type>Guid</type></datacolumn><datacolumn><name>crdnr</name><type>String</type></datacolumn><datacolumn><name>ItemCode</name><type>String</type></datacolumn><datacolumn><name>PurchaseCurrency</name><type>String</type></datacolumn><datacolumn><name>PurchasePrice</name><type>Double</type></datacolumn></datacolumns></general></settings></settingsxml><stepname>Update Supplier Purchase Price</stepname></step><step><id>2871</id><entity>-none-</entity><action>exec SQL</action><source>112</source><target>112</target><datasource>UPDATE [484].dbo.Items 
+SET CSPickITScanCode = i.CSPickITScanCode
+FROM [400].dbo.Items i WITH (NOLOCK)
+INNER JOIN  [484].dbo.Items i2 WITH (NOLOCK) ON i2.ItemCode = i.ItemCode
+WHERE ISNULL(i.CSPickITScanCode, '') != ISNULL(i2.CSPickITScanCode, '')</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>250</seqno><settings /><settingsxml /><stepname>Sync CSPickitscancode</stepname></step><step><id>3554</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>300</seqno><settings></settings><settingsxml /><stepname>==== Sync 100</stepname></step><step><id>3410</id><entity>Item</entity><action>update</action><source>129</source><target>105</target><datasource>SELECT TOP 50
+    CostPriceCurrency_DE as CostPriceCurrency
+    , CostPriceStandard_DE as CostPriceStandard
+    , SalesPackagePrice_DE as SalesPackagePrice
+    , SalesPrice_DE as SalesPrice
+    , Condition_ESE as Condition
+    , UserField_02_483 AS UserField_02
+    , UserField_03_483 AS UserField_03
+    , UserField_04_483 AS UserField_04
+    , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+    -- Globe
+    INNER JOIN [%abeitargetdb%].dbo.Items ig WITH (NOLOCK)
+        ON ig.ItemCode = i.ItemCode
+WHERE i.ESE_sysmodified &gt; ig.sysmodified -- modified
+OR (ig.Condition = 'A' and i.Condition_ESE &lt;&gt; 'A') 
+OR (ig.Condition = 'A' AND i.costpricestandard_DE IS NOT NULL AND
+    ABS(ROUND(ISNULL(ig.costpricestandard,0) - i.CostPriceStandard_DE,3)) &gt; 0.001 )
+OR (ig.Condition = 'A' AND i.SalesPackagePrice_DE IS NOT NULL AND
+     ISNULL(ig.SalesPackagePrice,0) &lt;&gt; i.SalesPackagePrice_DE)
+ORDER BY i.Itemcode</datasource><contentbody /><mapping /><disable>1</disable><remarks /><replace /><seqno>310</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Update</stepname></step><step><id>3407</id><entity>Item</entity><action>create</action><source>129</source><target>105</target><datasource>SELECT top 100 percent
+      CostPriceCurrency_DE as CostPriceCurrency
+    , CostPriceStandard_DE as CostPriceStandard
+    , SalesPackagePrice_DE as SalesPackagePrice
+    , SalesPrice_DE as SalesPrice
+    , Condition_ESE as Condition
+    , GLAccountDistribution_NEW AS GLAccountDistribution
+    , UserField_02_483 AS UserField_02
+    , UserField_03_483 AS UserField_03
+    , UserField_04_483 AS UserField_04
+    , i.*
+FROM dbo._AB_vw_ESE_Sync_Items_Export i WITH (NOLOCK)
+WHERE 1=1
+     AND NOT EXISTS (SELECT 1 FROM [%abeitargetdb%].dbo.Items ig WITH (NOLOCK) WHERE ig.ItemCode = i.ItemCode)
+     AND (i.Condition_ESE = 'A' OR i.Condition_ESE = 'F') --- Only create active or future items</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>320</seqno><settings /><settingsxml /><stepname>ESE -&gt; EG - Create</stepname></step><step><id>3595</id><entity>-none-</entity><action>textline</action><source>0</source><target>0</target><datasource></datasource><contentbody></contentbody><mapping></mapping><disable>1</disable><remarks></remarks><replace></replace><seqno>330</seqno><settings></settings><settingsxml /><stepname>==== Sync 400 Leadtime</stepname></step><step><id>3596</id><entity>Item</entity><action>update</action><source>1</source><target>107</target><datasource>select i.itemcode, convert(int,i.UserNumber_01) as UserNumber_13
+from [%abeisourcedb%]..items i with (NOLOCK)
+inner join [%abeitargetdb%]..items ii with (NOLOCK) on ii.ItemCode = i.ItemCode
+where  i.UserNumber_01 &lt;&gt; ii.UserNumber_13</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>330</seqno><settings /><settingsxml><settings><general><gen_datasource_method>0</gen_datasource_method><target_override /><referencekey /><datacolumns /></general></settings></settingsxml><stepname>ESE -&gt; EG - Update</stepname></step></steps></job></jobs>
