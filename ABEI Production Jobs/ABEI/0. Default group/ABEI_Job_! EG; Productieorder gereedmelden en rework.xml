@@ -25,18 +25,24 @@ ISNULL(er.ExactReceived,0) as QtyReceived,
 ISNULL(pr.ProductionReady,0) as QtyReady, 
 ISNULL(px.ProductionReject,0) as QtyReject,
 ISNULL(pr.OrderStatus,0) as OrderStatus,
-CASE WHEN ISNULL(pr.OrderStatus,0) = 1 
-    THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0) --as Quantity,
-    ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END as Quantity,
+  --SR (exact.Orlaco.nl) 05.375.706
+  --SR  (customers.absc.nl) 02.926.144
+--CASE WHEN ISNULL(pr.OrderStatus,0) = 1 
+--    THEN 
+        ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0) as Quantity,
+--    ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END as Quantity,
 '%runid%' as runid
 from [ExactData].[dbo].[_ST_PRD_Exact_Planned_Open] ep
 left join [ExactData].[dbo].[_ST_PRD_Exact_Received_Open] er on ep.ProductionOrder = er.ProductionOrder
 left join [ExactData].[dbo].[_ST_PRD_Prod_Ready] pr on ep.ProductionOrder = pr.ProductionOrder
 left join [ExactData].[dbo].[_ST_PRD_Prod_Reject] px on ep.ProductionOrder = px.ProductionOrder
 where ep.itemcode in ('1003030', '1003050')  
-    AND CASE WHEN ISNULL(pr.OrderStatus,0) = 1 
-        THEN ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0)
-        ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END &gt; 0
+  --SR (exact.Orlaco.nl) 05.375.706
+  --SR  (customers.absc.nl) 02.926.144
+    --AND CASE WHEN ISNULL(pr.OrderStatus,0) = 1 
+    --   THEN 
+    AND        ISNULL(pr.ProductionReady,0) + ISNULL(px.ProductionReject,0) - ISNULL(er.ExactReceived,0) &gt; 0
+--        ELSE ISNULL(pr.ProductionReady,0) - ISNULL(er.ExactReceived,0) END &gt; 0
     AND ep.ProductionOrder NOT IN (SELECT ProductionOrder collate database_Default FROM [ProdGlobe_live].[dbo].[_ST_PRD_Process_Cummulative] WHERE Status &lt; 2)
 ORDER BY ep.ProductionOrder</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>5</seqno><settings /><settingsxml /><stepname>Add component orders</stepname></step><step><id>1558</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>107</target><datasource>exec [ProdGlobe_live].dbo._AB_sp_New_prod_2_table
 </datasource><contentbody></contentbody><mapping></mapping><disable>0</disable><remarks></remarks><replace></replace><seqno>10</seqno><settings></settings><settingsxml /><stepname>Check for new records productie ontvangst</stepname></step><step><id>4005</id><entity>-none-</entity><action>exec SQL</action><source>0</source><target>130</target><datasource>BEGIN TRANSACTION;
