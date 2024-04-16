@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>553</id><jobname>Save error messages to table</jobname><disable>False</disable><emailbody /><emailmode>0</emailmode><emailsubject /><emailto>Berry.Gelderman@stoneridge.com</emailto><remarks>ABEI error log is by default only saved for 10 days.
+
+This job stores only error messages in table _AB_entity_results in database ABSC_Data for ABEI job 330. This is only used for throubleshooting.</remarks><schedulename /><schedulesettings></schedulesettings><settings></settings><settingsxml><settings><schedule><allowmultipleprocessorinstances>false</allowmultipleprocessorinstances><schedules><scheduledetails><scheduleid>0</scheduleid><allowmultipleprocessorinstances>False</allowmultipleprocessorinstances><freq>1</freq><timescale>once</timescale><frequency>daily</frequency><frequency_recurrence>1</frequency_recurrence><frequency_dayofmonth>1</frequency_dayofmonth><frequency_dayofmonth_day>1</frequency_dayofmonth_day><frequency_dayofmonth_daypos>1</frequency_dayofmonth_daypos><frequency_dayofmonth_type>nr</frequency_dayofmonth_type><scheduledenabled>-1</scheduledenabled><startat>23:50:58</startat><beginat>00:00:00</beginat><endat>23:59:59</endat><day1>-1</day1><day2>-1</day2><day3>-1</day3><day4>-1</day4><day5>-1</day5><day6>-1</day6><day7>-1</day7><duration_start>2022-10-20</duration_start><duration_end>2073-10-20</duration_end></scheduledetails></schedules></schedule><general><maxjobstepactions>200</maxjobstepactions></general><jobparams /></settings></settingsxml><steps><step><id>4046</id><entity>-none-</entity><action>exec SQL</action><source>129</source><target>129</target><datasource>Insert into [ABSC_Data].[dbo].[_AB_Entity_results]
+(
+       [id]
+      ,[runid]
+      ,[jobid]
+      ,[jobstepid]
+      ,[ExactProduct]
+      ,[TargetServer]
+      ,[TargetDB]
+      ,[Entity]
+      ,[Keyvalue]
+      ,[Action]
+      ,[HeaderID]
+      ,[UniqueKey]
+      ,[rowstatus]
+      ,[NewKeyvalue]
+      ,[errormessage]
+      ,[syscreated]
+      ,[sysmodified]
+      ,[RecordValue]
+      ,[ReferenceValue]
+)
+Select
+       r.[id]
+      ,r.[runid]
+      ,r.[jobid]
+      ,r.[jobstepid]
+      ,r.[ExactProduct]
+      ,r.[TargetServer]
+      ,r.[TargetDB]
+      ,r.[Entity]
+      ,r.[Keyvalue]
+      ,r.[Action]
+      ,r.[HeaderID]
+      ,r.[UniqueKey]
+      ,r.[rowstatus]
+      ,r.[NewKeyvalue]
+      ,r.[errormessage]
+      ,r.[syscreated]
+      ,r.[sysmodified]
+      ,r.[RecordValue]
+      ,r.[ReferenceValue]
+
+from    [ABEI].[dbo].[_AB_Entity_results] r with(nolock)
+        left outer join [ABSC_Data].[dbo].[_AB_Entity_results] cr with(nolock) on r.id = cr.id
+
+where   1=1
+        and r.jobid = 330
+        and r.rowstatus = -1
+        and cr.id is null</datasource><contentbody /><mapping /><disable>0</disable><remarks /><replace /><seqno>10</seqno><settings /><settingsxml /><stepname>Save error messages jobid 330</stepname></step></steps></job></jobs>

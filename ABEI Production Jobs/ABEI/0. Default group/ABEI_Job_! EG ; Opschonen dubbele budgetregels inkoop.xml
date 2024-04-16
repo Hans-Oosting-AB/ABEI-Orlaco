@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>400</id><jobname>! EG : Opschonen dubbele budgetregels inkoop</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>lennart.meeuse@stoneridge.com</emailto><remarks>
+﻿<?xml version="1.0" encoding="utf-8"?><jobs><instanceguid>d9025c07-3898-433f-88ee-c5899cf947e7</instanceguid><job><id>400</id><jobname>! EG : Opschonen dubbele budgetregels inkoop</jobname><disable>False</disable><emailbody /><emailmode>1</emailmode><emailsubject /><emailto>Berry.Gelderman@stoneridge.com</emailto><remarks>
 Sinds de update naar batch 414 ontstaan er dubbele budgetregels bij sommige (lijkt willekeurig) bestelregels. Dit geeft uiteraard enorme problemen binnen MRP. Exact heeft hier nog geen oplossing voor.
 
 Deze taak zet het transtype van de laatste aangemaakte (hoogste id) dubbele regel naar "V" (Void), waardoor MRP er geen last van heeft.
